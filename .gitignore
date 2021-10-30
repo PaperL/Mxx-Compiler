@@ -1,12 +1,12 @@
+test/
+
 # IDEA
 .idea/
 *.iml
 
-# Vscode
-.antlr/
-
 # ANTLR4
 gen/
+.antlr/
 
 # Java
 out/

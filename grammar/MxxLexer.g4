@@ -8,15 +8,15 @@ LINE_COMMENT: '//' ~[\r\n]* -> skip;
 
 // Separator
 
-PAREN_L: '(';
-PAREN_R: ')';
 BRACE_L: '{';
 BRACE_R: '}';
-BRACK_L: '[';
-BRACK_R: ']';
 SEMI: ';';
+PAREN_L: '(';   // PARENTHESIS
+PAREN_R: ')';
 COMMA: ',';
 DOT: '.';
+BRACK_L: '[';   // BRACKET
+BRACK_R: ']';
 
 // Operator
 
@@ -76,7 +76,7 @@ WHITE_SPACE: [ \t]+ -> skip;
 
 NEW_LINE: ('\r' '\n'? | '\n') -> skip;
 
-IDENTIFIER: [a-zA-Z] [a-zA-Z_0-9]*;
-DECIMAL_INTEGER: '-'? ([1-9][0-9]* | '0');
+IDENTIFIER: [a-zA-Z_] [a-zA-Z_0-9]*;
+DECIMAL_INTEGER: [1-9][0-9]* | '0';
 // 此处可扩展支持更多进制
 STRING_CONSTANT: '"' ('\\' . | .)*? '"';

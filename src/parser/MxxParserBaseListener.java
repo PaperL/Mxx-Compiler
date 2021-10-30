@@ -1,5 +1,5 @@
-// Generated from F:/WorkSpace/@Java/Mxx-Compiler/src/parser\MxxParser.g4 by ANTLR 4.9.1
 package parser;
+// Generated from //wsl$/Ubuntu/home/paperl/workspace/Mxx-Compiler/grammar\MxxParser.g4 by ANTLR 4.9.1
 
 import org.antlr.v4.runtime.ParserRuleContext;
 import org.antlr.v4.runtime.tree.ErrorNode;
@@ -40,18 +40,6 @@ public class MxxParserBaseListener implements MxxParserListener {
 	 *
 	 * <p>The default implementation does nothing.</p>
 	 */
-	@Override public void enterGlobalVariableDefine(MxxParser.GlobalVariableDefineContext ctx) { }
-	/**
-	 * {@inheritDoc}
-	 *
-	 * <p>The default implementation does nothing.</p>
-	 */
-	@Override public void exitGlobalVariableDefine(MxxParser.GlobalVariableDefineContext ctx) { }
-	/**
-	 * {@inheritDoc}
-	 *
-	 * <p>The default implementation does nothing.</p>
-	 */
 	@Override public void enterClassDefine(MxxParser.ClassDefineContext ctx) { }
 	/**
 	 * {@inheritDoc}
@@ -59,18 +47,6 @@ public class MxxParserBaseListener implements MxxParserListener {
 	 * <p>The default implementation does nothing.</p>
 	 */
 	@Override public void exitClassDefine(MxxParser.ClassDefineContext ctx) { }
-	/**
-	 * {@inheritDoc}
-	 *
-	 * <p>The default implementation does nothing.</p>
-	 */
-	@Override public void enterConstructorDef(MxxParser.ConstructorDefContext ctx) { }
-	/**
-	 * {@inheritDoc}
-	 *
-	 * <p>The default implementation does nothing.</p>
-	 */
-	@Override public void exitConstructorDef(MxxParser.ConstructorDefContext ctx) { }
 	/**
 	 * {@inheritDoc}
 	 *
@@ -88,30 +64,6 @@ public class MxxParserBaseListener implements MxxParserListener {
 	 *
 	 * <p>The default implementation does nothing.</p>
 	 */
-	@Override public void enterFunctionType(MxxParser.FunctionTypeContext ctx) { }
-	/**
-	 * {@inheritDoc}
-	 *
-	 * <p>The default implementation does nothing.</p>
-	 */
-	@Override public void exitFunctionType(MxxParser.FunctionTypeContext ctx) { }
-	/**
-	 * {@inheritDoc}
-	 *
-	 * <p>The default implementation does nothing.</p>
-	 */
-	@Override public void enterConstructorDefine(MxxParser.ConstructorDefineContext ctx) { }
-	/**
-	 * {@inheritDoc}
-	 *
-	 * <p>The default implementation does nothing.</p>
-	 */
-	@Override public void exitConstructorDefine(MxxParser.ConstructorDefineContext ctx) { }
-	/**
-	 * {@inheritDoc}
-	 *
-	 * <p>The default implementation does nothing.</p>
-	 */
 	@Override public void enterArgumentList(MxxParser.ArgumentListContext ctx) { }
 	/**
 	 * {@inheritDoc}
@@ -119,18 +71,6 @@ public class MxxParserBaseListener implements MxxParserListener {
 	 * <p>The default implementation does nothing.</p>
 	 */
 	@Override public void exitArgumentList(MxxParser.ArgumentListContext ctx) { }
-	/**
-	 * {@inheritDoc}
-	 *
-	 * <p>The default implementation does nothing.</p>
-	 */
-	@Override public void enterArgument(MxxParser.ArgumentContext ctx) { }
-	/**
-	 * {@inheritDoc}
-	 *
-	 * <p>The default implementation does nothing.</p>
-	 */
-	@Override public void exitArgument(MxxParser.ArgumentContext ctx) { }
 	/**
 	 * {@inheritDoc}
 	 *
@@ -172,13 +112,13 @@ public class MxxParserBaseListener implements MxxParserListener {
 	 *
 	 * <p>The default implementation does nothing.</p>
 	 */
-	@Override public void enterNotArrayType(MxxParser.NotArrayTypeContext ctx) { }
+	@Override public void enterBracket(MxxParser.BracketContext ctx) { }
 	/**
 	 * {@inheritDoc}
 	 *
 	 * <p>The default implementation does nothing.</p>
 	 */
-	@Override public void exitNotArrayType(MxxParser.NotArrayTypeContext ctx) { }
+	@Override public void exitBracket(MxxParser.BracketContext ctx) { }
 	/**
 	 * {@inheritDoc}
 	 *
@@ -280,13 +220,13 @@ public class MxxParserBaseListener implements MxxParserListener {
 	 *
 	 * <p>The default implementation does nothing.</p>
 	 */
-	@Override public void enterExpressionStmt(MxxParser.ExpressionStmtContext ctx) { }
+	@Override public void enterSingleExprStmt(MxxParser.SingleExprStmtContext ctx) { }
 	/**
 	 * {@inheritDoc}
 	 *
 	 * <p>The default implementation does nothing.</p>
 	 */
-	@Override public void exitExpressionStmt(MxxParser.ExpressionStmtContext ctx) { }
+	@Override public void exitSingleExprStmt(MxxParser.SingleExprStmtContext ctx) { }
 	/**
 	 * {@inheritDoc}
 	 *
@@ -436,18 +376,6 @@ public class MxxParserBaseListener implements MxxParserListener {
 	 *
 	 * <p>The default implementation does nothing.</p>
 	 */
-	@Override public void enterAtom(MxxParser.AtomContext ctx) { }
-	/**
-	 * {@inheritDoc}
-	 *
-	 * <p>The default implementation does nothing.</p>
-	 */
-	@Override public void exitAtom(MxxParser.AtomContext ctx) { }
-	/**
-	 * {@inheritDoc}
-	 *
-	 * <p>The default implementation does nothing.</p>
-	 */
 	@Override public void enterExpressionList(MxxParser.ExpressionListContext ctx) { }
 	/**
 	 * {@inheritDoc}
@@ -455,6 +383,18 @@ public class MxxParserBaseListener implements MxxParserListener {
 	 * <p>The default implementation does nothing.</p>
 	 */
 	@Override public void exitExpressionList(MxxParser.ExpressionListContext ctx) { }
+	/**
+	 * {@inheritDoc}
+	 *
+	 * <p>The default implementation does nothing.</p>
+	 */
+	@Override public void enterAtom(MxxParser.AtomContext ctx) { }
+	/**
+	 * {@inheritDoc}
+	 *
+	 * <p>The default implementation does nothing.</p>
+	 */
+	@Override public void exitAtom(MxxParser.AtomContext ctx) { }
 
 	/**
 	 * {@inheritDoc}

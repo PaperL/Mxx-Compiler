@@ -1,5 +1,5 @@
-// Generated from F:/WorkSpace/@Java/Mxx-Compiler/src/parser\MxxParser.g4 by ANTLR 4.9.1
 package parser;
+// Generated from //wsl$/Ubuntu/home/paperl/workspace/Mxx-Compiler/grammar\MxxParser.g4 by ANTLR 4.9.1
 import org.antlr.v4.runtime.tree.ParseTreeVisitor;
 
 /**
@@ -23,23 +23,11 @@ public interface MxxParserVisitor<T> extends ParseTreeVisitor<T> {
 	 */
 	T visitProgramSection(MxxParser.ProgramSectionContext ctx);
 	/**
-	 * Visit a parse tree produced by {@link MxxParser#globalVariableDefine}.
-	 * @param ctx the parse tree
-	 * @return the visitor result
-	 */
-	T visitGlobalVariableDefine(MxxParser.GlobalVariableDefineContext ctx);
-	/**
 	 * Visit a parse tree produced by {@link MxxParser#classDefine}.
 	 * @param ctx the parse tree
 	 * @return the visitor result
 	 */
 	T visitClassDefine(MxxParser.ClassDefineContext ctx);
-	/**
-	 * Visit a parse tree produced by {@link MxxParser#constructorDef}.
-	 * @param ctx the parse tree
-	 * @return the visitor result
-	 */
-	T visitConstructorDef(MxxParser.ConstructorDefContext ctx);
 	/**
 	 * Visit a parse tree produced by {@link MxxParser#functionDefine}.
 	 * @param ctx the parse tree
@@ -47,29 +35,11 @@ public interface MxxParserVisitor<T> extends ParseTreeVisitor<T> {
 	 */
 	T visitFunctionDefine(MxxParser.FunctionDefineContext ctx);
 	/**
-	 * Visit a parse tree produced by {@link MxxParser#functionType}.
-	 * @param ctx the parse tree
-	 * @return the visitor result
-	 */
-	T visitFunctionType(MxxParser.FunctionTypeContext ctx);
-	/**
-	 * Visit a parse tree produced by {@link MxxParser#constructorDefine}.
-	 * @param ctx the parse tree
-	 * @return the visitor result
-	 */
-	T visitConstructorDefine(MxxParser.ConstructorDefineContext ctx);
-	/**
 	 * Visit a parse tree produced by {@link MxxParser#argumentList}.
 	 * @param ctx the parse tree
 	 * @return the visitor result
 	 */
 	T visitArgumentList(MxxParser.ArgumentListContext ctx);
-	/**
-	 * Visit a parse tree produced by {@link MxxParser#argument}.
-	 * @param ctx the parse tree
-	 * @return the visitor result
-	 */
-	T visitArgument(MxxParser.ArgumentContext ctx);
 	/**
 	 * Visit a parse tree produced by {@link MxxParser#variableDefine}.
 	 * @param ctx the parse tree
@@ -89,11 +59,11 @@ public interface MxxParserVisitor<T> extends ParseTreeVisitor<T> {
 	 */
 	T visitType(MxxParser.TypeContext ctx);
 	/**
-	 * Visit a parse tree produced by {@link MxxParser#notArrayType}.
+	 * Visit a parse tree produced by {@link MxxParser#bracket}.
 	 * @param ctx the parse tree
 	 * @return the visitor result
 	 */
-	T visitNotArrayType(MxxParser.NotArrayTypeContext ctx);
+	T visitBracket(MxxParser.BracketContext ctx);
 	/**
 	 * Visit a parse tree produced by {@link MxxParser#suite}.
 	 * @param ctx the parse tree
@@ -150,12 +120,12 @@ public interface MxxParserVisitor<T> extends ParseTreeVisitor<T> {
 	 */
 	T visitReturnStmt(MxxParser.ReturnStmtContext ctx);
 	/**
-	 * Visit a parse tree produced by the {@code expressionStmt}
+	 * Visit a parse tree produced by the {@code singleExprStmt}
 	 * labeled alternative in {@link MxxParser#statement}.
 	 * @param ctx the parse tree
 	 * @return the visitor result
 	 */
-	T visitExpressionStmt(MxxParser.ExpressionStmtContext ctx);
+	T visitSingleExprStmt(MxxParser.SingleExprStmtContext ctx);
 	/**
 	 * Visit a parse tree produced by the {@code variableStmt}
 	 * labeled alternative in {@link MxxParser#statement}.
@@ -241,15 +211,15 @@ public interface MxxParserVisitor<T> extends ParseTreeVisitor<T> {
 	 */
 	T visitFunctionExpr(MxxParser.FunctionExprContext ctx);
 	/**
-	 * Visit a parse tree produced by {@link MxxParser#atom}.
-	 * @param ctx the parse tree
-	 * @return the visitor result
-	 */
-	T visitAtom(MxxParser.AtomContext ctx);
-	/**
 	 * Visit a parse tree produced by {@link MxxParser#expressionList}.
 	 * @param ctx the parse tree
 	 * @return the visitor result
 	 */
 	T visitExpressionList(MxxParser.ExpressionListContext ctx);
+	/**
+	 * Visit a parse tree produced by {@link MxxParser#atom}.
+	 * @param ctx the parse tree
+	 * @return the visitor result
+	 */
+	T visitAtom(MxxParser.AtomContext ctx);
 }

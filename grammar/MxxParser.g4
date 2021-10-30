@@ -5,92 +5,72 @@ options {
 }
 
 program: (programSection)* EOF;
+programSection:	classDefine	| functionDefine | variableDefine;
 
-programSection:
-	classDefine
-	| functionDefine
-	| globalVariableDefine;
+classDefine: CLASS IDENTIFIER BRACE_L (functionDefine | variableDefine)* BRACE_R SEMI;
 
-globalVariableDefine: variableDefine;
+functionDefine:	type? IDENTIFIER PAREN_L argumentList? PAREN_R suite;
 
-classDefine:
-	CLASS IDENTIFIER BRACE_L (
-		functionDefine
-		| constructorDefine
-		| variableDefine
-	)* BRACE_R SEMI;
+argumentList: type IDENTIFIER (COMMA type IDENTIFIER)* COMMA?;
 
-constructorDef: IDENTIFIER PAREN_L argumentList? PAREN_R suite;
-
-functionDefine:
-	functionType IDENTIFIER PAREN_L argumentList? PAREN_R suite;
-
-functionType: VOID | type;
-
-constructorDefine:
-	IDENTIFIER PAREN_L argumentList? PAREN_R suite;
-
-argumentList: argument (COMMA argument)* COMMA?;
-
-argument: type IDENTIFIER;
-
-variableDefine:
-	type variableTerm (COMMA variableTerm)* COMMA? SEMI;
+variableDefine:	type variableTerm (COMMA variableTerm)* COMMA? SEMI;
 variableTerm: IDENTIFIER (ASSIGN expression)?;
 
-type: notArrayType | type BRACK_L BRACK_R;
-
-notArrayType: BOOL | INT | STRING | IDENTIFIER;
+type: (VOID | BOOL | INT | STRING | IDENTIFIER (PAREN_L PAREN_R)?) bracket*;
+bracket: BRACK_L expression? BRACK_R;
 
 suite: BRACE_L statement* BRACE_R;
 
-statement:
-	suite # suiteStmt
-	| IF PAREN_L expression PAREN_R trueBranch = statement (
-		ELSE falseBranch = statement
-	)? # ifStmt
-	| FOR PAREN_L (initialExpr = expression)? SEMI (
-		conditionExpr = expression
-	)? SEMI (stepExpr = expression)? PAREN_R statement				# forStmt
-	| WHILE PAREN_L (conditionExpr = expression)? PAREN_R statement	# whileStmt
-	| CONTINUE SEMI													# continueStmt
-	| BREAK SEMI													# breakStmt
-	| RETURN expression? SEMI										# returnStmt
-	| (expression SEMI)												# expressionStmt
-	| variableDefine												# variableStmt
-	| SEMI															# emptyStmt;
+statement
+    : suite                                                             # suiteStmt
+	| IF PAREN_L expression PAREN_R
+	  trueBranch = statement
+	  (ELSE falseBranch = statement)?                                   # ifStmt
+	| FOR PAREN_L (initialExpr = expression)? SEMI
+	              (forCondExpr = expression)? SEMI
+	              (stepExpr = expression)?
+	  PAREN_R statement                                                 # forStmt
+	| WHILE PAREN_L expression?
+	  PAREN_R statement                                                 # whileStmt
+	| CONTINUE SEMI                                                     # continueStmt
+	| BREAK SEMI                                                        # breakStmt
+	| RETURN expression? SEMI                                           # returnStmt
+	| expression SEMI                                                   # singleExprStmt
+	| variableDefine                                                    # variableStmt
+	| SEMI                                                              # emptyStmt;
 
-expression:
+expression
 	// term
-	PAREN_L expression PAREN_R									# parenExpr
-	| atom														# atomExpr
-	| expression DOT IDENTIFIER									# memberExpr
-	| arrayName = expression BRACK_L index = expression BRACK_R	# arrayExpr
-	| expression PAREN_L expressionList? PAREN_R				# functionExpr
+	: PAREN_L expression PAREN_R                                        # parenExpr
+	| atom                                                              # atomExpr
+	| expression DOT IDENTIFIER                                         # memberExpr
+	| expression bracket+                                               # arrayExpr
+	| expression PAREN_L expressionList? PAREN_R                        # functionExpr
 	// command
-	| <assoc = right>lValue = expression ASSIGN rValue = expression	# assignExpr
-	| <assoc = right> NEW type										# newExpr
-	// arith
-	| expression op = (INC | DEC)													# selfExpr
-	| <assoc = right> op = (INC | DEC) expression									# unaryExpr
-	| <assoc = right> op = (BANG | TILDE) expression								# unaryExpr
-	| <assoc = right> op = (ADD | SUB) expression									# unaryExpr
-	| termL = expression op = (MUL | DIV | MOD) termR = expression					# binaryExpr
-	| termL = expression op = (ADD | SUB) termR = expression						# binaryExpr
-	| termL = expression op = (SHIFT_L | SHIFT_R) termR = expression				# binaryExpr
-	| termL = expression op = (GT | LT | GE | LE | EQ | NOT_EQ) termR = expression	# binaryExpr
-	| termL = expression op = BIT_AND termR = expression							# binaryExpr
-	| termL = expression op = BIT_OR termR = expression								# binaryExpr
-	| termL = expression op = CARET termR = expression								# binaryExpr
-	| termL = expression op = AND termR = expression								# binaryExpr
-	| termL = expression op = OR termR = expression									# binaryExpr;
+	| <assoc = right> lValue = expression ASSIGN rValue = expression    # assignExpr
+	| <assoc = right> NEW type                                          # newExpr
+	// arithmetic
+	| expression op = (INC | DEC)                                       # selfExpr
+	| <assoc = right> op = (INC | DEC) expression					    # unaryExpr
+	| <assoc = right> op = (BANG | TILDE) expression                    # unaryExpr
+	| <assoc = right> op = (ADD | SUB) expression                       # unaryExpr
 
-atom:
-	THIS
+	| lTerm = expression op = (MUL | DIV | MOD)     rTerm = expression  # binaryExpr
+	| lTerm = expression op = (ADD | SUB)           rTerm = expression  # binaryExpr
+	| lTerm = expression op = (SHIFT_L | SHIFT_R)   rTerm = expression	# binaryExpr
+	| lTerm = expression op = (GT | LT | GE | LE | EQ | NOT_EQ) rTerm = expression
+	                                                                    # binaryExpr
+	| lTerm = expression op = BIT_AND               rTerm = expression  # binaryExpr
+	| lTerm = expression op = BIT_OR                rTerm = expression  # binaryExpr
+	| lTerm = expression op = CARET                 rTerm = expression  # binaryExpr
+	| lTerm = expression op = AND                   rTerm = expression  # binaryExpr
+	| lTerm = expression op = OR                    rTerm = expression  # binaryExpr;
+expressionList: expression (COMMA expression)* COMMA?;
+
+atom
+	: THIS
 	| IDENTIFIER
 	| STRING_CONSTANT
 	| DECIMAL_INTEGER
 	| (TRUE | FALSE)
 	| NULL;
-
-expressionList: expression (COMMA expression)* COMMA?;

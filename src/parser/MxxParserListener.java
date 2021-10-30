@@ -1,5 +1,5 @@
-// Generated from F:/WorkSpace/@Java/Mxx-Compiler/src/parser\MxxParser.g4 by ANTLR 4.9.1
 package parser;
+// Generated from //wsl$/Ubuntu/home/paperl/workspace/Mxx-Compiler/grammar\MxxParser.g4 by ANTLR 4.9.1
 import org.antlr.v4.runtime.tree.ParseTreeListener;
 
 /**
@@ -28,16 +28,6 @@ public interface MxxParserListener extends ParseTreeListener {
 	 */
 	void exitProgramSection(MxxParser.ProgramSectionContext ctx);
 	/**
-	 * Enter a parse tree produced by {@link MxxParser#globalVariableDefine}.
-	 * @param ctx the parse tree
-	 */
-	void enterGlobalVariableDefine(MxxParser.GlobalVariableDefineContext ctx);
-	/**
-	 * Exit a parse tree produced by {@link MxxParser#globalVariableDefine}.
-	 * @param ctx the parse tree
-	 */
-	void exitGlobalVariableDefine(MxxParser.GlobalVariableDefineContext ctx);
-	/**
 	 * Enter a parse tree produced by {@link MxxParser#classDefine}.
 	 * @param ctx the parse tree
 	 */
@@ -47,16 +37,6 @@ public interface MxxParserListener extends ParseTreeListener {
 	 * @param ctx the parse tree
 	 */
 	void exitClassDefine(MxxParser.ClassDefineContext ctx);
-	/**
-	 * Enter a parse tree produced by {@link MxxParser#constructorDef}.
-	 * @param ctx the parse tree
-	 */
-	void enterConstructorDef(MxxParser.ConstructorDefContext ctx);
-	/**
-	 * Exit a parse tree produced by {@link MxxParser#constructorDef}.
-	 * @param ctx the parse tree
-	 */
-	void exitConstructorDef(MxxParser.ConstructorDefContext ctx);
 	/**
 	 * Enter a parse tree produced by {@link MxxParser#functionDefine}.
 	 * @param ctx the parse tree
@@ -68,26 +48,6 @@ public interface MxxParserListener extends ParseTreeListener {
 	 */
 	void exitFunctionDefine(MxxParser.FunctionDefineContext ctx);
 	/**
-	 * Enter a parse tree produced by {@link MxxParser#functionType}.
-	 * @param ctx the parse tree
-	 */
-	void enterFunctionType(MxxParser.FunctionTypeContext ctx);
-	/**
-	 * Exit a parse tree produced by {@link MxxParser#functionType}.
-	 * @param ctx the parse tree
-	 */
-	void exitFunctionType(MxxParser.FunctionTypeContext ctx);
-	/**
-	 * Enter a parse tree produced by {@link MxxParser#constructorDefine}.
-	 * @param ctx the parse tree
-	 */
-	void enterConstructorDefine(MxxParser.ConstructorDefineContext ctx);
-	/**
-	 * Exit a parse tree produced by {@link MxxParser#constructorDefine}.
-	 * @param ctx the parse tree
-	 */
-	void exitConstructorDefine(MxxParser.ConstructorDefineContext ctx);
-	/**
 	 * Enter a parse tree produced by {@link MxxParser#argumentList}.
 	 * @param ctx the parse tree
 	 */
@@ -97,16 +57,6 @@ public interface MxxParserListener extends ParseTreeListener {
 	 * @param ctx the parse tree
 	 */
 	void exitArgumentList(MxxParser.ArgumentListContext ctx);
-	/**
-	 * Enter a parse tree produced by {@link MxxParser#argument}.
-	 * @param ctx the parse tree
-	 */
-	void enterArgument(MxxParser.ArgumentContext ctx);
-	/**
-	 * Exit a parse tree produced by {@link MxxParser#argument}.
-	 * @param ctx the parse tree
-	 */
-	void exitArgument(MxxParser.ArgumentContext ctx);
 	/**
 	 * Enter a parse tree produced by {@link MxxParser#variableDefine}.
 	 * @param ctx the parse tree
@@ -138,15 +88,15 @@ public interface MxxParserListener extends ParseTreeListener {
 	 */
 	void exitType(MxxParser.TypeContext ctx);
 	/**
-	 * Enter a parse tree produced by {@link MxxParser#notArrayType}.
+	 * Enter a parse tree produced by {@link MxxParser#bracket}.
 	 * @param ctx the parse tree
 	 */
-	void enterNotArrayType(MxxParser.NotArrayTypeContext ctx);
+	void enterBracket(MxxParser.BracketContext ctx);
 	/**
-	 * Exit a parse tree produced by {@link MxxParser#notArrayType}.
+	 * Exit a parse tree produced by {@link MxxParser#bracket}.
 	 * @param ctx the parse tree
 	 */
-	void exitNotArrayType(MxxParser.NotArrayTypeContext ctx);
+	void exitBracket(MxxParser.BracketContext ctx);
 	/**
 	 * Enter a parse tree produced by {@link MxxParser#suite}.
 	 * @param ctx the parse tree
@@ -242,17 +192,17 @@ public interface MxxParserListener extends ParseTreeListener {
 	 */
 	void exitReturnStmt(MxxParser.ReturnStmtContext ctx);
 	/**
-	 * Enter a parse tree produced by the {@code expressionStmt}
+	 * Enter a parse tree produced by the {@code singleExprStmt}
 	 * labeled alternative in {@link MxxParser#statement}.
 	 * @param ctx the parse tree
 	 */
-	void enterExpressionStmt(MxxParser.ExpressionStmtContext ctx);
+	void enterSingleExprStmt(MxxParser.SingleExprStmtContext ctx);
 	/**
-	 * Exit a parse tree produced by the {@code expressionStmt}
+	 * Exit a parse tree produced by the {@code singleExprStmt}
 	 * labeled alternative in {@link MxxParser#statement}.
 	 * @param ctx the parse tree
 	 */
-	void exitExpressionStmt(MxxParser.ExpressionStmtContext ctx);
+	void exitSingleExprStmt(MxxParser.SingleExprStmtContext ctx);
 	/**
 	 * Enter a parse tree produced by the {@code variableStmt}
 	 * labeled alternative in {@link MxxParser#statement}.
@@ -398,16 +348,6 @@ public interface MxxParserListener extends ParseTreeListener {
 	 */
 	void exitFunctionExpr(MxxParser.FunctionExprContext ctx);
 	/**
-	 * Enter a parse tree produced by {@link MxxParser#atom}.
-	 * @param ctx the parse tree
-	 */
-	void enterAtom(MxxParser.AtomContext ctx);
-	/**
-	 * Exit a parse tree produced by {@link MxxParser#atom}.
-	 * @param ctx the parse tree
-	 */
-	void exitAtom(MxxParser.AtomContext ctx);
-	/**
 	 * Enter a parse tree produced by {@link MxxParser#expressionList}.
 	 * @param ctx the parse tree
 	 */
@@ -417,4 +357,14 @@ public interface MxxParserListener extends ParseTreeListener {
 	 * @param ctx the parse tree
 	 */
 	void exitExpressionList(MxxParser.ExpressionListContext ctx);
+	/**
+	 * Enter a parse tree produced by {@link MxxParser#atom}.
+	 * @param ctx the parse tree
+	 */
+	void enterAtom(MxxParser.AtomContext ctx);
+	/**
+	 * Exit a parse tree produced by {@link MxxParser#atom}.
+	 * @param ctx the parse tree
+	 */
+	void exitAtom(MxxParser.AtomContext ctx);
 }
