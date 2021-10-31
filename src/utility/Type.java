@@ -1,20 +1,17 @@
 package utility;
 
+import ast.NodeBracket;
+
+import java.util.ArrayList;
 import java.util.HashMap;
 
 public class Type {
-    public enum TypeEnum {
-        BOOL, INT, VOID, STRING;
+    public enum Genre {
+        VOID, BOOL, INT, STRING, IDENTIFIER;
     }
 
-    private TypeEnum type;
+    public Genre genre = null;
 
-    public Type(TypeEnum type_) {
-        type = type_;
-    }
-
-    public TypeEnum getType() {
-        return type;
-    }
-
+    public String name = null;
+    public int dimension = 0;
 }

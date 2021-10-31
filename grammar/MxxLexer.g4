@@ -15,6 +15,7 @@ PAREN_L: '(';   // PARENTHESIS
 PAREN_R: ')';
 COMMA: ',';
 DOT: '.';
+ARROW: '->';
 BRACK_L: '[';   // BRACKET
 BRACK_R: ']';
 

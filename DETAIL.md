@@ -74,3 +74,7 @@
     - AstBuilder
     - SymbolCollector
     - SemanticChecker
+
+## 其他说明
+
+- 题面 7.2 数组类型中允许定义数组时省略类型，但实际未测试该 feature

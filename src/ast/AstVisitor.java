@@ -1,6 +1,6 @@
 package ast;
 
-public interface AstVisitor {
+public interface  AstVisitor {
     // Throws error when try to visit a node without type
 //    void visit(AstNode node)
 
@@ -24,6 +24,7 @@ public interface AstVisitor {
     void visit(NodeStatement node);
 
     void visit(NodeExpression node);
+    // todo 需要补充
     void visit(NodeExpressionList node);
 
     void visit(NodeAtom node);

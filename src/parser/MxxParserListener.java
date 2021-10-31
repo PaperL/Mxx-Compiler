@@ -1,5 +1,5 @@
 package parser;
-// Generated from //wsl$/Ubuntu/home/paperl/workspace/Mxx-Compiler/grammar\MxxParser.g4 by ANTLR 4.9.1
+// Generated from //wsl$/Ubuntu/home/paperlane/workspace/@Java/Mxx-Compiler/grammar\MxxParser.g4 by ANTLR 4.9.1
 import org.antlr.v4.runtime.tree.ParseTreeListener;
 
 /**
@@ -263,6 +263,18 @@ public interface MxxParserListener extends ParseTreeListener {
 	 * @param ctx the parse tree
 	 */
 	void exitArrayExpr(MxxParser.ArrayExprContext ctx);
+	/**
+	 * Enter a parse tree produced by the {@code lambdaExpr}
+	 * labeled alternative in {@link MxxParser#expression}.
+	 * @param ctx the parse tree
+	 */
+	void enterLambdaExpr(MxxParser.LambdaExprContext ctx);
+	/**
+	 * Exit a parse tree produced by the {@code lambdaExpr}
+	 * labeled alternative in {@link MxxParser#expression}.
+	 * @param ctx the parse tree
+	 */
+	void exitLambdaExpr(MxxParser.LambdaExprContext ctx);
 	/**
 	 * Enter a parse tree produced by the {@code memberExpr}
 	 * labeled alternative in {@link MxxParser#expression}.

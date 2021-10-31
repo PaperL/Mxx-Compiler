@@ -12,7 +12,7 @@
 
 - 一个用 Java 编写的 Mx* 语言编译器
 - 本项目为 ACM 班 20 级大二大作业, 题面见: [Compiler-2022](https://github.com/ACMClassCourses/Compiler-Design-Implementation)
-- 目前进度: `Semantic: SymbolCollector`
+- 目前进度: `Semantic: SemanticChecker`
 
 ## 说明
 

@@ -8,7 +8,8 @@ public class NodeExpression extends AstNode {
     public enum Genre {
         PAREN, ATOM, MEMBER, ARRAY, FUNCTION,   // term
         ASSIGN, NEW,                            // command
-        SELF, UNARY, BINARY;                    // arithmetic
+        SELF, UNARY, BINARY,                    // arithmetic
+        LAMBDA;
     }
 
     public Genre genre = null;
@@ -56,6 +57,11 @@ public class NodeExpression extends AstNode {
     public NodeExpression rTermExpr = null;
 
     // endregion
+
+    // LAMBDA
+    public NodeArgumentList lambdaArgumentList = null;
+    public NodeSuite lambdaSuite = null;
+    public NodeExpressionList lambdaExpressionList = null;
 
     public NodeExpression(Position position) {
         super(position);

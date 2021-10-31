@@ -64,7 +64,10 @@ expression
     | lTerm = expression op = BIT_OR                rTerm = expression  # binaryExpr
     | lTerm = expression op = CARET                 rTerm = expression  # binaryExpr
     | lTerm = expression op = AND                   rTerm = expression  # binaryExpr
-    | lTerm = expression op = OR                    rTerm = expression  # binaryExpr;
+    | lTerm = expression op = OR                    rTerm = expression  # binaryExpr
+    // lambda
+    | BRACK_L BIT_AND BRACK_R PAREN_L argumentList? PAREN_R ARROW
+      suite PAREN_L expressionList? PAREN_R                             # lambdaExpr;
 expressionList: expression (COMMA expression)* COMMA?;
 
 atom

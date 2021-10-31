@@ -1,6 +1,5 @@
 package parser;
-// Generated from //wsl$/Ubuntu/home/paperl/workspace/Mxx-Compiler/grammar\MxxParser.g4 by ANTLR 4.9.1
-
+// Generated from //wsl$/Ubuntu/home/paperlane/workspace/@Java/Mxx-Compiler/grammar\MxxParser.g4 by ANTLR 4.9.1
 import org.antlr.v4.runtime.ParserRuleContext;
 import org.antlr.v4.runtime.tree.ErrorNode;
 import org.antlr.v4.runtime.tree.TerminalNode;
@@ -287,6 +286,18 @@ public class MxxParserBaseListener implements MxxParserListener {
 	 * <p>The default implementation does nothing.</p>
 	 */
 	@Override public void exitArrayExpr(MxxParser.ArrayExprContext ctx) { }
+	/**
+	 * {@inheritDoc}
+	 *
+	 * <p>The default implementation does nothing.</p>
+	 */
+	@Override public void enterLambdaExpr(MxxParser.LambdaExprContext ctx) { }
+	/**
+	 * {@inheritDoc}
+	 *
+	 * <p>The default implementation does nothing.</p>
+	 */
+	@Override public void exitLambdaExpr(MxxParser.LambdaExprContext ctx) { }
 	/**
 	 * {@inheritDoc}
 	 *
