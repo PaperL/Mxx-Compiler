@@ -1,8 +1,11 @@
 package utility.scope;
 
+import java.util.HashMap;
+
+// Manages name of global class, function and variable.
 public class BroadScope extends VariableScope {
-    // todo function and class scope
-    // private HashMap<, >  = new HashMap<>();
+    private HashMap<String, ClassScope> classes = new HashMap<>();
+    private HashMap<String, VariableScope> functions = new HashMap<>();
 
     public BroadScope() {
         super(null, null);

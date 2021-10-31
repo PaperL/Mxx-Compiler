@@ -37,8 +37,7 @@ public class Main {
             AstRoot = (NodeRoot) astBuilder.visit(parseTreeRoot);
             // AST 树构建完成后, package parser 不再被使用
 
-//            var scopeRoot = new BroadScope();
-//            var symbolCollector = new SymbolCollector(scopeRoot);
+//            var symbolCollector = new SymbolCollector();
 //            symbolCollector.visit(AstRoot);
 //            new SemanticChecker(scope).visit(AstRoot);
 

@@ -1,8 +1,8 @@
 package ast;
 
 public interface AstVisitor {
-    // ! Throws error when try to visit a node without type
-    void visit(AstNode node);
+    // Throws error when try to visit a node without type
+//    void visit(AstNode node)
 
     void visit(NodeRoot node);
     void visit(NodeProgramSection node);

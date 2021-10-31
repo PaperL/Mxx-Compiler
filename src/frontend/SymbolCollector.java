@@ -4,19 +4,10 @@ import ast.*;
 import utility.scope.VariableScope;
 
 public class SymbolCollector implements AstVisitor {
-
-    public SymbolCollector(VariableScope scope) {
-
-    }
-
-    @Override
-    public void visit(AstNode node) {
-
-    }
-
     @Override
     public void visit(NodeRoot node) {
-
+        for (var son : node.programSections)
+            visit(son);
     }
 
     @Override

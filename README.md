@@ -1,11 +1,10 @@
 # Mxx Compiler
 
-[![Latest tag](https://img.shields.io/github/v/tag/PaperL/Mxx-Compiler)](https://github.com/PaperL/Mxx-Compiler/tags)
 [![GitHub top language](https://img.shields.io/github/languages/top/PaperL/Mxx-Compiler)](http://jdk.java.net/17/)
 [![License](https://img.shields.io/github/license/PaperL/Mxx-Compiler)](https://www.gnu.org/licenses/gpl-3.0.html)
 
+[![Latest tag](https://img.shields.io/github/v/tag/PaperL/Mxx-Compiler)](https://github.com/PaperL/Mxx-Compiler/tags)
 [![Last commit](https://img.shields.io/github/last-commit/PaperL/Mxx-Compiler)](https://github.com/PaperL/Mxx-Compiler/commits/)
-
 ![GitHub repo size](https://img.shields.io/github/repo-size/PaperL/Mxx-Compiler)
 ![GitHub code size in bytes](https://img.shields.io/github/languages/code-size/PaperL/Mxx-Compiler)
 
