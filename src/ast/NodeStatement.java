@@ -19,7 +19,9 @@ public class NodeStatement extends AstNode {
     public NodeStatement falseBranchStmt = null;
 
     // FOR
+    public Boolean initialWithVarDef = null;
     public NodeExpression initialExpr = null;
+    public NodeVariableDefine initialVarDef = null;
     public NodeExpression forCondExpr = null;
     public NodeExpression stepExpr = null;
     public NodeStatement forBodyStmt = null;

@@ -2,6 +2,7 @@ package utility.scope;
 
 import ast.NodeFunctionDefine;
 import utility.Position;
+import utility.Type;
 import utility.error.SemanticError;
 
 import java.util.HashMap;
@@ -16,19 +17,30 @@ public class BroadScope extends VariableScope {
         super(null);
     }
 
-    public void DefineClass(String name, Position position) {
+    public void defineClass(String name, Position position) {
         if (classes.containsKey(name))
             throw new SemanticError("Redefinition of class '" + name + "'", position);
         classes.put(name, new ClassScope(globalScope));
     }
 
-    public ClassScope GetClass(String name, Position position) {
+    public ClassScope getClass(String name, Position position) {
         if (!classes.containsKey(name))
             throw new SemanticError("Undefined class '" + name + "'", position);
         return classes.get(name);
     }
 
-    public void DefineFunction(NodeFunctionDefine node) {
+    public void defineFunction(NodeFunctionDefine node) {
         functions.put(node.name, new FunctionScope(globalScope, node));
+    }
+
+    public FunctionScope getFunction(String name, Position position) {
+        if (!functions.containsKey(name))
+            throw new SemanticError("Undefined function '" + name + "'", position);
+        return functions.get(name);
+    }
+
+    public void checkTypeExist(Type type, Position position) {
+        if (type.genre == Type.Genre.CLASS_NAME && !classes.containsKey(type.className))
+            throw new SemanticError("Undefined class '" + type.className + "'", position);
     }
 }

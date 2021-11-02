@@ -89,12 +89,12 @@ public class AstBuilder extends MxxParserBaseVisitor<AstNode> {
         var node = new NodeType(new Position(ctx.getStart()));
         var type = new Type();
         if (ctx.VOID() != null) type.genre = Type.Genre.VOID;
-        else if (ctx.BOOL() != null) type.genre = Type.Genre.BOOL;
-        else if (ctx.INT() != null) type.genre = Type.Genre.INT;
+        else if (ctx.BOOL() != null) type.genre = Type.Genre.BOOLEAN;
+        else if (ctx.INT() != null) type.genre = Type.Genre.INTEGER;
         else if (ctx.STRING() != null) type.genre = Type.Genre.STRING;
         else if (ctx.IDENTIFIER() != null) {
-            type.genre = Type.Genre.IDENTIFIER;
-            type.name = ctx.IDENTIFIER().getText();
+            type.genre = Type.Genre.CLASS_NAME;
+            type.className = ctx.IDENTIFIER().getText();
         } else throw new SemanticError("Unexpected error in visitType()", node.position);
 
         var bracketList = ctx.bracket();
@@ -152,10 +152,17 @@ public class AstBuilder extends MxxParserBaseVisitor<AstNode> {
         var node = new NodeStatement(new Position(ctx.getStart()));
         node.genre = NodeStatement.Genre.FOR;
 
+        var variableDefine = ctx.variableDefine();
         var initialExpr = ctx.initialExpr;
         var forCondExpr = ctx.forCondExpr;
         var stepExpr = ctx.stepExpr;
-        if (initialExpr != null) node.initialExpr = (NodeExpression) visit(ctx.initialExpr);
+        if (variableDefine != null) {
+            node.initialWithVarDef = true;
+            node.initialVarDef = (NodeVariableDefine) visit(variableDefine);
+        } else if (initialExpr != null) {
+            node.initialWithVarDef = false;
+            node.initialExpr = (NodeExpression) visit(initialExpr);
+        } // else initialWithVarDef = null;
         if (forCondExpr != null) node.forCondExpr = (NodeExpression) visit(ctx.forCondExpr);
         if (stepExpr != null) node.stepExpr = (NodeExpression) visit(ctx.stepExpr);
         node.forBodyStmt = (NodeStatement) visit(ctx.statement());
@@ -168,8 +175,7 @@ public class AstBuilder extends MxxParserBaseVisitor<AstNode> {
         var node = new NodeStatement(new Position(ctx.getStart()));
         node.genre = NodeStatement.Genre.WHILE;
 
-        var whileCondExpr = ctx.expression();
-        if (whileCondExpr != null) node.whileCondExpr = (NodeExpression) visit(whileCondExpr);
+        node.whileCondExpr = (NodeExpression) visit(ctx.expression());
         node.whileBodyStmt = (NodeStatement) visit(ctx.statement());
 
         return node;

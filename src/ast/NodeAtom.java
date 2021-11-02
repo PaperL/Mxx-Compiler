@@ -5,7 +5,7 @@ import utility.Position;
 public class NodeAtom extends AstNode {
     public enum Genre {
         THIS, IDENTIFIER, STRING_CONSTANT,
-        DECIMAL_INTEGER, BOOLEAN, NULL;
+        DECIMAL_INTEGER, BOOLEAN, NULL
     }
 
     public Genre genre = null;

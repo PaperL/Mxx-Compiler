@@ -36,10 +36,10 @@ public class Main {
             // AST 树构建完成后, package parser 不再被使用
 
             var forwardCollector = new ForwardCollector();
-            forwardCollector.visitRoot(astRoot);
+            forwardCollector.collectRoot(astRoot);
             // Class, class method and function name are collected
             var semanticChecker = new SemanticChecker(forwardCollector.globalScope);
-            semanticChecker.visit(astRoot);
+            semanticChecker.checkRoot(astRoot);
 
         } catch (Error error) {
             System.err.println(error);

@@ -26,12 +26,11 @@ statement
     | IF PAREN_L expression PAREN_R
     trueBranch = statement
     (ELSE falseBranch = statement)?                                     # ifStmt
-    | FOR PAREN_L (initialExpr = expression)? SEMI
+    | FOR PAREN_L ((initialExpr = expression) | variableDefine)? SEMI
                   (forCondExpr = expression)? SEMI
                   (stepExpr = expression)?
       PAREN_R statement                                                 # forStmt
-    | WHILE PAREN_L expression?
-      PAREN_R statement                                                 # whileStmt
+    | WHILE PAREN_L expression PAREN_R statement                        # whileStmt
     | CONTINUE SEMI                                                     # continueStmt
     | BREAK SEMI                                                        # breakStmt
     | RETURN expression? SEMI                                           # returnStmt

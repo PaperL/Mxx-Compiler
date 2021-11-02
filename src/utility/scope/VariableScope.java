@@ -8,20 +8,22 @@ import java.util.HashMap;
 import java.util.Objects;
 
 public class VariableScope {
-    final public BroadScope globalScope;
-    public HashMap<String, Type> variables = new HashMap<>();
+    public final BroadScope globalScope;
+    public final HashMap<String, Type> variables = new HashMap<>();
 
     public VariableScope(final BroadScope globalScope_) {
         globalScope = Objects.requireNonNullElseGet(globalScope_, () -> (BroadScope) this);
     }
 
-    public void DefineVariable(String name, Type type, Position position) {
+    // Defines local variable with illegal type and redefinition check
+    public void defineVariable(String name, Type type, Position position) {
+        globalScope.checkTypeExist(type, position);
         if (variables.containsKey(name))
             throw new SemanticError("Redefinition of variable '" + name + "'", position);
-        variables.put(name, new Type());
+        variables.put(name, type);
     }
 
-    public Type GetVariableType(String name, Position position) {
+    public Type getVariableType(String name, Position position) {
         if (variables.containsKey(name))
             return variables.get(name);
         else throw new SemanticError("Cannot find variable '" + name + "'", position);

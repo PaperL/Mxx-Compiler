@@ -77,4 +77,9 @@
 
 ## 其他说明
 
-- 题面 7.2 数组类型中允许定义数组时省略类型，但实际未测试该 feature
+- `AstNode`
+  - 规避了 `Accept()` 函数的使用必要
+- `AstVisitor`
+  - 这是个很愚蠢的东西, 见上 `Accept()`
+- 
+- 暂时参见 `SemanticChecker.java`

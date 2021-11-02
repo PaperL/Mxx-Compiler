@@ -1,13 +1,12 @@
 package utility.scope;
 
 import ast.NodeFunctionDefine;
-import utility.Position;
 import utility.Type;
 import utility.error.SemanticError;
 
 import java.util.ArrayList;
-import java.util.HashMap;
 
+// Store function claim information (return type and arguments)
 public class FunctionScope extends VariableScope {
     // VariableScope: HashMap<String, Type> variables
     public Type returnType = null;
@@ -16,26 +15,25 @@ public class FunctionScope extends VariableScope {
 
     public FunctionScope(BroadScope globalScope_, NodeFunctionDefine node) {
         super(globalScope_);
+        // Here is just function claim, not function body.
 
+        globalScope.checkTypeExist(returnType, node.position);
         returnType = node.type.type;
-        var argTypes = new ArrayList<Type>();
-        var len = node.argumentList.types.size();
-        var argList = node.argumentList;
+        final var argList = node.argumentList;
+        final var len = argList.types.size();
         for (int i = 0; i < len; i++) {
+            var name = argList.identifiers.get(i);
+            var type = argList.types.get(i).type;
+            // Check type available
+            globalScope.checkTypeExist(type, node.position);
+            argumentsType.add(type);
             // Check argument redefinition
-            if (variables.containsKey(argList.identifiers.get(i)))
+            if (variables.containsKey(name))
                 throw new SemanticError(
                         "Redefinition of argument '" + argList.identifiers.get(i)
                                 + "'", argList.types.get(i).position);
-            // Check type available
-            var type = argList.types.get(i).type;
-            // todo
-//            if (type.genre == Type.Genre.IDENTIFIER) {
-//
-//            }
-//            argTypes.add();
+            else variables.put(name, type);
         }
-        argumentsType = argTypes;
-        argumentsName = node.argumentList.identifiers;
+        argumentsName = argList.identifiers;
     }
 }

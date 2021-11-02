@@ -47,7 +47,7 @@ public class NodeExpression extends AstNode {
         BANG, TILDE, ADD, SUB,
         MUL, DIV, MOD, SHIFT_L, SHIFT_R,
         GT, LT, GE, LE, EQ, NOT_EQ,
-        BIT_AND, BIT_OR, CARET, AND, OR;
+        BIT_AND, BIT_OR, CARET, AND, OR
     }
 
     public OpEnum operator = null;
