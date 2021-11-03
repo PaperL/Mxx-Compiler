@@ -7,11 +7,13 @@ import utility.Position;
 import utility.Type;
 import utility.error.SemanticError;
 
+import java.util.ArrayList;
+
 public class AstBuilder extends MxxParserBaseVisitor<AstNode> {
 
     @Override
     public AstNode visitProgram(MxxParser.ProgramContext ctx) {
-        var node = new NodeRoot(new Position(ctx.getStart()));
+        var node = new NodeRoot(new Position(ctx));
         var sonList = ctx.programSection();
         for (var son : sonList) node.programSections.add((NodeProgramSection) visit(son));
         return node;
@@ -19,7 +21,7 @@ public class AstBuilder extends MxxParserBaseVisitor<AstNode> {
 
     @Override
     public AstNode visitProgramSection(MxxParser.ProgramSectionContext ctx) {
-        var node = new NodeProgramSection(new Position(ctx.getStart()));
+        var node = new NodeProgramSection(new Position(ctx));
         if (ctx.classDefine() != null) {
             node.genre = NodeProgramSection.Genre.CLASS_DEFINE;
             node.classDefineNode = (NodeClassDefine) visit(ctx.classDefine());
@@ -35,7 +37,7 @@ public class AstBuilder extends MxxParserBaseVisitor<AstNode> {
 
     @Override
     public AstNode visitClassDefine(MxxParser.ClassDefineContext ctx) {
-        var node = new NodeClassDefine(new Position(ctx.getStart()));
+        var node = new NodeClassDefine(new Position(ctx));
         node.name = ctx.IDENTIFIER().getText();
         var funcList = ctx.functionDefine();
         for (var son : funcList) node.methodDefines.add((NodeFunctionDefine) visit(son));
@@ -46,7 +48,7 @@ public class AstBuilder extends MxxParserBaseVisitor<AstNode> {
 
     @Override
     public AstNode visitFunctionDefine(MxxParser.FunctionDefineContext ctx) {
-        var node = new NodeFunctionDefine(new Position(ctx.getStart()));
+        var node = new NodeFunctionDefine(new Position(ctx));
         var type = ctx.type();
         var argumentList = ctx.argumentList();
         if (type != null) node.type = (NodeType) visit(type);
@@ -58,7 +60,7 @@ public class AstBuilder extends MxxParserBaseVisitor<AstNode> {
 
     @Override
     public AstNode visitArgumentList(MxxParser.ArgumentListContext ctx) {
-        var node = new NodeArgumentList(new Position(ctx.getStart()));
+        var node = new NodeArgumentList(new Position(ctx));
         var typeList = ctx.type();
         for (var son : typeList) node.types.add((NodeType) visit(son));
         var identifierList = ctx.IDENTIFIER();
@@ -68,7 +70,7 @@ public class AstBuilder extends MxxParserBaseVisitor<AstNode> {
 
     @Override
     public AstNode visitVariableDefine(MxxParser.VariableDefineContext ctx) {
-        var node = new NodeVariableDefine(new Position(ctx.getStart()));
+        var node = new NodeVariableDefine(new Position(ctx));
         node.type = (NodeType) visit(ctx.type());
         var termList = ctx.variableTerm();
         for (var son : termList) node.variableTerms.add((NodeVariableTerm) visit(son));
@@ -77,7 +79,7 @@ public class AstBuilder extends MxxParserBaseVisitor<AstNode> {
 
     @Override
     public AstNode visitVariableTerm(MxxParser.VariableTermContext ctx) {
-        var node = new NodeVariableTerm(new Position(ctx.getStart()));
+        var node = new NodeVariableTerm(new Position(ctx));
         node.name = ctx.IDENTIFIER().getText();
         var expression = ctx.expression();
         if (expression != null) node.initialExpression = (NodeExpression) visit(expression);
@@ -86,16 +88,14 @@ public class AstBuilder extends MxxParserBaseVisitor<AstNode> {
 
     @Override
     public AstNode visitType(MxxParser.TypeContext ctx) {
-        var node = new NodeType(new Position(ctx.getStart()));
-        var type = new Type();
-        if (ctx.VOID() != null) type.genre = Type.Genre.VOID;
-        else if (ctx.BOOL() != null) type.genre = Type.Genre.BOOLEAN;
-        else if (ctx.INT() != null) type.genre = Type.Genre.INTEGER;
-        else if (ctx.STRING() != null) type.genre = Type.Genre.STRING;
-        else if (ctx.IDENTIFIER() != null) {
-            type.genre = Type.Genre.CLASS_NAME;
-            type.className = ctx.IDENTIFIER().getText();
-        } else throw new SemanticError("Unexpected error in visitType()", node.position);
+        var node = new NodeType(new Position(ctx));
+        Type type;
+        if (ctx.VOID() != null) type = new Type(Type.Genre.VOID);
+        else if (ctx.BOOL() != null) type = new Type(Type.Genre.BOOLEAN);
+        else if (ctx.INT() != null) type = new Type(Type.Genre.INTEGER);
+        else if (ctx.STRING() != null) type = new Type(Type.Genre.STRING);
+        else if (ctx.IDENTIFIER() != null) type = new Type(ctx.IDENTIFIER().getText());
+        else throw new SemanticError("Unexpected error in visitType()", node.position);
 
         var bracketList = ctx.bracket();
         type.dimension = bracketList.size();
@@ -108,7 +108,7 @@ public class AstBuilder extends MxxParserBaseVisitor<AstNode> {
 
     @Override
     public AstNode visitBracket(MxxParser.BracketContext ctx) {
-        var node = new NodeBracket(new Position(ctx.getStart()));
+        var node = new NodeBracket(new Position(ctx));
         var expr = ctx.expression();
         if (expr != null) node.expression = (NodeExpression) visit(expr);
         return node;
@@ -116,7 +116,7 @@ public class AstBuilder extends MxxParserBaseVisitor<AstNode> {
 
     @Override
     public AstNode visitSuite(MxxParser.SuiteContext ctx) {
-        var node = new NodeSuite(new Position(ctx.getStart()));
+        var node = new NodeSuite(new Position(ctx));
         var statementList = ctx.statement();
         for (var son : statementList) node.statements.add((NodeStatement) visit(son));
         return node;
@@ -126,7 +126,7 @@ public class AstBuilder extends MxxParserBaseVisitor<AstNode> {
     // region statement
     @Override
     public AstNode visitSuiteStmt(MxxParser.SuiteStmtContext ctx) {
-        var node = new NodeStatement(new Position(ctx.getStart()));
+        var node = new NodeStatement(new Position(ctx));
         node.genre = NodeStatement.Genre.SUITE;
 
         node.suite = (NodeSuite) visit(ctx.suite());
@@ -136,7 +136,7 @@ public class AstBuilder extends MxxParserBaseVisitor<AstNode> {
 
     @Override
     public AstNode visitIfStmt(MxxParser.IfStmtContext ctx) {
-        var node = new NodeStatement(new Position(ctx.getStart()));
+        var node = new NodeStatement(new Position(ctx));
         node.genre = NodeStatement.Genre.IF;
 
         node.ifCondExpr = (NodeExpression) visit(ctx.expression());
@@ -149,7 +149,7 @@ public class AstBuilder extends MxxParserBaseVisitor<AstNode> {
 
     @Override
     public AstNode visitForStmt(MxxParser.ForStmtContext ctx) {
-        var node = new NodeStatement(new Position(ctx.getStart()));
+        var node = new NodeStatement(new Position(ctx));
         node.genre = NodeStatement.Genre.FOR;
 
         var variableDefine = ctx.variableDefine();
@@ -172,7 +172,7 @@ public class AstBuilder extends MxxParserBaseVisitor<AstNode> {
 
     @Override
     public AstNode visitWhileStmt(MxxParser.WhileStmtContext ctx) {
-        var node = new NodeStatement(new Position(ctx.getStart()));
+        var node = new NodeStatement(new Position(ctx));
         node.genre = NodeStatement.Genre.WHILE;
 
         node.whileCondExpr = (NodeExpression) visit(ctx.expression());
@@ -183,21 +183,21 @@ public class AstBuilder extends MxxParserBaseVisitor<AstNode> {
 
     @Override
     public AstNode visitContinueStmt(MxxParser.ContinueStmtContext ctx) {
-        var node = new NodeStatement(new Position(ctx.getStart()));
+        var node = new NodeStatement(new Position(ctx));
         node.genre = NodeStatement.Genre.CONTINUE;
         return node;
     }
 
     @Override
     public AstNode visitBreakStmt(MxxParser.BreakStmtContext ctx) {
-        var node = new NodeStatement(new Position(ctx.getStart()));
+        var node = new NodeStatement(new Position(ctx));
         node.genre = NodeStatement.Genre.BREAK;
         return node;
     }
 
     @Override
     public AstNode visitReturnStmt(MxxParser.ReturnStmtContext ctx) {
-        var node = new NodeStatement(new Position(ctx.getStart()));
+        var node = new NodeStatement(new Position(ctx));
         node.genre = NodeStatement.Genre.RETURN;
 
         var returnExpr = ctx.expression();
@@ -208,7 +208,7 @@ public class AstBuilder extends MxxParserBaseVisitor<AstNode> {
 
     @Override
     public AstNode visitSingleExprStmt(MxxParser.SingleExprStmtContext ctx) {
-        var node = new NodeStatement(new Position(ctx.getStart()));
+        var node = new NodeStatement(new Position(ctx));
         node.genre = NodeStatement.Genre.SINGLE_EXPRESSION;
 
         node.singleExpr = (NodeExpression) visit(ctx.expression());
@@ -218,7 +218,7 @@ public class AstBuilder extends MxxParserBaseVisitor<AstNode> {
 
     @Override
     public AstNode visitVariableStmt(MxxParser.VariableStmtContext ctx) {
-        var node = new NodeStatement(new Position(ctx.getStart()));
+        var node = new NodeStatement(new Position(ctx));
         node.genre = NodeStatement.Genre.VARIABLE_DEFINE;
 
         node.variableDefine = (NodeVariableDefine) visit(ctx.variableDefine());
@@ -228,7 +228,7 @@ public class AstBuilder extends MxxParserBaseVisitor<AstNode> {
 
     @Override
     public AstNode visitEmptyStmt(MxxParser.EmptyStmtContext ctx) {
-        var node = new NodeStatement(new Position(ctx.getStart()));
+        var node = new NodeStatement(new Position(ctx));
         node.genre = NodeStatement.Genre.EMPTY;
         return node;
     }
@@ -240,7 +240,7 @@ public class AstBuilder extends MxxParserBaseVisitor<AstNode> {
 
     @Override
     public AstNode visitParenExpr(MxxParser.ParenExprContext ctx) {
-        var node = new NodeExpression(new Position(ctx.getStart()));
+        var node = new NodeExpression(new Position(ctx));
         node.genre = NodeExpression.Genre.PAREN;
         node.parenExpr = (NodeExpression) visit(ctx.expression());
         return node;
@@ -248,7 +248,7 @@ public class AstBuilder extends MxxParserBaseVisitor<AstNode> {
 
     @Override
     public AstNode visitAtomExpr(MxxParser.AtomExprContext ctx) {
-        var node = new NodeExpression(new Position(ctx.getStart()));
+        var node = new NodeExpression(new Position(ctx));
         node.genre = NodeExpression.Genre.ATOM;
         node.atom = (NodeAtom) visit(ctx.atom());
         return node;
@@ -256,7 +256,7 @@ public class AstBuilder extends MxxParserBaseVisitor<AstNode> {
 
     @Override
     public AstNode visitMemberExpr(MxxParser.MemberExprContext ctx) {
-        var node = new NodeExpression(new Position(ctx.getStart()));
+        var node = new NodeExpression(new Position(ctx));
         node.genre = NodeExpression.Genre.MEMBER;
         node.objectExpr = (NodeExpression) visit(ctx.expression());
         node.memberName = ctx.IDENTIFIER().getText();
@@ -265,7 +265,7 @@ public class AstBuilder extends MxxParserBaseVisitor<AstNode> {
 
     @Override
     public AstNode visitArrayExpr(MxxParser.ArrayExprContext ctx) {
-        var node = new NodeExpression(new Position(ctx.getStart()));
+        var node = new NodeExpression(new Position(ctx));
         node.genre = NodeExpression.Genre.ARRAY;
         node.arrayNameExpr = (NodeExpression) visit(ctx.expression());
         var bracketList = ctx.bracket();
@@ -275,7 +275,7 @@ public class AstBuilder extends MxxParserBaseVisitor<AstNode> {
 
     @Override
     public AstNode visitFunctionExpr(MxxParser.FunctionExprContext ctx) {
-        var node = new NodeExpression(new Position(ctx.getStart()));
+        var node = new NodeExpression(new Position(ctx));
         node.genre = NodeExpression.Genre.FUNCTION;
         node.functionExpr = (NodeExpression) visit(ctx.expression());
         var arguments = ctx.expressionList();
@@ -285,7 +285,7 @@ public class AstBuilder extends MxxParserBaseVisitor<AstNode> {
 
     @Override
     public AstNode visitAssignExpr(MxxParser.AssignExprContext ctx) {
-        var node = new NodeExpression(new Position(ctx.getStart()));
+        var node = new NodeExpression(new Position(ctx));
         node.genre = NodeExpression.Genre.ASSIGN;
         node.lValue = (NodeExpression) visit(ctx.lValue);
         node.rValue = (NodeExpression) visit(ctx.rValue);
@@ -294,7 +294,7 @@ public class AstBuilder extends MxxParserBaseVisitor<AstNode> {
 
     @Override
     public AstNode visitNewExpr(MxxParser.NewExprContext ctx) {
-        var node = new NodeExpression(new Position(ctx.getStart()));
+        var node = new NodeExpression(new Position(ctx));
         node.genre = NodeExpression.Genre.NEW;
         node.type = (NodeType) visit(ctx.type());
         return node;
@@ -302,7 +302,7 @@ public class AstBuilder extends MxxParserBaseVisitor<AstNode> {
 
     @Override
     public AstNode visitSelfExpr(MxxParser.SelfExprContext ctx) {
-        var node = new NodeExpression(new Position(ctx.getStart()));
+        var node = new NodeExpression(new Position(ctx));
         node.genre = NodeExpression.Genre.SELF;
 
         if (ctx.INC() != null) node.operator = NodeExpression.OpEnum.INC;
@@ -315,7 +315,7 @@ public class AstBuilder extends MxxParserBaseVisitor<AstNode> {
 
     @Override
     public AstNode visitUnaryExpr(MxxParser.UnaryExprContext ctx) {
-        var node = new NodeExpression(new Position(ctx.getStart()));
+        var node = new NodeExpression(new Position(ctx));
         node.genre = NodeExpression.Genre.UNARY;
 
         if (ctx.INC() != null) node.operator = NodeExpression.OpEnum.INC;
@@ -332,7 +332,7 @@ public class AstBuilder extends MxxParserBaseVisitor<AstNode> {
 
     @Override
     public AstNode visitBinaryExpr(MxxParser.BinaryExprContext ctx) {
-        var node = new NodeExpression(new Position(ctx.getStart()));
+        var node = new NodeExpression(new Position(ctx));
         node.genre = NodeExpression.Genre.BINARY;
 
         if (ctx.MUL() != null) node.operator = NodeExpression.OpEnum.MUL;
@@ -367,7 +367,7 @@ public class AstBuilder extends MxxParserBaseVisitor<AstNode> {
 
     @Override
     public AstNode visitLambdaExpr(MxxParser.LambdaExprContext ctx) {
-        var node = new NodeExpression(new Position(ctx.getStart()));
+        var node = new NodeExpression(new Position(ctx));
         node.genre = NodeExpression.Genre.LAMBDA;
 
         var argList = ctx.argumentList();
@@ -383,7 +383,7 @@ public class AstBuilder extends MxxParserBaseVisitor<AstNode> {
 
     @Override
     public AstNode visitExpressionList(MxxParser.ExpressionListContext ctx) {
-        var node = new NodeExpressionList(new Position(ctx.getStart()));
+        var node = new NodeExpressionList(new Position(ctx));
         var expressionList = ctx.expression();
         for (var son : expressionList) node.expressions.add((NodeExpression) visit(son));
         return node;
@@ -391,7 +391,7 @@ public class AstBuilder extends MxxParserBaseVisitor<AstNode> {
 
     @Override
     public AstNode visitAtom(MxxParser.AtomContext ctx) {
-        var node = new NodeAtom(new Position(ctx.getStart()));
+        var node = new NodeAtom(new Position(ctx));
         if (ctx.THIS() != null) node.genre = NodeAtom.Genre.THIS;
         var identifier = ctx.IDENTIFIER();
         if (identifier != null) {

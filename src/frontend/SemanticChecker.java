@@ -4,6 +4,7 @@ import ast.*;
 import utility.Type;
 import utility.error.SemanticError;
 import utility.scope.BroadScope;
+import utility.scope.FunctionScope;
 import utility.scope.VariableScope;
 
 import java.util.ArrayList;
@@ -26,6 +27,8 @@ public class SemanticChecker {
         scopeStack = new LinkedList<>();
         scopeStack.push(globalScope_);
         scopeGenreStack = new LinkedList<>();
+        // todo
+        // 添加内建函数, 以及 array.size()
     }
 
     // region Jump_Check_Tools
@@ -69,10 +72,16 @@ public class SemanticChecker {
         // And the rule that class member variable cannot
         // be initialized when defining is also managed
         // in class ForwardCollector.
-        scopeGenreStack.push(ScopeGenre.CLASS);
         currentClassName = node.name;
+        var classScope = globalScope.getClass(currentClassName, node.position);
+        var currentScope = new VariableScope(globalScope);
+        currentScope.variables.putAll(classScope.variables);
+
+        scopeGenreStack.push(ScopeGenre.CLASS);
+        scopeStack.push(currentScope);
         for (var functionDefine : node.methodDefines)
             checkFunctionDefine(functionDefine);
+        scopeStack.pop();
         scopeGenreStack.pop();
         currentClassName = null;
     }
@@ -80,28 +89,36 @@ public class SemanticChecker {
     public void checkFunctionDefine(NodeFunctionDefine node) {
         // Same as comment of NodeClassDefine
         var currentScope = new VariableScope(globalScope);
-        scopeGenreStack.push(ScopeGenre.FUNCTION);
         currentScope.variables.putAll(
                 globalScope.getFunction(node.name, node.position).variables);
         // 若使用 clone() 需要在 globalScope 及其基类中实现深克隆
-//        currentScope.variables = (HashMap<String, Type>)
-//                globalScope.getFunction(node.name, node.position).variables.clone();
-//        scopeStack.push(currentScope);
-        checkSuite(node.suite);
+        scopeGenreStack.push(ScopeGenre.FUNCTION);
+        scopeStack.push(currentScope);
+        var returnType = checkSuite(node.suite);
+        scopeStack.pop();
+        scopeGenreStack.pop();
+        if (!node.type.type.equals(returnType))
+            throw new SemanticError(
+                    "Get wrong type of function return value",
+                    node.position
+            );
     }
 
     // Only for lambda
-    public void checkArgumentList(NodeArgumentList node) {
-        // todo remake
-        var currentScope = new VariableScope(globalScope, VariableScope.ScopeGenre.FUNCTION);
+    public ArrayList<Type> checkArgumentList(NodeArgumentList node) {
+        var currentScope = new VariableScope(globalScope);
         final var len = node.types.size();
-        for (int i = 0; i < len; i++)
+        var returnTypes = new ArrayList<Type>();
+        for (int i = 0; i < len; i++) {
             currentScope.defineVariable(
                     node.identifiers.get(i),
-                    node.types.get(i).type,
+                    checkType(node.types.get(i), true, false),
                     node.position
             );
-        return currentScope;
+            returnTypes.add(node.types.get(i).type);
+        }
+        scopeStack.push(currentScope);
+        return returnTypes;
     }
 
     public void checkVariableDefine(NodeVariableDefine node) {
@@ -163,6 +180,11 @@ public class SemanticChecker {
                 }
             }
         }
+        if (node.type.genre == Type.Genre.VOID && !allowVoid)
+            throw new SemanticError(
+                    "Cannot use void type here"
+                    , node.position
+            );
         globalScope.checkTypeExist(node.type, node.position);
         return node.type;
     }
@@ -181,25 +203,46 @@ public class SemanticChecker {
         return false;
     }
 
-    public void checkSuite(NodeSuite node) {
+    public Type checkSuite(NodeSuite node) {
         scopeStack.push(new VariableScope(globalScope));
         var statementList = node.statements;
-        for (var statement : statementList) checkStatement(statement);
+        var returnType = new Type(Type.Genre.VOID);
+        for (var statement : statementList) {
+            var statementType = checkStatement(statement);
+            if (statementType.genre != Type.Genre.VOID) {
+                if (returnType.genre == Type.Genre.VOID)
+                    returnType = statementType;
+                else if (statementType.genre != returnType.genre)
+                    throw new SemanticError(
+                            "Wrong type of return value",
+                            statement.position
+                    );
+            }
+        }
         scopeStack.pop();
+        return returnType;
     }
 
     // Returns 'Type' for return expression or 'null' for the other situations.
     public Type checkStatement(NodeStatement node) {
         switch (node.genre) {
-            case SUITE -> checkSuite(node.suite);
+            case SUITE -> {
+                return checkSuite(node.suite);
+            }
             case IF -> {
                 if (checkExpression(node.ifCondExpr).genre != Type.Genre.BOOLEAN)
                     throw new SemanticError(
                             "Type of condition expression of 'if' statement is not Boolean",
                             node.position
                     );
-                checkStatement(node.trueBranchStmt);
-                checkStatement(node.falseBranchStmt);
+                var returnType1 = checkStatement(node.trueBranchStmt);
+                var returnType2 = checkStatement(node.falseBranchStmt);
+                if (!returnType1.equals(returnType2))
+                    throw new SemanticError(
+                            "Wrong type of return value",
+                            node.position
+                    );
+                else return returnType1;
             }
             case FOR -> {
                 scopeStack.push(new VariableScope(globalScope));
@@ -219,9 +262,10 @@ public class SemanticChecker {
                 if (node.stepExpr != null) checkExpression(node.stepExpr);
 
                 scopeGenreStack.push(ScopeGenre.LOOP);
-                checkStatement(node.forBodyStmt);
+                var returnType = checkStatement(node.forBodyStmt);
                 scopeGenreStack.pop();
                 scopeStack.pop();
+                return returnType;
             }
             case WHILE -> {
                 if (checkExpression(node.whileCondExpr).genre != Type.Genre.BOOLEAN)
@@ -230,8 +274,9 @@ public class SemanticChecker {
                             node.position
                     );
                 scopeGenreStack.push(ScopeGenre.LOOP);
-                checkStatement(node.whileBodyStmt);
+                var returnType = checkStatement(node.whileBodyStmt);
                 scopeGenreStack.pop();
+                return returnType;
             }
             case CONTINUE -> {
                 if (!in_loop())
@@ -255,20 +300,20 @@ public class SemanticChecker {
                     );
                 return checkExpression(node.returnExpr);
             }
-            case SINGLE_EXPRESSION -> checkExpression(node.singleExpr);
+            case SINGLE_EXPRESSION -> {
+                return checkExpression(node.singleExpr);
+            }
             case VARIABLE_DEFINE -> checkVariableDefine(node.variableDefine);
             case EMPTY -> {
                 // just touch fish
             }
         }
-        throw new SemanticError(
-                "Unexpected error in checkStatement()",
-                node.position
-        );
+        return new Type(Type.Genre.VOID);
     }
 
     public Type checkExpression(NodeExpression node) {
         // NodeExpression 子节点中仅有 newExpr 和 lambdaExpr 可能产生 void 类型返回值
+        // expression 必为实际值
         switch (node.genre) {
             // * Term
             case PAREN -> {
@@ -318,7 +363,34 @@ public class SemanticChecker {
                 // Only string has built-in method
                 // * Call string type constant's built-in method is undefined behavior
 
-                // todo
+                String functionName = node.memberName;
+                FunctionScope functionScope;
+                if (node.functionExpr.genre == NodeExpression.Genre.MEMBER) {
+                    // Method
+                    var objectType = checkExpression(node.functionExpr.objectExpr);
+                    var classScope = globalScope.getClass(objectType.className, node.position);
+                    functionScope = classScope.getMethod(functionName, node.position);
+                } else if (node.functionExpr.genre == NodeExpression.Genre.ATOM) {
+                    // Function
+                    functionScope = globalScope.getFunction(functionName, node.position);
+                } else throw new SemanticError("Wrong function call", node.position);
+                var arguments = checkExpressionList(node.arguments);
+                var argumentTypes = functionScope.argumentsType;
+
+                var len = argumentTypes.size();
+                if (arguments.size() != len)
+                    throw new SemanticError(
+                            "Function call gets wrong number of arguments",
+                            node.position
+                    );
+                for (int i = 0; i < len; i++) {
+                    if (!argumentTypes.get(i).equals(arguments.get(i)))
+                        throw new SemanticError(
+                                "Function call gets a wrong type argument",
+                                node.lambdaExpressionList.expressions.get(i).position
+                        );
+                }
+                return functionScope.returnType;
             }
             // * Command
             case ASSIGN -> {
@@ -451,7 +523,27 @@ public class SemanticChecker {
             }
             // * Lambda
             case LAMBDA -> {
-                // todo
+                var argumentTypes = checkArgumentList(node.lambdaArgumentList);
+                // checkArgumentList(): scopeStack.push()
+                var expressionTypes = checkExpressionList(node.lambdaExpressionList);
+                final var len = argumentTypes.size();
+                if (len != expressionTypes.size())
+                    throw new SemanticError(
+                            "Lambda expression gets wrong number of arguments",
+                            node.position
+                    );
+                for (int i = 0; i < len; i++) {
+                    if (!argumentTypes.get(i).equals(expressionTypes.get(i)))
+                        throw new SemanticError(
+                                "Lambda expression gets a wrong type argument",
+                                node.lambdaExpressionList.expressions.get(i).position
+                        );
+                }
+                scopeGenreStack.push(ScopeGenre.FUNCTION);
+                var returnType = checkSuite(node.lambdaSuite);
+                scopeGenreStack.pop();
+                scopeStack.pop();
+                return returnType;
             }
         }
         throw new SemanticError(
@@ -461,8 +553,10 @@ public class SemanticChecker {
     }
 
     public ArrayList<Type> checkExpressionList(NodeExpressionList node) {
-        // todo
-        return new ArrayList<>();
+        var returnTypes = new ArrayList<Type>();
+        for (var expression : node.expressions)
+            returnTypes.add(checkExpression(expression));
+        return returnTypes;
     }
 
     public Type checkAtom(NodeAtom node) {
@@ -478,7 +572,15 @@ public class SemanticChecker {
             }
             case IDENTIFIER -> {
                 assert scopeStack.peek() != null;
-                return scopeStack.peek().getVariableType(node.identifier, node.position);
+                System.out.println("here~~ 1");
+                for (var scope : scopeStack) {
+                    Type returnType = scope.getVariableType(node.identifier, node.position);
+                    if (returnType != null) return returnType;
+                }
+                System.out.println("here~~ 2");
+                throw new SemanticError(
+                        "Variable/object '" + node.identifier + "' doesn't exist",
+                        node.position);
             }
             case STRING_CONSTANT -> {
                 return new Type(Type.Genre.STRING);

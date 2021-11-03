@@ -5,7 +5,7 @@ import utility.Position;
 public class NodeStatement extends AstNode {
     public enum Genre {
         SUITE, IF, FOR, WHILE, CONTINUE, BREAK,
-        RETURN, SINGLE_EXPRESSION, VARIABLE_DEFINE, EMPTY;
+        RETURN, SINGLE_EXPRESSION, VARIABLE_DEFINE, EMPTY
     }
 
     public Genre genre = null;

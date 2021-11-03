@@ -24,8 +24,6 @@ public class VariableScope {
     }
 
     public Type getVariableType(String name, Position position) {
-        if (variables.containsKey(name))
-            return variables.get(name);
-        else throw new SemanticError("Cannot find variable '" + name + "'", position);
+        return variables.getOrDefault(name, null);
     }
 }

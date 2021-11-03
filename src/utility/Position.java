@@ -1,34 +1,25 @@
 package utility;
 
-import org.antlr.v4.runtime.Token;
+import org.antlr.v4.runtime.ParserRuleContext;
 
 public class Position {
-    private int line, column;
+    private final int line;
+    private final int column;
 
     public Position(int line_, int column_) {
         this.line = line_;
         this.column = column_;
     }
 
-    public Position(Token token) {
+//    public Position(Token token) {
+//        this.line = token.getLine();
+//        this.column = token.getCharPositionInLine();
+//    }
+
+    public Position(ParserRuleContext ctx) {
+        var token = ctx.getStart();
         this.line = token.getLine();
         this.column = token.getCharPositionInLine();
-    }
-
-//    public Position(TerminalNode terminal) {
-//        this(terminal.getSymbol());
-//    }
-
-//    public position(ParserRuleContext ctx) {
-//        this(ctx.getStart());
-//    }
-
-    public int line() {
-        return line;
-    }
-
-    public int column() {
-        return column;
     }
 
     public String toString() {

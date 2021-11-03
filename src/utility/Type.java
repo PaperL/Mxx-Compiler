@@ -1,10 +1,5 @@
 package utility;
 
-import ast.NodeBracket;
-
-import java.util.ArrayList;
-import java.util.HashMap;
-
 public class Type {
     public enum Genre {
         BOOLEAN, INTEGER, STRING,   // built-in type
@@ -17,9 +12,6 @@ public class Type {
 
     public String className = null;      // class name
     public int dimension = 0;
-
-    public Type() {
-    }
 
     public Type(Genre genre_) {
         assert genre_ != Genre.CLASS_NAME;

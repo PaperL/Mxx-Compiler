@@ -4,7 +4,7 @@ import utility.Position;
 
 public class NodeProgramSection extends AstNode {
     public enum Genre {
-        CLASS_DEFINE, FUNCTION_DEFINE, VARIABLE_DEFINE;
+        CLASS_DEFINE, FUNCTION_DEFINE, VARIABLE_DEFINE
     }
 
     public Genre genre = null;

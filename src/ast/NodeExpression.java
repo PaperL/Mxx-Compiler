@@ -9,7 +9,7 @@ public class NodeExpression extends AstNode {
         PAREN, ATOM, MEMBER, ARRAY, FUNCTION,   // term
         ASSIGN, NEW,                            // command
         SELF, UNARY, BINARY,                    // arithmetic
-        LAMBDA;
+        LAMBDA
     }
 
     public Genre genre = null;
