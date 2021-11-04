@@ -1,5 +1,6 @@
 import java.io.InputStream;
 import java.io.FileInputStream;
+import java.util.Scanner;
 
 import frontend.ForwardCollector;
 import frontend.SemanticChecker;
@@ -15,8 +16,9 @@ import frontend.AstBuilder;
 
 public class Main {
     public static void main(String[] args) throws Exception {
-//        String name = "test.yx";
-//        InputStream input = new FileInputStream(name);
+//        var keyBoardInput = new Scanner(System.in);
+//        String inputFileName = "test/all/" + keyBoardInput.nextLine() + ".mx";
+//        InputStream input = new FileInputStream(inputFileName);
         InputStream input = System.in;
 
         boolean exceptionExist = false;
@@ -31,17 +33,22 @@ public class Main {
             parser.addErrorListener(new ErrorListener());
 
             var parseTreeRoot = parser.program();
+            System.out.println("\033[36m🔨 Lexer and parser finished.\033[0m");
+
             NodeRoot astRoot;
             var astBuilder = new AstBuilder();
             astRoot = (NodeRoot) astBuilder.visit(parseTreeRoot);
+            System.out.println("\033[36m🔨 Building AST finished.\033[0m");
             // AST 树构建完成后, package parser 不再被使用
 
             var forwardCollector = new ForwardCollector();
             forwardCollector.collectRoot(astRoot);
+            System.out.println("\033[36m🔨 Collecting forward reference symbol finished.\033[0m");
             // Class, class method and function name are collected
             var semanticChecker = new SemanticChecker(forwardCollector.globalScope);
             semanticChecker.checkRoot(astRoot);
-
+            System.out.println("\033[36m🔨 Semantic check finished.\033[0m");
+            System.out.println("\033[33m🎗️ Frontend worked successfully.\033[0m");
         } catch (Error error) {
             System.err.println(error);
             exceptionExist = true;

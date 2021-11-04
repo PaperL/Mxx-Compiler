@@ -34,12 +34,21 @@ public class ForwardCollector {
             // term's initial expression should be empty
             for (var term : variableDefine.variableTerms) {
                 if (term.initialExpression != null)
-                    throw new SemanticError("Class member variable cannot have initialization expression", term.position);
+                    throw new SemanticError("Class member variable cannot " +
+                            "have initialization expression", term.position);
+                // ! misc-31.mx: line 55: "ltree[i][2 * x].mtag" 无法识别为左值
+//                variableDefine.type.type.isVariable = true;
                 classScope.defineVariable(term.name, variableDefine.type.type, term.position);
             }
         }
-        for (var methodDefine : node.methodDefines)
-            classScope.defineMethod(methodDefine);
+        boolean constructorExist = false;
+        for (var methodDefine : node.methodDefines) {
+            if (classScope.defineMethod(methodDefine)) {
+                if (!constructorExist) constructorExist = true;
+                else throw new SemanticError("Class '" + node.name
+                        + "' has plural constructors", methodDefine.position);
+            }
+        }
     }
 
     public void collectFunction(NodeFunctionDefine node) {

@@ -17,8 +17,10 @@ public class FunctionScope extends VariableScope {
         super(globalScope_);
         // Here is just function claim, not function body.
 
-        if (node.type != null) returnType = node.type.type;
-        globalScope.checkTypeExist(returnType, node.position);
+        if (node.type != null) {
+            returnType = node.type.type;
+            globalScope.checkTypeExist(returnType, node.position);
+        }
 
         final var argList = node.argumentList;
         if (argList != null) {

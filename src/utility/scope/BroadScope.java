@@ -33,9 +33,10 @@ public class BroadScope extends VariableScope {
         functions.put(node.name, new FunctionScope(globalScope, node));
     }
 
-    public FunctionScope getFunction(String name, Position position) {
+    public FunctionScope getFunction(String name, Position position, boolean throwable) {
         if (!functions.containsKey(name))
-            throw new SemanticError("Undefined function '" + name + "'", position);
+            if (throwable) throw new SemanticError("Undefined function '" + name + "'", position);
+            else return null;
         return functions.get(name);
     }
 

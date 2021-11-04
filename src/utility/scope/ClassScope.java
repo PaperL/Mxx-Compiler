@@ -9,19 +9,22 @@ import java.util.HashMap;
 // Stores class member variables and methods information.
 public class ClassScope extends VariableScope {
     // VariableScope: HashMap<String, Type> variables
-    public HashMap<String, FunctionScope> methods;
+    public HashMap<String, FunctionScope> methods = new HashMap<>();
 
     public ClassScope(BroadScope globalScope_) {
         super(globalScope_);
     }
 
-    public void defineMethod(NodeFunctionDefine node) {
-        methods.put(node.name, new FunctionScope(globalScope, node));
+    public boolean defineMethod(NodeFunctionDefine node) {
+        var functionScope = new FunctionScope(globalScope, node);
+        methods.put(node.name, functionScope);
+        return (functionScope.returnType == null);
     }
 
-    public FunctionScope getMethod(String name, Position position) {
+    public FunctionScope getMethod(String name, Position position, boolean throwable) {
         if (!methods.containsKey(name))
-            throw new SemanticError("Undefined methods '" + name + "'", position);
+            if (throwable) throw new SemanticError("Undefined methods '" + name + "'", position);
+            else return null;
         return methods.get(name);
     }
 }

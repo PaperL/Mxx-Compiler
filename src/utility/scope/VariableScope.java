@@ -24,6 +24,9 @@ public class VariableScope {
     }
 
     public Type getVariableType(String name, Position position) {
+        // ! 垃圾补丁
+        var returnType = variables.getOrDefault(name, null);
+        if (returnType != null) returnType.isVariable = true;
         return variables.getOrDefault(name, null);
     }
 }

@@ -1,6 +1,7 @@
 package frontend;
 
 import ast.*;
+import org.antlr.v4.runtime.ParserRuleContext;
 import parser.MxxParser;
 import parser.MxxParserBaseVisitor;
 import utility.Position;
@@ -10,6 +11,12 @@ import utility.error.SemanticError;
 import java.util.ArrayList;
 
 public class AstBuilder extends MxxParserBaseVisitor<AstNode> {
+
+    public String checkIdentifier(String text, ParserRuleContext ctx) {
+        if (text.charAt(0) == '_')
+            throw new SemanticError("Get identifier begins with '_'", new Position(ctx));
+        return text;
+    }
 
     @Override
     public AstNode visitProgram(MxxParser.ProgramContext ctx) {
@@ -31,14 +38,15 @@ public class AstBuilder extends MxxParserBaseVisitor<AstNode> {
         } else if (ctx.variableDefine() != null) {
             node.genre = NodeProgramSection.Genre.VARIABLE_DEFINE;
             node.globalVariableDefine = (NodeVariableDefine) visit(ctx.variableDefine());
-        } else throw new SemanticError("Unexpected error in visitProgramSection()", node.position);
+        } else throw new SemanticError(
+                "Unexpected error in visitProgramSection()", node.position);
         return node;
     }
 
     @Override
     public AstNode visitClassDefine(MxxParser.ClassDefineContext ctx) {
         var node = new NodeClassDefine(new Position(ctx));
-        node.name = ctx.IDENTIFIER().getText();
+        node.name = checkIdentifier(ctx.IDENTIFIER().getText(), ctx);
         var funcList = ctx.functionDefine();
         for (var son : funcList) node.methodDefines.add((NodeFunctionDefine) visit(son));
         var varList = ctx.variableDefine();
@@ -52,7 +60,7 @@ public class AstBuilder extends MxxParserBaseVisitor<AstNode> {
         var type = ctx.type();
         var argumentList = ctx.argumentList();
         if (type != null) node.type = (NodeType) visit(type);
-        node.name = ctx.IDENTIFIER().getText();
+        node.name = checkIdentifier(ctx.IDENTIFIER().getText(), ctx);
         if (argumentList != null) node.argumentList = (NodeArgumentList) visit(argumentList);
         node.suite = (NodeSuite) visit(ctx.suite());
         return node;
@@ -64,7 +72,7 @@ public class AstBuilder extends MxxParserBaseVisitor<AstNode> {
         var typeList = ctx.type();
         for (var son : typeList) node.types.add((NodeType) visit(son));
         var identifierList = ctx.IDENTIFIER();
-        for (var son : identifierList) node.identifiers.add(son.getText());
+        for (var son : identifierList) node.identifiers.add(checkIdentifier(son.getText(), ctx));
         return node;
     }
 
@@ -80,7 +88,7 @@ public class AstBuilder extends MxxParserBaseVisitor<AstNode> {
     @Override
     public AstNode visitVariableTerm(MxxParser.VariableTermContext ctx) {
         var node = new NodeVariableTerm(new Position(ctx));
-        node.name = ctx.IDENTIFIER().getText();
+        node.name = checkIdentifier(ctx.IDENTIFIER().getText(), ctx);
         var expression = ctx.expression();
         if (expression != null) node.initialExpression = (NodeExpression) visit(expression);
         return node;
@@ -90,11 +98,12 @@ public class AstBuilder extends MxxParserBaseVisitor<AstNode> {
     public AstNode visitType(MxxParser.TypeContext ctx) {
         var node = new NodeType(new Position(ctx));
         Type type;
-        if (ctx.VOID() != null) type = new Type(Type.Genre.VOID);
-        else if (ctx.BOOL() != null) type = new Type(Type.Genre.BOOLEAN);
-        else if (ctx.INT() != null) type = new Type(Type.Genre.INTEGER);
-        else if (ctx.STRING() != null) type = new Type(Type.Genre.STRING);
-        else if (ctx.IDENTIFIER() != null) type = new Type(ctx.IDENTIFIER().getText());
+        if (ctx.VOID() != null) type = new Type(Type.Genre.VOID, false);
+        else if (ctx.BOOL() != null) type = new Type(Type.Genre.BOOLEAN, false);
+        else if (ctx.INT() != null) type = new Type(Type.Genre.INTEGER, false);
+        else if (ctx.STRING() != null) type = new Type(Type.Genre.STRING, false);
+        else if (ctx.IDENTIFIER() != null)
+            type = new Type(checkIdentifier(ctx.IDENTIFIER().getText(), ctx));
         else throw new SemanticError("Unexpected error in visitType()", node.position);
 
         var bracketList = ctx.bracket();
@@ -259,7 +268,7 @@ public class AstBuilder extends MxxParserBaseVisitor<AstNode> {
         var node = new NodeExpression(new Position(ctx));
         node.genre = NodeExpression.Genre.MEMBER;
         node.objectExpr = (NodeExpression) visit(ctx.expression());
-        node.memberName = ctx.IDENTIFIER().getText();
+        node.memberName = checkIdentifier(ctx.IDENTIFIER().getText(), ctx);
         return node;
     }
 
@@ -396,17 +405,17 @@ public class AstBuilder extends MxxParserBaseVisitor<AstNode> {
         var identifier = ctx.IDENTIFIER();
         if (identifier != null) {
             node.genre = NodeAtom.Genre.IDENTIFIER;
-            node.identifier = identifier.getText();
+            node.identifier = checkIdentifier(identifier.getText(), ctx);
         }
         var string = ctx.STRING_CONSTANT();
         if (string != null) {
             node.genre = NodeAtom.Genre.STRING_CONSTANT;
-            node.stringConstant = string.getText();
+            node.stringConstant = checkIdentifier(string.getText(), ctx);
         }
         var decimalInteger = ctx.DECIMAL_INTEGER();
         if (decimalInteger != null) {
             node.genre = NodeAtom.Genre.DECIMAL_INTEGER;
-            node.decimalInteger = Integer.parseInt(decimalInteger.getText());
+            node.decimalInteger = Integer.parseInt(checkIdentifier(decimalInteger.getText(), ctx));
         }
         if (ctx.TRUE() != null) {
             node.genre = NodeAtom.Genre.BOOLEAN;
