@@ -654,6 +654,10 @@ public class SemanticChecker {
             // * Arithmetic
             case SELF -> {
                 var termType = checkExpression(node.termExpr);
+                if (!termType.isVariable) throw new SemanticError(
+                        "Illegal term to use postfix '++' or '--' operator",
+                        node.position
+                );
                 if (termType.genre != Type.Genre.INTEGER
                         || termType.dimension != 0)
                     throw new SemanticError(
@@ -661,7 +665,12 @@ public class SemanticChecker {
                                     + "non-integer type object",
                             node.position
                     );
-                return termType;
+                // ! shit
+                var retType = new Type(Type.Genre.NULL, false);
+                retType.genre = termType.genre;
+                retType.className = termType.className;
+                retType.dimension = termType.dimension;
+                return retType;
             }
             case UNARY -> {
                 var termType = checkExpression(node.termExpr);
@@ -681,6 +690,22 @@ public class SemanticChecker {
                                         + "' with non-integer type object",
                                 node.position
                         );
+                }
+                // ! shit!
+                if (node.operator == NodeExpression.OpEnum.INC || node.operator == NodeExpression.OpEnum.DEC) {
+                    if (!termType.isVariable) {
+                        var retType = new Type(Type.Genre.NULL, true);
+                        retType.genre = termType.genre;
+                        retType.className = termType.className;
+                        retType.dimension = termType.dimension;
+                        return retType;
+                    }
+                } else if (termType.isVariable) {
+                    var retType = new Type(Type.Genre.NULL, false);
+                    retType.genre = termType.genre;
+                    retType.className = termType.className;
+                    retType.dimension = termType.dimension;
+                    return retType;
                 }
                 return termType;
             }
