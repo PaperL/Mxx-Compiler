@@ -30,6 +30,11 @@ public class BroadScope extends VariableScope {
     }
 
     public void defineFunction(NodeFunctionDefine node) {
+        if (classes.containsKey(node.name))
+            throw new SemanticError(
+                    "Function '" + node.name + "' has the same name of a class",
+                    node.position
+            );
         functions.put(node.name, new FunctionScope(globalScope, node));
     }
 

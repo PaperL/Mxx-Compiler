@@ -258,7 +258,8 @@ public class SemanticChecker {
         if (node.name.equals("main")) {
             boolean correct;
             if ((node.type == null)
-                    || (node.type.type.genre != Type.Genre.INTEGER))
+                    || (node.type.type.genre != Type.Genre.INTEGER)
+                    || (node.argumentList != null))
                 correct = false;
             else {
                 correct = (returnType == null)
@@ -635,7 +636,8 @@ public class SemanticChecker {
                         || (lValueType.genre == Type.Genre.CLASS_NAME
                         && !lValueType.className.equals(rValueType.className))
                         || lValueType.dimension != rValueType.dimension) {
-                    if (!(lValueType.dimension != 0 && rValueType.genre == Type.Genre.NULL))
+                    if (!((lValueType.genre == Type.Genre.CLASS_NAME || lValueType.dimension != 0)
+                            && rValueType.genre == Type.Genre.NULL))
                         throw new SemanticError(
                                 "Right value has different type from left value " +
                                         "in assignment expression",

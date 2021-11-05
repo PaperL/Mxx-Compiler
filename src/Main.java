@@ -56,8 +56,9 @@ public class Main {
         }
 
         if (!exceptionExist) System.out.println("\033[32m🎉 All work successfully finished.\033[0m");
-        else System.out.println("\033[31m😭 Process terminated with error.\033[0m");
-
-        if (exceptionExist) throw new RuntimeException();
+        else {
+            System.out.println("\033[31m⚠️ Process terminated with error.\033[0m");
+            throw new RuntimeException("Semantic check failed.");
+        }
     }
 }

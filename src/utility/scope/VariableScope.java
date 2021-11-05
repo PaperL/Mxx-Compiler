@@ -18,6 +18,8 @@ public class VariableScope {
     // Defines local variable with illegal type and redefinition check
     public void defineVariable(String name, Type type, Position position) {
         globalScope.checkTypeExist(type, position);
+        if (globalScope.classes.containsKey(name))
+            throw new SemanticError("Variable '" + name + "' has the same name of a class", position);
         if (variables.containsKey(name))
             throw new SemanticError("Redefinition of variable '" + name + "'", position);
         variables.put(name, type);
