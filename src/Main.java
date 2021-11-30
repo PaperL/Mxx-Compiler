@@ -1,8 +1,7 @@
 import java.io.InputStream;
-import java.io.FileInputStream;
-import java.util.Scanner;
 
 import frontend.ForwardCollector;
+import frontend.IrBuilder;
 import frontend.SemanticChecker;
 import org.antlr.v4.runtime.CharStreams;
 import org.antlr.v4.runtime.CommonTokenStream;
@@ -48,6 +47,11 @@ public class Main {
             var semanticChecker = new SemanticChecker(forwardCollector.globalScope);
             semanticChecker.checkRoot(astRoot);
             System.out.println("\033[36m🔨 Semantic check finished.\033[0m");
+
+            var IrBuilder = new IrBuilder();
+            IrBuilder.build(astRoot);
+            System.out.println("\033[36m🔨 IR generation finished.\033[0m");
+
             System.out.println("\033[33m🎗️ Frontend worked successfully.\033[0m");
         } catch (Error error) {
             System.err.println(error);
