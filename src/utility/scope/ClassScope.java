@@ -1,7 +1,7 @@
 package utility.scope;
 
 import ast.NodeFunctionDefine;
-import utility.Position;
+import utility.AstPosition;
 import utility.error.SemanticError;
 
 import java.util.HashMap;
@@ -21,7 +21,7 @@ public class ClassScope extends VariableScope {
         return (functionScope.returnType == null);
     }
 
-    public FunctionScope getMethod(String name, Position position, boolean throwable) {
+    public FunctionScope getMethod(String name, AstPosition position, boolean throwable) {
         if (!methods.containsKey(name))
             if (throwable) throw new SemanticError("Undefined methods '" + name + "'", position);
             else return null;

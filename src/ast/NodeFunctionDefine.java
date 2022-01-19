@@ -1,6 +1,6 @@
 package ast;
 
-import utility.Position;
+import utility.AstPosition;
 
 public class NodeFunctionDefine extends AstNode {
     public NodeType type = null;
@@ -8,7 +8,7 @@ public class NodeFunctionDefine extends AstNode {
     public NodeArgumentList argumentList = null;
     public NodeSuite suite = null;
 
-    public NodeFunctionDefine(Position position) {
+    public NodeFunctionDefine(AstPosition position) {
         super(position);
     }
 

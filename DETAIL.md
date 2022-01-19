@@ -117,19 +117,55 @@
 
 ## IR
 
-- module
-  - > 全局变量、全局常量、Class 声明、函数声明
+- Top
+
+  - Declare
+
+  - Variable Define
+
+    - > global / const / alloca，其中 global 和 const 有初值
+
+  - Type
+
+    - > Struct 定义
+
   - Function
-    - Instruction Block
-      - Instruction
-        - Type
-  - Global Variable Define
-  - Type Define
+
+    - Block
+      - Statement
+        - Variable Define
+        - Load / Store
+        - Arith
+        - Logic
+        - Branch
+        - Call
 
 ### 其他说明
 
-- 期望实现 llvm
+- 实现 llvm
 - 使用 clang
-  - `clang -S -emit-llvm main.c` 生成 `.ll`
-  - `clang -c -emit-llvm main.c` 生成 `.bc`
-- string 相关操作应在 codegen 阶段直接将 cstring 函数 link 入汇编程序
+  - `clang -S -emit-llvm test.c` 生成 `.ll`
+  - `clang -c -emit-llvm test.c` 生成 `.bc`
+  - 对于 RISC-V32（限制指令集对内容基本没有影响）
+    - `clang -emit-llvm -S test.c -o test.ll --target=riscv32` 生成 `.ll`
+    - `llc test.ll -o test.s -march=riscv32` 生成 `.s`
+- `string` 相关操作应在 codegen 阶段直接将 `cstring` 函数 link 入汇编程序。`malloca` 同理
+- `.LL` 文件头
+  - `e`: 小端序
+  - `m:o`: 符号表 name mangling 的格式
+  - `i64:64`: 将`i64`类型的变量采用64比特的ABI对齐
+  - `n8:16:32:64`: 目标CPU的原生整型包含 8 比特、16 比特、32 比特和 64 比特
+  - `S128`: 栈以128比特自然对齐
+- 与 Clang 生成 IR 相比
+  - Clang 信息
+    - `clang version 10.0.0-4ubuntu1`
+    - `Target: x86_64-pc-linux-gnu`
+    - `Thread model: posix`
+  - 忽略 `dso_local` 及 `.ll` 文件末参数
+  - 忽略 `align 4`
+- 由于 IR 结构的特性，数据结构主要使用 `LinkedList`
+  - 其中对应 C++ `queue.push` 的操作，在 Java 中为 `add`
+  - 在 Java 中 `push` 为 `Stack` 的操作，对于 `LinkedList` 等效于 `addFirst`
+  - C++ `stack.top` 在 Java 中对应 `Deque.peek` 和 `Deque.getFirst` 后者在空时抛出异常
+
+

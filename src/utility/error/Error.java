@@ -1,12 +1,12 @@
 package utility.error;
 
-import utility.Position;
+import utility.AstPosition;
 
 abstract public class Error extends RuntimeException {
-    private final String errorType, message;
-    private final Position position;
+    protected final String errorType, message;
+    protected final AstPosition position;
 
-    public Error(String errType, String msg, Position pos) {
+    public Error(String errType, String msg, AstPosition pos) {
         this.errorType = errType;
         this.message = msg;
         this.position = pos;

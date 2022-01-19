@@ -1,6 +1,6 @@
 package ast;
 
-import utility.Position;
+import utility.AstPosition;
 
 public class NodeAtom extends AstNode {
     public enum Genre {
@@ -15,7 +15,7 @@ public class NodeAtom extends AstNode {
     public Integer decimalInteger = null;
     public Boolean booleanValue = null;
 
-    public NodeAtom(Position position) {
+    public NodeAtom(AstPosition position) {
         super(position);
     }
 }

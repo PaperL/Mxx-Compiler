@@ -1,15 +1,15 @@
 package ast;
 
-import utility.Position;
-import utility.Type;
+import utility.AstPosition;
+import utility.AstType;
 
 import java.util.ArrayList;
 
 public class NodeType extends AstNode {
-    public Type type;
+    public AstType type;
     public ArrayList<NodeBracket> brackets = new ArrayList<>();
 
-    public NodeType(Position position) {
+    public NodeType(AstPosition position) {
         super(position);
     }
 }

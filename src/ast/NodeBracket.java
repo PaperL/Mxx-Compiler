@@ -1,11 +1,11 @@
 package ast;
 
-import utility.Position;
+import utility.AstPosition;
 
 public class NodeBracket extends AstNode {
     public NodeExpression expression = null;
 
-    public NodeBracket(Position position) {
+    public NodeBracket(AstPosition position) {
         super(position);
     }
 }

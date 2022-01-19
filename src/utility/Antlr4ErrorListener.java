@@ -6,7 +6,7 @@ import org.antlr.v4.runtime.Recognizer;
 
 import utility.error.SyntaxError;
 
-public class ErrorListener extends BaseErrorListener {
+public class Antlr4ErrorListener extends BaseErrorListener {
     @Override
     public void syntaxError(Recognizer<?, ?> recognizer,
                             Object offendingSymbol,
@@ -14,6 +14,6 @@ public class ErrorListener extends BaseErrorListener {
                             String msg,
                             RecognitionException e) {
 
-        throw new SyntaxError(msg, new Position(line, charPositionInLine));
+        throw new SyntaxError(msg, new AstPosition(line, charPositionInLine));
     }
 }

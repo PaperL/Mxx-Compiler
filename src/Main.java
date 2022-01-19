@@ -9,7 +9,7 @@ import org.antlr.v4.runtime.CommonTokenStream;
 import parser.MxxLexer;
 import parser.MxxParser;
 import utility.error.Error;
-import utility.ErrorListener;
+import utility.Antlr4ErrorListener;
 import ast.NodeRoot;
 import frontend.AstBuilder;
 
@@ -25,11 +25,11 @@ public class Main {
             // MxxLexer, MxxParser, ParseTree 等均来自 Antlr4 生成
             var lexer = new MxxLexer(CharStreams.fromStream(input));
             lexer.removeErrorListeners();
-            lexer.addErrorListener(new ErrorListener());
+            lexer.addErrorListener(new Antlr4ErrorListener());
 
             var parser = new MxxParser(new CommonTokenStream(lexer));
             parser.removeErrorListeners();
-            parser.addErrorListener(new ErrorListener());
+            parser.addErrorListener(new Antlr4ErrorListener());
 
             var parseTreeRoot = parser.program();
             System.out.println("\033[36m🔨 Lexer and parser finished.\033[0m");
@@ -49,7 +49,7 @@ public class Main {
             System.out.println("\033[36m🔨 Semantic check finished.\033[0m");
 
             var IrBuilder = new IrBuilder();
-            IrBuilder.build(astRoot);
+            IrBuilder.buildRoot(astRoot);
             System.out.println("\033[36m🔨 IR generation finished.\033[0m");
 
             System.out.println("\033[33m🎗️ Frontend worked successfully.\033[0m");

@@ -1,6 +1,6 @@
 package ast;
 
-import utility.Position;
+import utility.AstPosition;
 
 import java.util.ArrayList;
 
@@ -8,7 +8,7 @@ import java.util.ArrayList;
 public class NodeRoot extends AstNode {
     public ArrayList<NodeProgramSection> programSections = new ArrayList<>();
 
-    public NodeRoot(Position position) {
+    public NodeRoot(AstPosition position) {
         super(position);
     }
 }

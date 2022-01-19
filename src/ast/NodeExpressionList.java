@@ -1,13 +1,13 @@
 package ast;
 
-import utility.Position;
+import utility.AstPosition;
 
 import java.util.ArrayList;
 
 public class NodeExpressionList extends AstNode{
     public ArrayList<NodeExpression> expressions = new ArrayList<>();
 
-    public NodeExpressionList(Position position) {
+    public NodeExpressionList(AstPosition position) {
         super(position);
     }
 }

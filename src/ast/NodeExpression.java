@@ -1,6 +1,6 @@
 package ast;
 
-import utility.Position;
+import utility.AstPosition;
 
 import java.util.ArrayList;
 
@@ -63,7 +63,7 @@ public class NodeExpression extends AstNode {
     public NodeSuite lambdaSuite = null;
     public NodeExpressionList lambdaExpressionList = null;
 
-    public NodeExpression(Position position) {
+    public NodeExpression(AstPosition position) {
         super(position);
     }
 }

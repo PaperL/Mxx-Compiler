@@ -1,7 +1,7 @@
 package utility.scope;
 
 import ast.NodeFunctionDefine;
-import utility.Type;
+import utility.AstType;
 import utility.error.SemanticError;
 
 import java.util.ArrayList;
@@ -9,8 +9,8 @@ import java.util.ArrayList;
 // Store function claim information (return type and arguments)
 public class FunctionScope extends VariableScope {
     // VariableScope: HashMap<String, Type> variables
-    public Type returnType = null;
-    public ArrayList<Type> argumentsType = new ArrayList<>();
+    public AstType returnType = null;
+    public ArrayList<AstType> argumentsType = new ArrayList<>();
     public ArrayList<String> argumentsName = new ArrayList<>();
 
     public FunctionScope(BroadScope globalScope_, NodeFunctionDefine node) {

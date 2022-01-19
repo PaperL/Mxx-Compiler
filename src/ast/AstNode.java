@@ -1,11 +1,11 @@
 package ast;
 
-import utility.Position;
+import utility.AstPosition;
 
 abstract public class AstNode {
-    public Position position;
+    public AstPosition position;
 
-    public AstNode(Position position_) {
+    public AstNode(AstPosition position_) {
         position = position_;
     }
 }

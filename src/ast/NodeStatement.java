@@ -1,6 +1,6 @@
 package ast;
 
-import utility.Position;
+import utility.AstPosition;
 
 public class NodeStatement extends AstNode {
     public enum Genre {
@@ -40,7 +40,7 @@ public class NodeStatement extends AstNode {
     public NodeVariableDefine variableDefine = null;
 
 
-    public NodeStatement(Position position) {
+    public NodeStatement(AstPosition position) {
         super(position);
     }
 }
