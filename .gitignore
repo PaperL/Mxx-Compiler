@@ -11,3 +11,8 @@ gen/
 
 # Java
 out/
+bin/
+
+# LLVM IR
+a.out
+output.ll

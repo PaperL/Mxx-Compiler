@@ -167,5 +167,10 @@
   - 其中对应 C++ `queue.push` 的操作，在 Java 中为 `add`
   - 在 Java 中 `push` 为 `Stack` 的操作，对于 `LinkedList` 等效于 `addFirst`
   - C++ `stack.top` 在 Java 中对应 `Deque.peek` 和 `Deque.getFirst` 后者在空时抛出异常
-
+- 变量定义的时候进行 alloca
+  - 使用变量时从内存读出
+  - 赋值时写入至内存
+- 所需 LLVM IR 变量类型仅有 I1，I32，组合
+- LLVM IR 函数 Attribute 不占命名序号，可自由命名（纯数字）。函数开头必为 Label `0:` 且可缺省
+- 实现 `toString()` 的对象与字符串进行运算时可以省略该函数调用
 

@@ -1,22 +1,38 @@
 package utility;
 
+import utility.error.InternalError;
+
+/**
+ * IR Identifier
+ * Store both type and value of global variable, local variable, constant value.
+ * In addition, jump label is also contained.
+ * <p>
+ * For convenience, constructor's arguments do not contain genre.
+ */
 public class IrId {
     public enum Genre {
-        GLOBAL, LOCAL, CONSTANT,
+        GLOBAL, LOCAL, CONSTANT, LABEL
     }
 
     public Genre genre = null;
 
     public IrType type = null;
 
-    private static int staticCnt = 0; // ? 这真的用得上吗
-    public int staticId = 0;    // Local Value
+    private static int staticLastRegId = 0;
+    public int finalId = -1;    // Local Value
 
-    public String globalName;   // Global Variable
+    public String globalName;   // Global Variable or Function
 
     public int outputId = -1;   // Local Variable
 
     public int constantValue = 0;   // Constant Integer
+
+    /**
+     * @return LLVM label name
+     */
+    public IrId() {
+        genre = Genre.LABEL;
+    }
 
     /**
      * @return LLVM register name of local variable
@@ -24,7 +40,6 @@ public class IrId {
     public IrId(IrType type_) {
         genre = Genre.LOCAL;
         type = type_;
-        staticId = staticCnt++;
     }
 
     /**
@@ -45,7 +60,37 @@ public class IrId {
         constantValue = value;
     }
 
-    public String toString() {
-        // todo
+    public static void clearIndexCounter() {
+        staticLastRegId = 0;
     }
+
+    public void setIndex() {
+        if (finalId == -1) finalId = staticLastRegId++;
+    }
+
+    public int getLabel() {
+        setIndex();
+        return finalId;
+    }
+
+    @Override
+    public String toString() {
+        switch (genre) {
+            case GLOBAL -> {
+                return ("@" + globalName);
+            }
+            case LOCAL, LABEL -> {
+                setIndex();
+                return ("%" + finalId);
+            }
+            case CONSTANT -> {
+                return Integer.toString(constantValue);
+            }
+        }
+        throw new InternalError(
+                "IR",
+                "Unexpected error in IrId.toString()");
+    }
+
+
 }

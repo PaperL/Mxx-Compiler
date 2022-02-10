@@ -1,5 +1,5 @@
 package parser;
-// Generated from //wsl$/Ubuntu/home/paperl/workspace/Mxx-Compiler/grammar\MxxParser.g4 by ANTLR 4.9.1
+// Generated from E:/WinWorkSpace/@Java/Mxx-Compiler/grammar\MxxParser.g4 by ANTLR 4.9.1
 import org.antlr.v4.runtime.atn.*;
 import org.antlr.v4.runtime.dfa.DFA;
 import org.antlr.v4.runtime.*;
@@ -1703,7 +1703,7 @@ public class MxxParser extends Parser {
 					consume();
 				}
 				setState(187);
-				expression(13);
+				expression(14);
 				}
 				break;
 			case BANG:
@@ -1724,7 +1724,7 @@ public class MxxParser extends Parser {
 					consume();
 				}
 				setState(189);
-				expression(12);
+				expression(13);
 				}
 				break;
 			case ADD:
@@ -1745,7 +1745,7 @@ public class MxxParser extends Parser {
 					consume();
 				}
 				setState(191);
-				expression(11);
+				expression(12);
 				}
 				break;
 			case BRACK_L:
@@ -1810,15 +1810,24 @@ public class MxxParser extends Parser {
 					switch ( getInterpreter().adaptivePredict(_input,27,_ctx) ) {
 					case 1:
 						{
-						_localctx = new AssignExprContext(new ExpressionContext(_parentctx, _parentState));
-						((AssignExprContext)_localctx).lValue = _prevctx;
+						_localctx = new BinaryExprContext(new ExpressionContext(_parentctx, _parentState));
+						((BinaryExprContext)_localctx).lTerm = _prevctx;
 						pushNewRecursionContext(_localctx, _startState, RULE_expression);
 						setState(210);
-						if (!(precpred(_ctx, 16))) throw new FailedPredicateException(this, "precpred(_ctx, 16)");
+						if (!(precpred(_ctx, 11))) throw new FailedPredicateException(this, "precpred(_ctx, 11)");
 						setState(211);
-						match(ASSIGN);
+						((BinaryExprContext)_localctx).op = _input.LT(1);
+						_la = _input.LA(1);
+						if ( !((((_la) & ~0x3f) == 0 && ((1L << _la) & ((1L << MUL) | (1L << DIV) | (1L << MOD))) != 0)) ) {
+							((BinaryExprContext)_localctx).op = (Token)_errHandler.recoverInline(this);
+						}
+						else {
+							if ( _input.LA(1)==Token.EOF ) matchedEOF = true;
+							_errHandler.reportMatch(this);
+							consume();
+						}
 						setState(212);
-						((AssignExprContext)_localctx).rValue = expression(16);
+						((BinaryExprContext)_localctx).rTerm = expression(12);
 						}
 						break;
 					case 2:
@@ -1831,7 +1840,7 @@ public class MxxParser extends Parser {
 						setState(214);
 						((BinaryExprContext)_localctx).op = _input.LT(1);
 						_la = _input.LA(1);
-						if ( !((((_la) & ~0x3f) == 0 && ((1L << _la) & ((1L << MUL) | (1L << DIV) | (1L << MOD))) != 0)) ) {
+						if ( !(_la==ADD || _la==SUB) ) {
 							((BinaryExprContext)_localctx).op = (Token)_errHandler.recoverInline(this);
 						}
 						else {
@@ -1853,7 +1862,7 @@ public class MxxParser extends Parser {
 						setState(217);
 						((BinaryExprContext)_localctx).op = _input.LT(1);
 						_la = _input.LA(1);
-						if ( !(_la==ADD || _la==SUB) ) {
+						if ( !(_la==SHIFT_L || _la==SHIFT_R) ) {
 							((BinaryExprContext)_localctx).op = (Token)_errHandler.recoverInline(this);
 						}
 						else {
@@ -1875,7 +1884,7 @@ public class MxxParser extends Parser {
 						setState(220);
 						((BinaryExprContext)_localctx).op = _input.LT(1);
 						_la = _input.LA(1);
-						if ( !(_la==SHIFT_L || _la==SHIFT_R) ) {
+						if ( !((((_la) & ~0x3f) == 0 && ((1L << _la) & ((1L << EQ) | (1L << NOT_EQ) | (1L << LT) | (1L << LE) | (1L << GT) | (1L << GE))) != 0)) ) {
 							((BinaryExprContext)_localctx).op = (Token)_errHandler.recoverInline(this);
 						}
 						else {
@@ -1895,16 +1904,7 @@ public class MxxParser extends Parser {
 						setState(222);
 						if (!(precpred(_ctx, 7))) throw new FailedPredicateException(this, "precpred(_ctx, 7)");
 						setState(223);
-						((BinaryExprContext)_localctx).op = _input.LT(1);
-						_la = _input.LA(1);
-						if ( !((((_la) & ~0x3f) == 0 && ((1L << _la) & ((1L << EQ) | (1L << NOT_EQ) | (1L << LT) | (1L << LE) | (1L << GT) | (1L << GE))) != 0)) ) {
-							((BinaryExprContext)_localctx).op = (Token)_errHandler.recoverInline(this);
-						}
-						else {
-							if ( _input.LA(1)==Token.EOF ) matchedEOF = true;
-							_errHandler.reportMatch(this);
-							consume();
-						}
+						((BinaryExprContext)_localctx).op = match(BIT_AND);
 						setState(224);
 						((BinaryExprContext)_localctx).rTerm = expression(8);
 						}
@@ -1917,7 +1917,7 @@ public class MxxParser extends Parser {
 						setState(225);
 						if (!(precpred(_ctx, 6))) throw new FailedPredicateException(this, "precpred(_ctx, 6)");
 						setState(226);
-						((BinaryExprContext)_localctx).op = match(BIT_AND);
+						((BinaryExprContext)_localctx).op = match(BIT_OR);
 						setState(227);
 						((BinaryExprContext)_localctx).rTerm = expression(7);
 						}
@@ -1930,7 +1930,7 @@ public class MxxParser extends Parser {
 						setState(228);
 						if (!(precpred(_ctx, 5))) throw new FailedPredicateException(this, "precpred(_ctx, 5)");
 						setState(229);
-						((BinaryExprContext)_localctx).op = match(BIT_OR);
+						((BinaryExprContext)_localctx).op = match(CARET);
 						setState(230);
 						((BinaryExprContext)_localctx).rTerm = expression(6);
 						}
@@ -1943,7 +1943,7 @@ public class MxxParser extends Parser {
 						setState(231);
 						if (!(precpred(_ctx, 4))) throw new FailedPredicateException(this, "precpred(_ctx, 4)");
 						setState(232);
-						((BinaryExprContext)_localctx).op = match(CARET);
+						((BinaryExprContext)_localctx).op = match(AND);
 						setState(233);
 						((BinaryExprContext)_localctx).rTerm = expression(5);
 						}
@@ -1956,22 +1956,22 @@ public class MxxParser extends Parser {
 						setState(234);
 						if (!(precpred(_ctx, 3))) throw new FailedPredicateException(this, "precpred(_ctx, 3)");
 						setState(235);
-						((BinaryExprContext)_localctx).op = match(AND);
+						((BinaryExprContext)_localctx).op = match(OR);
 						setState(236);
 						((BinaryExprContext)_localctx).rTerm = expression(4);
 						}
 						break;
 					case 10:
 						{
-						_localctx = new BinaryExprContext(new ExpressionContext(_parentctx, _parentState));
-						((BinaryExprContext)_localctx).lTerm = _prevctx;
+						_localctx = new AssignExprContext(new ExpressionContext(_parentctx, _parentState));
+						((AssignExprContext)_localctx).lValue = _prevctx;
 						pushNewRecursionContext(_localctx, _startState, RULE_expression);
 						setState(237);
 						if (!(precpred(_ctx, 2))) throw new FailedPredicateException(this, "precpred(_ctx, 2)");
 						setState(238);
-						((BinaryExprContext)_localctx).op = match(OR);
+						match(ASSIGN);
 						setState(239);
-						((BinaryExprContext)_localctx).rTerm = expression(3);
+						((AssignExprContext)_localctx).rValue = expression(2);
 						}
 						break;
 					case 11:
@@ -2041,7 +2041,7 @@ public class MxxParser extends Parser {
 						_localctx = new SelfExprContext(new ExpressionContext(_parentctx, _parentState));
 						pushNewRecursionContext(_localctx, _startState, RULE_expression);
 						setState(255);
-						if (!(precpred(_ctx, 14))) throw new FailedPredicateException(this, "precpred(_ctx, 14)");
+						if (!(precpred(_ctx, 15))) throw new FailedPredicateException(this, "precpred(_ctx, 15)");
 						setState(256);
 						((SelfExprContext)_localctx).op = _input.LT(1);
 						_la = _input.LA(1);
@@ -2267,7 +2267,7 @@ public class MxxParser extends Parser {
 	private boolean expression_sempred(ExpressionContext _localctx, int predIndex) {
 		switch (predIndex) {
 		case 0:
-			return precpred(_ctx, 16);
+			return precpred(_ctx, 11);
 		case 1:
 			return precpred(_ctx, 10);
 		case 2:
@@ -2293,7 +2293,7 @@ public class MxxParser extends Parser {
 		case 12:
 			return precpred(_ctx, 17);
 		case 13:
-			return precpred(_ctx, 14);
+			return precpred(_ctx, 15);
 		}
 		return true;
 	}
@@ -2363,8 +2363,8 @@ public class MxxParser extends Parser {
 		"\u00b1\3\2\2\2\u00b3\27\3\2\2\2\u00b4\u00b5\b\r\1\2\u00b5\u00b6\7\b\2"+
 		"\2\u00b6\u00b7\5\30\r\2\u00b7\u00b8\7\t\2\2\u00b8\u00d3\3\2\2\2\u00b9"+
 		"\u00d3\5\34\17\2\u00ba\u00bb\7(\2\2\u00bb\u00d3\5\20\t\2\u00bc\u00bd\t"+
-		"\2\2\2\u00bd\u00d3\5\30\r\17\u00be\u00bf\t\3\2\2\u00bf\u00d3\5\30\r\16"+
-		"\u00c0\u00c1\t\4\2\2\u00c1\u00d3\5\30\r\r\u00c2\u00c3\7\r\2\2\u00c3\u00c4"+
+		"\2\2\2\u00bd\u00d3\5\30\r\20\u00be\u00bf\t\3\2\2\u00bf\u00d3\5\30\r\17"+
+		"\u00c0\u00c1\t\4\2\2\u00c1\u00d3\5\30\r\16\u00c2\u00c3\7\r\2\2\u00c3\u00c4"+
 		"\7!\2\2\u00c4\u00c5\7\16\2\2\u00c5\u00c7\7\b\2\2\u00c6\u00c8\5\n\6\2\u00c7"+
 		"\u00c6\3\2\2\2\u00c7\u00c8\3\2\2\2\u00c8\u00c9\3\2\2\2\u00c9\u00ca\7\t"+
 		"\2\2\u00ca\u00cb\7\f\2\2\u00cb\u00cc\5\24\13\2\u00cc\u00ce\7\b\2\2\u00cd"+
@@ -2372,35 +2372,35 @@ public class MxxParser extends Parser {
 		"\2\2\2\u00d0\u00d1\7\t\2\2\u00d1\u00d3\3\2\2\2\u00d2\u00b4\3\2\2\2\u00d2"+
 		"\u00b9\3\2\2\2\u00d2\u00ba\3\2\2\2\u00d2\u00bc\3\2\2\2\u00d2\u00be\3\2"+
 		"\2\2\u00d2\u00c0\3\2\2\2\u00d2\u00c2\3\2\2\2\u00d3\u0105\3\2\2\2\u00d4"+
-		"\u00d5\f\22\2\2\u00d5\u00d6\7\20\2\2\u00d6\u0104\5\30\r\22\u00d7\u00d8"+
-		"\f\f\2\2\u00d8\u00d9\t\5\2\2\u00d9\u0104\5\30\r\r\u00da\u00db\f\13\2\2"+
-		"\u00db\u00dc\t\4\2\2\u00dc\u0104\5\30\r\f\u00dd\u00de\f\n\2\2\u00de\u00df"+
-		"\t\6\2\2\u00df\u0104\5\30\r\13\u00e0\u00e1\f\t\2\2\u00e1\u00e2\t\7\2\2"+
-		"\u00e2\u0104\5\30\r\n\u00e3\u00e4\f\b\2\2\u00e4\u00e5\7!\2\2\u00e5\u0104"+
-		"\5\30\r\t\u00e6\u00e7\f\7\2\2\u00e7\u00e8\7\"\2\2\u00e8\u0104\5\30\r\b"+
-		"\u00e9\u00ea\f\6\2\2\u00ea\u00eb\7#\2\2\u00eb\u0104\5\30\r\7\u00ec\u00ed"+
-		"\f\5\2\2\u00ed\u00ee\7\27\2\2\u00ee\u0104\5\30\r\6\u00ef\u00f0\f\4\2\2"+
-		"\u00f0\u00f1\7\30\2\2\u00f1\u0104\5\30\r\5\u00f2\u00f3\f\25\2\2\u00f3"+
-		"\u00f4\7\13\2\2\u00f4\u0104\79\2\2\u00f5\u00f7\f\24\2\2\u00f6\u00f8\5"+
-		"\22\n\2\u00f7\u00f6\3\2\2\2\u00f8\u00f9\3\2\2\2\u00f9\u00f7\3\2\2\2\u00f9"+
-		"\u00fa\3\2\2\2\u00fa\u0104\3\2\2\2\u00fb\u00fc\f\23\2\2\u00fc\u00fe\7"+
-		"\b\2\2\u00fd\u00ff\5\32\16\2\u00fe\u00fd\3\2\2\2\u00fe\u00ff\3\2\2\2\u00ff"+
-		"\u0100\3\2\2\2\u0100\u0104\7\t\2\2\u0101\u0102\f\20\2\2\u0102\u0104\t"+
-		"\2\2\2\u0103\u00d4\3\2\2\2\u0103\u00d7\3\2\2\2\u0103\u00da\3\2\2\2\u0103"+
-		"\u00dd\3\2\2\2\u0103\u00e0\3\2\2\2\u0103\u00e3\3\2\2\2\u0103\u00e6\3\2"+
-		"\2\2\u0103\u00e9\3\2\2\2\u0103\u00ec\3\2\2\2\u0103\u00ef\3\2\2\2\u0103"+
-		"\u00f2\3\2\2\2\u0103\u00f5\3\2\2\2\u0103\u00fb\3\2\2\2\u0103\u0101\3\2"+
-		"\2\2\u0104\u0107\3\2\2\2\u0105\u0103\3\2\2\2\u0105\u0106\3\2\2\2\u0106"+
-		"\31\3\2\2\2\u0107\u0105\3\2\2\2\u0108\u010d\5\30\r\2\u0109\u010a\7\n\2"+
-		"\2\u010a\u010c\5\30\r\2\u010b\u0109\3\2\2\2\u010c\u010f\3\2\2\2\u010d"+
-		"\u010b\3\2\2\2\u010d\u010e\3\2\2\2\u010e\u0111\3\2\2\2\u010f\u010d\3\2"+
-		"\2\2\u0110\u0112\7\n\2\2\u0111\u0110\3\2\2\2\u0111\u0112\3\2\2\2\u0112"+
-		"\33\3\2\2\2\u0113\u011a\7\'\2\2\u0114\u011a\79\2\2\u0115\u011a\7;\2\2"+
-		"\u0116\u011a\7:\2\2\u0117\u011a\t\b\2\2\u0118\u011a\7-\2\2\u0119\u0113"+
-		"\3\2\2\2\u0119\u0114\3\2\2\2\u0119\u0115\3\2\2\2\u0119\u0116\3\2\2\2\u0119"+
-		"\u0117\3\2\2\2\u0119\u0118\3\2\2\2\u011a\35\3\2\2\2\"!)\60\629>KOW[bk"+
-		"mrw\177\u008c\u0092\u0096\u009a\u00aa\u00b2\u00c7\u00ce\u00d2\u00f9\u00fe"+
-		"\u0103\u0105\u010d\u0111\u0119";
+		"\u00d5\f\r\2\2\u00d5\u00d6\t\5\2\2\u00d6\u0104\5\30\r\16\u00d7\u00d8\f"+
+		"\f\2\2\u00d8\u00d9\t\4\2\2\u00d9\u0104\5\30\r\r\u00da\u00db\f\13\2\2\u00db"+
+		"\u00dc\t\6\2\2\u00dc\u0104\5\30\r\f\u00dd\u00de\f\n\2\2\u00de\u00df\t"+
+		"\7\2\2\u00df\u0104\5\30\r\13\u00e0\u00e1\f\t\2\2\u00e1\u00e2\7!\2\2\u00e2"+
+		"\u0104\5\30\r\n\u00e3\u00e4\f\b\2\2\u00e4\u00e5\7\"\2\2\u00e5\u0104\5"+
+		"\30\r\t\u00e6\u00e7\f\7\2\2\u00e7\u00e8\7#\2\2\u00e8\u0104\5\30\r\b\u00e9"+
+		"\u00ea\f\6\2\2\u00ea\u00eb\7\27\2\2\u00eb\u0104\5\30\r\7\u00ec\u00ed\f"+
+		"\5\2\2\u00ed\u00ee\7\30\2\2\u00ee\u0104\5\30\r\6\u00ef\u00f0\f\4\2\2\u00f0"+
+		"\u00f1\7\20\2\2\u00f1\u0104\5\30\r\4\u00f2\u00f3\f\25\2\2\u00f3\u00f4"+
+		"\7\13\2\2\u00f4\u0104\79\2\2\u00f5\u00f7\f\24\2\2\u00f6\u00f8\5\22\n\2"+
+		"\u00f7\u00f6\3\2\2\2\u00f8\u00f9\3\2\2\2\u00f9\u00f7\3\2\2\2\u00f9\u00fa"+
+		"\3\2\2\2\u00fa\u0104\3\2\2\2\u00fb\u00fc\f\23\2\2\u00fc\u00fe\7\b\2\2"+
+		"\u00fd\u00ff\5\32\16\2\u00fe\u00fd\3\2\2\2\u00fe\u00ff\3\2\2\2\u00ff\u0100"+
+		"\3\2\2\2\u0100\u0104\7\t\2\2\u0101\u0102\f\21\2\2\u0102\u0104\t\2\2\2"+
+		"\u0103\u00d4\3\2\2\2\u0103\u00d7\3\2\2\2\u0103\u00da\3\2\2\2\u0103\u00dd"+
+		"\3\2\2\2\u0103\u00e0\3\2\2\2\u0103\u00e3\3\2\2\2\u0103\u00e6\3\2\2\2\u0103"+
+		"\u00e9\3\2\2\2\u0103\u00ec\3\2\2\2\u0103\u00ef\3\2\2\2\u0103\u00f2\3\2"+
+		"\2\2\u0103\u00f5\3\2\2\2\u0103\u00fb\3\2\2\2\u0103\u0101\3\2\2\2\u0104"+
+		"\u0107\3\2\2\2\u0105\u0103\3\2\2\2\u0105\u0106\3\2\2\2\u0106\31\3\2\2"+
+		"\2\u0107\u0105\3\2\2\2\u0108\u010d\5\30\r\2\u0109\u010a\7\n\2\2\u010a"+
+		"\u010c\5\30\r\2\u010b\u0109\3\2\2\2\u010c\u010f\3\2\2\2\u010d\u010b\3"+
+		"\2\2\2\u010d\u010e\3\2\2\2\u010e\u0111\3\2\2\2\u010f\u010d\3\2\2\2\u0110"+
+		"\u0112\7\n\2\2\u0111\u0110\3\2\2\2\u0111\u0112\3\2\2\2\u0112\33\3\2\2"+
+		"\2\u0113\u011a\7\'\2\2\u0114\u011a\79\2\2\u0115\u011a\7;\2\2\u0116\u011a"+
+		"\7:\2\2\u0117\u011a\t\b\2\2\u0118\u011a\7-\2\2\u0119\u0113\3\2\2\2\u0119"+
+		"\u0114\3\2\2\2\u0119\u0115\3\2\2\2\u0119\u0116\3\2\2\2\u0119\u0117\3\2"+
+		"\2\2\u0119\u0118\3\2\2\2\u011a\35\3\2\2\2\"!)\60\629>KOW[bkmrw\177\u008c"+
+		"\u0092\u0096\u009a\u00aa\u00b2\u00c7\u00ce\u00d2\u00f9\u00fe\u0103\u0105"+
+		"\u010d\u0111\u0119";
 	public static final ATN _ATN =
 		new ATNDeserializer().deserialize(_serializedATN.toCharArray());
 	static {

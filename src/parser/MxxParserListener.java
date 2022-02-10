@@ -1,5 +1,5 @@
 package parser;
-// Generated from //wsl$/Ubuntu/home/paperl/workspace/Mxx-Compiler/grammar\MxxParser.g4 by ANTLR 4.9.1
+// Generated from E:/WinWorkSpace/@Java/Mxx-Compiler/grammar\MxxParser.g4 by ANTLR 4.9.1
 import org.antlr.v4.runtime.tree.ParseTreeListener;
 
 /**

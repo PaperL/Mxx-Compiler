@@ -11,7 +11,12 @@ public class IrBlock extends IrNode {
 
     @Override
     public String toString() {
-        // todo
-        return null;
+        var tot = new StringBuilder();
+        var labelId = label.getLabel();
+        if (labelId != 0) tot.append(label.getLabel()).append(":\n");   // 省略 "0:"
+        for (var ins : instructions)
+            tot.append("  ").append(ins).append("\n");
+        tot.append("  ").append(jumpInstruction).append("\n");
+        return tot.toString();
     }
 }

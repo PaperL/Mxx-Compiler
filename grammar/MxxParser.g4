@@ -45,8 +45,7 @@ expression
     | expression DOT IDENTIFIER                                         # memberExpr
     | expression bracket+                                               # arrayExpr
     | expression PAREN_L expressionList? PAREN_R                        # functionExpr
-    // command
-    | <assoc = right> lValue = expression ASSIGN rValue = expression    # assignExpr
+    // new
     | <assoc = right> NEW type                                          # newExpr
     // arithmetic
     | expression op = (INC | DEC)                                       # selfExpr
@@ -64,6 +63,8 @@ expression
     | lTerm = expression op = CARET                 rTerm = expression  # binaryExpr
     | lTerm = expression op = AND                   rTerm = expression  # binaryExpr
     | lTerm = expression op = OR                    rTerm = expression  # binaryExpr
+    // assign
+    | <assoc = right> lValue = expression ASSIGN rValue = expression    # assignExpr
     // lambda
     | BRACK_L BIT_AND BRACK_R PAREN_L argumentList? PAREN_R ARROW
       suite PAREN_L expressionList? PAREN_R                             # lambdaExpr;
