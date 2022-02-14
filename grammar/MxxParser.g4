@@ -1,4 +1,4 @@
-parser grammar MxxParser;
+frontend.parser grammar MxxParser;
 options {
     language = Java;
     tokenVocab = MxxLexer;

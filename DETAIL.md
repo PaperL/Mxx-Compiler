@@ -1,5 +1,16 @@
 # Mxx Compiler 实现说明
 
+## 代码风格
+
+- 遵循 Java 命名规范
+- 关于多态
+  - 减少多态使用，可以减少文件数量以使得源代码文件结构更为简洁
+  - 多态类代码量较少，可直接使用枚举实现多态，例如 `frontend.ast.node.NodeExpression`
+
+
+
+## 具体实现
+
 > 关于 g4 文件中的 program & programSection 节点\
 > 题面 13.4 要求: 全局变量和局部变量不支持前向引用\
 > 故不能将 programSection 规则直接在 program 中展开\
@@ -10,46 +21,38 @@
 ## 文件结构
 
 - Main
-- **parser** (Antlr4 生成)
-    - MxxLexer
-    - MxxParser
-    - MxxParserBaseListener
-    - MxxParserListener
-    - MxxParserBaseVisitor
-    - MxxParserVisitor
-- **ast**
-    - AstNode
-        - NodeRoot
-        - NodeProgramSection
-        - NodeClassDefine
-        - NodeFunctionDefine
-        - NodeVariableDefine
-        - NodeType
-        - NodeArgumentList
-        - NodeSuite
-        - NodeVariableTerm
-        - NodeExpression
-        - NodeBracket
-        - NodeStatement
-        - NodeExpressionList
-        - NodeAtom
-- **frontend**
-    - AstBuilder
-    - ForwardCollector
-    - SemanticChecker
-- **utility**
-    - **error**
-        - Error
-            - SyntaxError
-            - SemanticError
-    - **scope**
-        - VariableScope
-            - FunctionScope
-            - ClassScope
-            - BroadScope
-    - ErrorListener
-    - Position
-    - Type
+- frontend
+    - parser *(Antlr4 生成)*
+        - MxxLexer
+        - MxxParser
+        - MxxParserBaseListener
+        - MxxParserListener
+        - MxxParserBaseVisitor
+        - MxxParserVisitor
+
+    - ast
+        - node
+            - **AstNode**, NodeRoot, NodeProgramSection, NodeClassDefine, NodeFunctionDefine, NodeVariableDefine, NodeType, NodeArgumentList, NodeSuite, NodeVariableTerm, NodeExpression, NodeBracket, NodeStatement, NodeExpressionList, NodeAtom
+
+        - scope
+            - **VariableScope**, BroadScope, ClassScope, FunctionScope
+
+        - AstPosition, AstType
+        - AstBuilder, ForwardCollector, SemanticChecker
+
+    - ir
+        - node
+            - **IrNode**, IrTop, IrFunction, IrBlock, IrInsturction
+
+        - IrType, IrId
+        - IrBuilder
+
+- utility
+    - error
+        - **Error**, SyntaxError, SemanticError, InternalError
+    - CmdArgument
+
+
 
 ## AST 结构
 

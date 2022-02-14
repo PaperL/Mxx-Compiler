@@ -1,19 +1,20 @@
 import java.io.*;
 import java.util.Scanner;
 
-import frontend.ForwardCollector;
-import frontend.IrBuilder;
-import frontend.SemanticChecker;
 import org.antlr.v4.runtime.CharStreams;
 import org.antlr.v4.runtime.CommonTokenStream;
 
-import parser.MxxLexer;
-import parser.MxxParser;
 import utility.CmdArgument;
 import utility.error.Error;
-import utility.Antlr4ErrorListener;
-import ast.NodeRoot;
-import frontend.AstBuilder;
+
+import frontend.parser.MxxLexer;
+import frontend.parser.MxxParser;
+import frontend.parser.Antlr4ErrorListener;
+import frontend.ast.node.NodeRoot;
+import frontend.ast.AstBuilder;
+import frontend.ast.ForwardCollector;
+import frontend.ast.SemanticChecker;
+import frontend.ir.IrBuilder;
 
 public class Main {
     public static void main(String[] args) throws Exception {
@@ -43,13 +44,13 @@ public class Main {
             parser.addErrorListener(new Antlr4ErrorListener());
 
             var parseTreeRoot = parser.program();
-            stdOut.println("\033[36m🔨 Lexer and parser finished.\033[0m");
+            stdOut.println("\033[36m🔨 Lexer and frontend.parser finished.\033[0m");
 
             NodeRoot astRoot;
             var astBuilder = new AstBuilder();
             astRoot = (NodeRoot) astBuilder.visit(parseTreeRoot);
             stdOut.println("\033[36m🔨 Building AST finished.\033[0m");
-            // AST 树构建完成后, package parser 不再被使用
+            // AST 树构建完成后, package frontend.parser 不再被使用
 
             var forwardCollector = new ForwardCollector();
             forwardCollector.collectRoot(astRoot);
@@ -75,7 +76,8 @@ public class Main {
                 stdOut.println("\033[33m🎗️ Backend worked successfully.\033[0m");
             }
         } catch (Error error) {
-            System.err.println(error);
+//            System.err.println(error);
+            error.printStackTrace();    // 输出异常位置
             stdOut.println("\033[31m⚠️ Process terminated with error.\033[0m");
             throw new RuntimeException("Compiling failed.");
         }

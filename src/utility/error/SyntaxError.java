@@ -1,6 +1,6 @@
 package utility.error;
 
-import utility.AstPosition;
+import frontend.ast.AstPosition;
 
 public class SyntaxError extends Error {
 

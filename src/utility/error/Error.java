@@ -1,6 +1,6 @@
 package utility.error;
 
-import utility.AstPosition;
+import frontend.ast.AstPosition;
 
 abstract public class Error extends RuntimeException {
     protected final String errorType, message;
