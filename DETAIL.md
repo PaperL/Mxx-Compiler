@@ -8,49 +8,19 @@
   - 多态类代码量较少，可直接使用枚举实现多态，例如 `frontend.ast.node.NodeExpression`
 
 
+## 相关工具
 
-## 具体实现
+- 代码中部分注释使用 IDEA 插件 [Comments Highlighter](https://plugins.jetbrains.com/plugin/12895-comments-highlighter) 提供高亮
+- 代码量统计使用 IDEA 插件 [Statistic](https://plugins.jetbrains.com/plugin/4509-statistic) 完成, 统计方式为计算由本人创建 / 修改的文件中的代码总行数 (纯空行与注释行不计) 
+
+
+
+## 具体实现备注
 
 > 关于 g4 文件中的 program & programSection 节点\
 > 题面 13.4 要求: 全局变量和局部变量不支持前向引用\
 > 故不能将 programSection 规则直接在 program 中展开\
 > 13.5: 函数和类的声明都应该在顶层，作用域为全局，支持前向引用（forward reference）
-
-
-
-## 文件结构
-
-- Main
-- frontend
-    - parser *(Antlr4 生成)*
-        - MxxLexer
-        - MxxParser
-        - MxxParserBaseListener
-        - MxxParserListener
-        - MxxParserBaseVisitor
-        - MxxParserVisitor
-
-    - ast
-        - node
-            - **AstNode**, NodeRoot, NodeProgramSection, NodeClassDefine, NodeFunctionDefine, NodeVariableDefine, NodeType, NodeArgumentList, NodeSuite, NodeVariableTerm, NodeExpression, NodeBracket, NodeStatement, NodeExpressionList, NodeAtom
-
-        - scope
-            - **VariableScope**, BroadScope, ClassScope, FunctionScope
-
-        - AstPosition, AstType
-        - AstBuilder, ForwardCollector, SemanticChecker
-
-    - ir
-        - node
-            - **IrNode**, IrTop, IrFunction, IrBlock, IrInsturction
-
-        - IrType, IrId
-        - IrBuilder
-
-- utility
-    - error
-        - **Error**, SyntaxError, SemanticError, InternalError
-    - CmdArgument
 
 
 
@@ -146,6 +116,7 @@
 ### 其他说明
 
 - 实现 llvm
+  - 指令说明详见 https://llvm.org/docs/LangRef.html
 - 使用 clang
   - `clang -S -emit-llvm test.c` 生成 `.ll`
   - `clang -c -emit-llvm test.c` 生成 `.bc`
@@ -176,4 +147,5 @@
 - 所需 LLVM IR 变量类型仅有 I1，I32，组合
 - LLVM IR 函数 Attribute 不占命名序号，可自由命名（纯数字）。函数开头必为 Label `0:` 且可缺省
 - 实现 `toString()` 的对象与字符串进行运算时可以省略该函数调用
+- LLVM IR 指令中类型指操作数的类型，在绝大多数情况下等同于指令结果的类型，但 `icmp` 指令除外，例如 `icmp eq i32 %1, %2`，该指令返回值始终为 `i1`
 

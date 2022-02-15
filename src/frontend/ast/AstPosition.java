@@ -1,6 +1,7 @@
 package frontend.ast;
 
 import org.antlr.v4.runtime.ParserRuleContext;
+import org.antlr.v4.runtime.misc.Interval;
 
 /**
  * Used in semantic check
@@ -8,6 +9,7 @@ import org.antlr.v4.runtime.ParserRuleContext;
 public class AstPosition {
     private final int line;
     private final int column;
+    public String rawText;
 
     public AstPosition(int line_, int column_) {
         this.line = line_;
@@ -23,6 +25,8 @@ public class AstPosition {
         var token = ctx.getStart();
         this.line = token.getLine();
         this.column = token.getCharPositionInLine();
+        this.rawText = ctx.start.getInputStream().getText(
+                new Interval(ctx.start.getStartIndex(), ctx.stop.getStopIndex()));
     }
 
     public String toString() {

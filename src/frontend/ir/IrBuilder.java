@@ -2,37 +2,44 @@ package frontend.ir;
 
 import java.util.LinkedList;
 import java.util.HashMap;
+import java.util.Objects;
+
 import org.antlr.v4.runtime.misc.Pair;  // Not Java STL
+import utility.CmdArgument;
 import utility.error.InternalError;
 import frontend.ast.node.*;
 import frontend.ir.node.*;
 
-// Build tree structure LLVM IR from AST
+/**
+ * Build sequential structure LLVM IR from AST
+ */
 public class IrBuilder {
     // region BASIC
+    public static CmdArgument cmdArgs = null;
+
     public final String GLOBAL_VARIABLE_PREFIX = "__VAR__";
     public final String FUNCTION_PREFIX = "__FUNC__";
     public final String INITIAL_FUNCTION = "__INIT";
     public final String THIS_VARIABLE_NAME = "__THIS";
 
-    public IrTop irRoot = new IrTop();
+    public final IrTop irRoot = new IrTop();
     public IrFunction currentFunction = null;
     public IrBlock currentBlock = null;
-    public LinkedList<HashMap<String, IrId>> scopeStack;
+    // scopeStack 中变量名无 GLOBAL_VARIABLE_PREFIX 前缀
+    // 但对应的 IrId 名称含有前缀
+    public final LinkedList<HashMap<String, IrId>> scopeStack = new LinkedList<>();
 
     // For Continue and Break, is 'null' when out of loop
-    public LinkedList<IrBlock> loopCondBlockStack = new LinkedList<>();
-    public LinkedList<IrBlock> loopNextBlockStack = new LinkedList<>();
+    public final LinkedList<IrBlock> loopCondBlockStack = new LinkedList<>();
+    public final LinkedList<IrBlock> loopNextBlockStack = new LinkedList<>();
 
-    // For postfix ++/--, calculate after current statement finishes
-    public LinkedList<Pair<IrId, NodeExpression.OpEnum>> calcAfterStatement = new LinkedList<>();
-
-    public IrBuilder() {
-        scopeStack = new LinkedList<>();
+    public IrBuilder(CmdArgument cmdArgs_) {
+        cmdArgs = cmdArgs_;
         scopeStack.push(new HashMap<>());
     }
 
     public String print() {
+        irRoot.genIndex();
         return irRoot.toString();
     }
 
@@ -46,6 +53,32 @@ public class IrBuilder {
 
     public static void throwUnexpectedError() throws InternalError {
         throw new InternalError("IR_UNEXPECTED", "");
+    }
+
+    public void buildComment(String commentInfo) {
+        if (cmdArgs.contains(CmdArgument.ArgumentType.IR_SOURCE_CODE)) {
+            var ins = new IrInstruction(IrInstruction.Genre.COMMENT);
+            ins.commentInfo = commentInfo;
+            currentBlock.instructions.add(ins);
+            if (cmdArgs.contains(CmdArgument.ArgumentType.DEBUG))
+                System.out.println("# " + commentInfo);
+        }
+    }
+
+    /**
+     * Generate comment of corresponding source code.
+     * Just show the first line of multiline statement, e.g. IF, FOR.
+     */
+    public void buildSourceCodeComment(AstNode astNode) {
+        if (cmdArgs.contains(CmdArgument.ArgumentType.IR_SOURCE_CODE)) {
+            var ins = new IrInstruction(IrInstruction.Genre.COMMENT);
+            var str = astNode.position.rawText;
+            var end = str.indexOf('\n');
+            ins.commentInfo = (end == -1) ? str : str.substring(0, str.indexOf('\n'));
+            currentBlock.instructions.add(ins);
+            if (cmdArgs.contains(CmdArgument.ArgumentType.DEBUG))
+                System.out.println("# " + ins.commentInfo);
+        }
     }
 
     /**
@@ -106,11 +139,11 @@ public class IrBuilder {
      * Finish current block, build jump to another block
      * and set 'currentBlock' as target block
      */
-    public void buildJumpToBlock(IrBlock block) {
+    public void buildJumpToBlock(IrBlock block, boolean setCurrentBlock) {
         var ins = new IrInstruction(IrInstruction.Genre.JUMP);
         ins.jumpLabel = block.label;
         currentBlock.jumpInstruction = ins;
-        currentBlock = block;
+        if (setCurrentBlock) currentBlock = block;
     }
 
     /**
@@ -120,8 +153,8 @@ public class IrBuilder {
     public void buildBranch(IrId condId, IrBlock trueBlock, IrBlock falseBlock) {
         var ins = new IrInstruction(IrInstruction.Genre.BRANCH);
         ins.branchCondId = condId;
-        ins.branchTrueBlock = trueBlock;
-        ins.branchFalseBlock = falseBlock;
+        ins.branchTrueLabel = trueBlock.label;
+        ins.branchFalseLabel = falseBlock.label;
         currentBlock.jumpInstruction = ins;
     }
 
@@ -177,14 +210,15 @@ public class IrBuilder {
     public void declareFunction(NodeFunctionDefine astNode) {
         var func = new IrFunction();
         func.returnType = new IrType(astNode.type);
-        func.name = astNode.name;
+        func.name = ((Objects.equals(astNode.name, "main")) ? "" : FUNCTION_PREFIX)
+                + astNode.name;
         var arguments = astNode.argumentList;
         if (arguments != null) {
             for (var astType : arguments.types)
                 func.arguments.add(new IrId(new IrType(astType)));
         }
 
-        irRoot.functions.put(func.name, func);
+        irRoot.functions.put(astNode.name, func);
     }
 
     public void buildClass(NodeClassDefine astNode) {
@@ -202,28 +236,47 @@ public class IrBuilder {
         var arguments = astNode.argumentList;
         if (arguments != null) {
             var len = arguments.types.size();
-            for (int i = 0; i < len; i++)
+            for (int i = 0; i < len; i++) {
+                var argVal = currentFunction.arguments.get(i);
+                var insAlloca = new IrInstruction(
+                        IrInstruction.Genre.ALLOCA,
+                        argVal.type);
+                var insStore = new IrInstruction(
+                        IrInstruction.Genre.STORE,
+                        argVal.type);
+                insStore.storeAddress = insAlloca.insId;
+                insStore.storeData = argVal;
+                currentBlock.instructions.add(insAlloca);
+                currentBlock.instructions.add(insStore);
                 currentScope.put(
                         arguments.identifiers.get(i),
-                        currentFunction.arguments.get(i));
+                        insAlloca.insId);
+            }
         }
         scopeStack.push(currentScope);
 
         // Declare return variable
-        currentFunction.retValPtr = buildAlloca(currentFunction.returnType);
+        boolean returnVoid = (currentFunction.returnType.genre == IrType.Genre.VOID);
+        if (!returnVoid)
+            currentFunction.retValPtr = buildAlloca(currentFunction.returnType);
 
         // Build return block
         var retBlock = new IrBlock();
         currentFunction.returnBlock = retBlock;
-        var loadRetValIns = new IrInstruction(
+        var loadRetValIns = returnVoid ? null
+                : new IrInstruction(
                 IrInstruction.Genre.LOAD,
                 currentFunction.returnType);
-        loadRetValIns.loadAddress = currentFunction.retValPtr;
+        if (!returnVoid) {
+            loadRetValIns.loadAddress = currentFunction.retValPtr;
+            retBlock.instructions.add(loadRetValIns);
+        }
         var retIns = new IrInstruction(
                 IrInstruction.Genre.RETURN,
                 currentFunction.returnType);
-        retIns.returnValue = loadRetValIns.insId;
-        retBlock.instructions.add(loadRetValIns);
+        retIns.returnValue = returnVoid ?
+                new IrId(currentFunction.returnType)
+                : loadRetValIns.insId;
         retBlock.jumpInstruction = retIns;
 
         // Build statements of function body
@@ -234,7 +287,7 @@ public class IrBuilder {
         if(currentBlock.instructions.isEmpty()){
             // Set empty current block as return block
         } */
-        buildJumpToBlock(retBlock);
+        buildJumpToBlock(retBlock, true);
         currentFunction.blocks.add(retBlock);
 
         // Pop scope
@@ -254,6 +307,11 @@ public class IrBuilder {
 
     // region Statement
     public void visitVariableDefine(NodeVariableDefine astNode, boolean isGlobal) {
+        if (isGlobal) {
+            currentFunction = irRoot.functions.get(INITIAL_FUNCTION);
+            currentBlock = currentFunction.blocks.getLast();
+        }
+        buildSourceCodeComment(astNode);
         for (var term : astNode.variableTerms)
             buildVariableTerm(astNode.type, term, isGlobal);
     }
@@ -274,8 +332,6 @@ public class IrBuilder {
             scopeStack.getLast().put(astTerm.name, ins.insId);
             if (initExpr != null) {
                 // 在 Initial Function 中生成初始化指令
-                currentFunction = irRoot.functions.get(INITIAL_FUNCTION);
-                currentBlock = currentFunction.blocks.get(0);
                 var initVal = buildExpression(initExpr, false);
                 buildAssignToMem(initVal, ins.insId);
             }
@@ -292,70 +348,135 @@ public class IrBuilder {
     }
 
     public void buildStatement(NodeStatement astNode) {
+        // Generate source code comment
+        switch (astNode.genre) {
+            case SUITE, EMPTY, VARIABLE_DEFINE -> {
+            }   // Some single expression which isn't statement,
+            // like IF condition, need to be build in addition.
+            default -> buildSourceCodeComment(astNode);
+        }
         // * 需要保证添加 Statement 后, currentBlock 与后续 Block 的关系不变
         switch (astNode.genre) {
             case SUITE -> buildSuite(astNode.suite);
             case IF -> {
-                var curJumpIns = currentBlock.jumpInstruction;
-                // Add 3 blocks: Condition, CondTrue, CondFalse
-                var condBlock = new IrBlock();
+                // 假设当前有若干块: B1, {B2}, B3..., currentBlock == B2
+                // 构造 IF 语句后将 B2 扩展为 4 个块 (CondFalse 可缺省)
+                // B1, {B2(Cond), CondTrue, CondFalse, Next}, B3...
+                // currentBlock == Next
+                var originalJumpIns = currentBlock.jumpInstruction;
+                // Add 2 blocks: CondTrue, CondFalse
+                // Calculate condition at current block
                 var nextBlock = new IrBlock();
                 var trueBlock = new IrBlock();
                 var falseBlock = (astNode.falseBranchStmt == null)
                         ? nextBlock : (new IrBlock());
 
-                currentFunction.blocks.add(condBlock);
-                currentFunction.blocks.add(trueBlock);
-                if (astNode.falseBranchStmt != null)
-                    currentFunction.blocks.add(falseBlock);
-                currentFunction.blocks.add(nextBlock);
-
-                loopCondBlockStack.push(condBlock);
-                loopNextBlockStack.push(nextBlock);
-
-                // Build condition block
-                buildJumpToBlock(condBlock);
+                // Build condition expression, whose return value must be 'i1'
+                buildSourceCodeComment(astNode.ifCondExpr);
                 var condRstId = buildExpression(astNode.ifCondExpr, false);
                 buildBranch(condRstId, trueBlock, falseBlock);
-
                 // Build true block
+                currentFunction.blocks.add(trueBlock);
                 currentBlock = trueBlock;
+                buildJumpToBlock(nextBlock, false);
                 buildStatement(astNode.trueBranchStmt);
-                buildJumpToBlock(nextBlock);
                 if (astNode.falseBranchStmt != null) {
+                    currentFunction.blocks.add(falseBlock);
                     currentBlock = falseBlock;
+                    buildJumpToBlock(nextBlock, false);
                     buildStatement(astNode.falseBranchStmt);
-                    buildJumpToBlock(nextBlock);
                 }
-
                 // Set 'nextBlock'
-                currentBlock.jumpInstruction = curJumpIns;
-
-                loopCondBlockStack.pop();
-                loopNextBlockStack.pop();
+                currentFunction.blocks.add(nextBlock);
+                currentBlock = nextBlock;
+                currentBlock.jumpInstruction = originalJumpIns;
+                buildComment("end if");
             }
             case FOR -> {
-                // Block: ForInit, ForCond, ForBody
+                var originalJumpIns = currentBlock.jumpInstruction;
+                // 3 New Block: (ForInit), ForCond, ForBodyAndStep, NextBlock
+                var condBlock = new IrBlock();
+                var bodyAndStepBlock = new IrBlock();
+                var nextBlock = new IrBlock();
+
+                scopeStack.push(new HashMap<>());
+                if (astNode.initialWithVarDef)
+                    visitVariableDefine(astNode.initialVarDef, false);
+                else {
+                    buildSourceCodeComment(astNode.initialExpr);
+                    buildExpression(astNode.initialExpr, false);
+                }
+                buildJumpToBlock(condBlock, true);
+                // Condition
+                currentFunction.blocks.add(condBlock);
+                buildSourceCodeComment(astNode.forCondExpr);
+                var condId = buildExpression(astNode.forCondExpr, false);
+                buildBranch(condId, bodyAndStepBlock, nextBlock);
+                // Body and Step
+                currentFunction.blocks.add(bodyAndStepBlock);
+                currentBlock = bodyAndStepBlock;
+                buildJumpToBlock(condBlock, false);
+                loopCondBlockStack.add(condBlock);
+                loopNextBlockStack.add(nextBlock);
+                buildStatement(astNode.forBodyStmt);
+                loopCondBlockStack.pop();
+                loopNextBlockStack.pop();
+                buildSourceCodeComment(astNode.stepExpr);
+                buildExpression(astNode.stepExpr, false);
+                // Next
+                currentFunction.blocks.add(nextBlock);
+                scopeStack.pop();
+                currentBlock = nextBlock;
+                nextBlock.jumpInstruction = originalJumpIns;
+                buildComment("end for");
             }
             case WHILE -> {
-                // Block: WhileCond, WhileBody
+                var originalJumpIns = currentBlock.jumpInstruction;
+                // 2 new block: WhileCond, WhileBody
+                var condBlock = new IrBlock();
+                var bodyBlock = new IrBlock();
+                var nextBlock = new IrBlock();
+
+                buildJumpToBlock(condBlock, true);
+                // Condition
+                currentFunction.blocks.add(condBlock);
+                buildSourceCodeComment(astNode.whileCondExpr);
+                var condId = buildExpression(astNode.whileCondExpr, false);
+                buildBranch(condId, bodyBlock, nextBlock);
+                // Body
+                currentFunction.blocks.add(bodyBlock);
+                currentBlock = bodyBlock;
+                buildJumpToBlock(condBlock, false);
+                loopCondBlockStack.add(condBlock);
+                loopNextBlockStack.add(nextBlock);
+                buildStatement(astNode.whileBodyStmt);
+                loopCondBlockStack.pop();
+                loopNextBlockStack.pop();
+                // Next
+                currentFunction.blocks.add(nextBlock);
+                currentBlock = nextBlock;
+                nextBlock.jumpInstruction = originalJumpIns;
+                buildComment("end while");
             }
             case CONTINUE -> {
                 // 跳至上一个 Block (Body -> Cond)
-                buildJumpToBlock(loopCondBlockStack.peek());
+                buildJumpToBlock(loopCondBlockStack.peek(), false);
             }
             case BREAK -> {
                 // 跳至下一个 Block (Body -> Out of Loop)
-                buildJumpToBlock(loopNextBlockStack.peek());
+                buildJumpToBlock(loopNextBlockStack.peek(), false);
             }
             case RETURN -> {
                 // 将返回值存至内存
-                var ins = new IrInstruction(
-                        IrInstruction.Genre.STORE,
-                        currentFunction.returnType);
-                ins.storeAddress = currentFunction.retValPtr;
-                ins.storeData = buildExpression(astNode.returnExpr, false);
-                currentBlock.instructions.add(ins);
+                if (currentFunction.returnType.genre != IrType.Genre.VOID) {
+                    var ins = new IrInstruction(
+                            IrInstruction.Genre.STORE,
+                            currentFunction.returnType);
+                    ins.storeAddress = currentFunction.retValPtr;
+                    ins.storeData = buildExpression(astNode.returnExpr, false);
+                    currentBlock.instructions.add(ins);
+                }
+                buildJumpToBlock(currentFunction.returnBlock, false);
             }
             case SINGLE_EXPRESSION -> {
                 buildExpression(astNode.singleExpr, false);
@@ -428,18 +549,20 @@ public class IrBuilder {
             }
             case FUNCTION -> {
                 String funcName = null;
-                switch (astNode.genre) {
-                    case ATOM -> funcName = astNode.atom.identifier;
-                    case MEMBER -> funcName = astNode.memberName;
+                switch (astNode.functionExpr.genre) {
+                    case ATOM -> funcName = astNode.functionExpr.atom.identifier;
+                    case MEMBER -> throwTodoError("Call method");
                     default -> throwUnexpectedError();
                 }
                 var func = irRoot.functions.get(funcName);
                 var ins = new IrInstruction(IrInstruction.Genre.CALL, func.returnType);
                 ins.callName = func.name;
                 // NodeExpressionList is only used in Function Call
+                ins.callArguments = new LinkedList<>();
                 for (var expr : astNode.arguments.expressions)
                     ins.callArguments.add(buildExpression(expr, false));
                 currentBlock.instructions.add(ins);
+                return ins.insId;
             }
             case ASSIGN -> {
                 var rValue = buildExpression(astNode.rValue, false);
@@ -458,7 +581,18 @@ public class IrBuilder {
                     case INC, DEC -> {
                         var operandPtr = buildExpression(astNode.termExpr, true);
                         var operandVal = buildGetFromMem(operandPtr);
-                        calcAfterStatement.add(new Pair<>(operandPtr, astNode.operator));
+                        var ins = new IrInstruction(IrInstruction.Genre.ARITH, operandVal.type);
+                        ins.arithOperandLeft = operandVal;
+                        switch (astNode.operator) {
+                            case INC -> // Suffix ++
+                                    ins.opGenre = IrInstruction.operatorGenre.ADD;
+                            case DEC -> // Suffix --
+                                    ins.opGenre = IrInstruction.operatorGenre.SUB;
+                            default -> throwUnexpectedError();
+                        }
+                        ins.arithOperandRight = new IrId(operandVal.type, 1);
+                        currentBlock.instructions.add(ins);
+                        buildAssignToMem(ins.insId, operandPtr);
                         return operandVal;
                     }
                     default -> throwUnexpectedError();
@@ -469,23 +603,16 @@ public class IrBuilder {
                     case INC, DEC -> {
                         var operandPtr = buildExpression(astNode.termExpr, true);
                         var operandVal = buildGetFromMem(operandPtr);
-                        var ins = new IrInstruction(IrInstruction.Genre.ARITH, operandPtr.type);
+                        var ins = new IrInstruction(IrInstruction.Genre.ARITH, operandVal.type);
                         ins.arithOperandLeft = operandVal;
                         switch (astNode.operator) {
-                            case INC -> {   // Prefix ++
-                                ins.opGenre = IrInstruction.operatorGenre.ADD;
-                                ins.arithOperandRight = new IrId(operandPtr.type, 1);
-                                if (operandPtr.type.genre != IrType.Genre.I32) throwUnexpectedError();
-                            }
-                            case DEC -> {   // Prefix --
-                                ins.opGenre = IrInstruction.operatorGenre.SUB;
-                                ins.arithOperandRight = new IrId(operandPtr.type, 1);
-                                if (operandPtr.type.genre != IrType.Genre.I32) throw new InternalError(
-                                        "IR",
-                                        "Unexpected operator type in UNARY::DEC calculation in buildExpression()");
-                            }
+                            case INC -> // Prefix ++
+                                    ins.opGenre = IrInstruction.operatorGenre.ADD;
+                            case DEC -> // Prefix --
+                                    ins.opGenre = IrInstruction.operatorGenre.SUB;
                             default -> throwUnexpectedError();
                         }
+                        ins.arithOperandRight = new IrId(operandVal.type, 1);
                         currentBlock.instructions.add(ins);
                         buildAssignToMem(ins.insId, operandPtr);
                         // 前缀 ++/-- 可以作为左值
@@ -541,7 +668,12 @@ public class IrBuilder {
                         if (!lOperand.type.equals(rOperand.type)) throw new InternalError(
                                 "IR",
                                 "Left and Right Operand of NodeExpression(BINARY) have Different Type in buildExpression()");
-                        var ins = new IrInstruction(IrInstruction.Genre.ARITH, lOperand.type);
+                        IrType insType;
+                        switch (astNode.operator) {
+                            case GT, LT, GE, LE, EQ, NOT_EQ -> insType = new IrType(IrType.Genre.I1);
+                            default -> insType = lOperand.type;
+                        }
+                        var ins = new IrInstruction(IrInstruction.Genre.ARITH, insType);
                         ins.arithOperandLeft = lOperand;
                         ins.arithOperandRight = rOperand;
                         switch (astNode.operator) {

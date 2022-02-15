@@ -1,12 +1,14 @@
 package frontend.ir.node;
 
 import java.util.LinkedList;
+
 import frontend.ir.IrId;
 import frontend.ir.IrType;
 import frontend.ir.IrBuilder;
 
 public class IrInstruction extends IrNode {
     public enum Genre {
+        COMMENT,
         DECLARE, GLOBAL_VARIABLE, TYPE,
         ALLOCA,
         LOAD, STORE,
@@ -16,8 +18,10 @@ public class IrInstruction extends IrNode {
     }
 
     public Genre genre = null;
-    public IrId insId = null;
+    public IrId insId = null;   // Instruction result
 
+    // Comment
+    public String commentInfo = null;
     // Declare
     public String declareInfo = null;
     // Global Variable
@@ -30,8 +34,8 @@ public class IrInstruction extends IrNode {
     public IrId storeAddress = null;
     // Branch
     public IrId branchCondId = null;
-    public IrBlock branchTrueBlock = null;
-    public IrBlock branchFalseBlock = null;
+    public IrId branchTrueLabel = null;
+    public IrId branchFalseLabel = null;
     // Jump
     public IrId jumpLabel = null;
     // Call
@@ -61,7 +65,7 @@ public class IrInstruction extends IrNode {
     public IrInstruction(Genre genre_) {
         genre = genre_;
         switch (genre) {
-            case DECLARE, TYPE, BRANCH, JUMP -> {
+            case COMMENT, DECLARE, TYPE, BRANCH, JUMP -> {
             }
             default -> IrBuilder.throwUnexpectedError();
         }
@@ -87,13 +91,35 @@ public class IrInstruction extends IrNode {
         insId = id;
     }
 
+    @Override
+    public void genIndex() {
+        switch (genre) {
+            case ALLOCA, LOAD, ARITH -> insId.setIndex();
+            case CALL -> {
+                if (insId.type.genre != IrType.Genre.VOID)
+                    insId.setIndex();
+            }
+        }
+    }
+
     /**
      * @return LLVM Instruction without end-of-line newline
      */
     @Override
     public String toString() {
-        var insType = ((insId == null) ? null : insId.type);
+        var insType = (insId == null) ? null
+                : ((genre == Genre.ARITH) ? arithOperandLeft.type : insId.type);
         switch (genre) {
+            case COMMENT -> {
+                var strBuilder = new StringBuilder(commentInfo);
+                int pos = 0;
+                while (pos < strBuilder.length() - 1) {
+                    strBuilder.insert(pos, "; ");
+                    pos = strBuilder.indexOf("\n", pos);
+                    if (pos++ == -1) break;
+                }
+                return (strBuilder.toString());
+            }
             case DECLARE -> {
                 return declareInfo;
             }
@@ -135,16 +161,29 @@ public class IrInstruction extends IrNode {
                 return String.format("br %s %s, label %s, label %s",
                         branchCondId.type,
                         branchCondId,
-                        branchTrueBlock.label,
-                        branchFalseBlock.label);
+                        branchTrueLabel,
+                        branchFalseLabel);
             }
             case JUMP -> {
                 // br label %1
                 return String.format("br label %s", jumpLabel);
             }
             case CALL -> {
-                // todo
-                IrBuilder.throwTodoError("CALL");
+                // call void @funcName(i32 %1)
+                // %1 = call void @funcName(i32 %2, i1 %3)
+                var argStrBuilder = new StringBuilder();
+                for (var arg : callArguments) {
+                    argStrBuilder.append(arg.type).append(' ')
+                            .append(arg).append(", ");
+                }
+                argStrBuilder.delete(argStrBuilder.length() - 2,
+                        argStrBuilder.length());    // 删除末尾 ", "
+                return ((insType.genre == IrType.Genre.VOID)
+                        ? "" : (insId + " = "))
+                        + String.format("call %s @%s(%s)",
+                        insType,
+                        callName,
+                        argStrBuilder);
             }
             case RETURN -> {
                 if (insType.genre == IrType.Genre.VOID)
@@ -152,42 +191,25 @@ public class IrInstruction extends IrNode {
                 else return "ret " + insType + " " + returnValue;   // ret i32 %1
             }
             case ARITH -> {
-                var opStr = "";
+                String opStr = null;
                 // todo
                 switch (opGenre) {
-                    case ADD -> {
-                        opStr = "add";
-                    }
-                    case GT -> {
-                    }
-                    case LT -> {
-                    }
-                    case GE -> {
-                    }
-                    case LE -> {
-                    }
-                    case EQ -> {
-                    }
-                    case NEQ -> {
-                    }
-                    case SUB -> {
-                    }
-                    case MUL -> {
-                    }
-                    case DIV -> {
-                    }
-                    case MOD -> {
-                    }
-                    case SHIFT_L -> {
-                    }
-                    case SHIFT_R -> {
-                    }
-                    case AND -> {
-                    }
-                    case OR -> {
-                    }
-                    case XOR -> {
-                    }
+                    case ADD -> opStr = "add";
+                    case GT -> opStr = "icmp sgt";
+                    case LT -> opStr = "icmp slt";
+                    case GE -> opStr = "icmp sge";
+                    case LE -> opStr = "icmp sle";
+                    case EQ -> opStr = "icmp eq";
+                    case NEQ -> opStr = "icmp ne";
+                    case SUB -> opStr = "sub";
+                    case MUL -> opStr = "mul";
+                    case DIV -> opStr = "sdiv";
+                    case MOD -> opStr = "srem";
+                    case SHIFT_L -> opStr = "shl";
+                    case SHIFT_R -> opStr = "ashr";
+                    case AND -> opStr = "and";
+                    case OR -> opStr = "or";
+                    case XOR -> opStr = "xor";
                 }
                 // %1 = add i32 %2, %3
                 return String.format("%s = %s %s %s, %s",

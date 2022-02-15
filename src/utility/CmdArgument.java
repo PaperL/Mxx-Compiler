@@ -6,9 +6,11 @@ import java.util.List;
 public class CmdArgument {
     public ArrayList<String> arguments;
 
-    public enum ArgumentType{
-        LOCAL,
-        SEMANTIC, IR, CODEGEN
+    public enum ArgumentType {
+        DEBUG, LOCAL,
+        SEMANTIC,
+        IR, IR_SOURCE_CODE,
+        CODEGEN
     }
 
     public CmdArgument(String[] args) {
@@ -19,16 +21,26 @@ public class CmdArgument {
         return arguments.contains(trans(arg));
     }
 
-    public String trans(ArgumentType arg){
-        switch(arg){
+    public String trans(ArgumentType arg) {
+        switch (arg) {
+            case DEBUG -> {
+                return "--debug";
+            }
             case LOCAL -> {
-                return "-local";
+                return "--local";
             }
             case SEMANTIC -> {
-                return "-semantic";
+                return "--semantic";
             }
-            // todo
+            case IR_SOURCE_CODE -> {
+                return "--ir-source-code";
+            }
         }
         return null;
+    }
+
+    @Override
+    public String toString() {
+        return arguments.toString();
     }
 }

@@ -23,8 +23,6 @@ public class IrId {
 
     public String globalName;   // Global Variable or Function
 
-    public int outputId = -1;   // Local Variable
-
     public int constantValue = 0;   // Constant Integer
 
     /**

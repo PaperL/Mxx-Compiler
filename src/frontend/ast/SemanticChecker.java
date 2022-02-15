@@ -435,13 +435,14 @@ public class SemanticChecker {
                     scopeStack.push(new VariableScope(globalScope));
                     var returnType2 = checkStatement(node.falseBranchStmt);
                     scopeStack.pop();
-                    if (!(returnType1 == null && returnType2 == null))
-                        if ((returnType1 == null || returnType2 == null)
-                                || !returnType1.equals(returnType2))
-                            throw new SemanticError(
-                                    "Wrong type of branch return value",
-                                    node.position
-                            );
+                    // ? 为什么写 Semantic 的时候写了这段玩意儿
+//                    if (!(returnType1 == null && returnType2 == null))
+//                        if ((returnType1 == null || returnType2 == null)
+//                                || !returnType1.equals(returnType2))
+//                            throw new SemanticError(
+//                                    "Wrong type of branch return value",
+//                                    node.position
+//                            );
                 }
                 return returnType1;
             }

@@ -1,19 +1,19 @@
-frontend.parser grammar MxxParser;
+parser grammar MxxParser;
 options {
     language = Java;
     tokenVocab = MxxLexer;
 }
 
 program: (programSection)* EOF;
-programSection: classDefine | functionDefine | variableDefine;
+programSection: classDefine | functionDefine | (variableDefine SEMI);
 
-classDefine: CLASS IDENTIFIER BRACE_L (functionDefine | variableDefine)* BRACE_R SEMI;
+classDefine: CLASS IDENTIFIER BRACE_L (functionDefine | (variableDefine SEMI))* BRACE_R SEMI;
 
 functionDefine: type? IDENTIFIER PAREN_L argumentList? PAREN_R suite;
 
 argumentList: type IDENTIFIER (COMMA type IDENTIFIER)* COMMA?;
 
-variableDefine: type variableTerm (COMMA variableTerm)* COMMA? SEMI;
+variableDefine: type variableTerm (COMMA variableTerm)* COMMA?;
 variableTerm: IDENTIFIER (ASSIGN expression)?;
 
 type: (VOID | BOOL | INT | STRING | IDENTIFIER (PAREN_L PAREN_R)?) bracket*;
@@ -35,7 +35,7 @@ statement
     | BREAK SEMI                                                        # breakStmt
     | RETURN expression? SEMI                                           # returnStmt
     | expression SEMI                                                   # singleExprStmt
-    | variableDefine                                                    # variableStmt
+    | variableDefine SEMI                                               # variableStmt
     | SEMI                                                              # emptyStmt;
 
 expression
