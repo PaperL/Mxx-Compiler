@@ -18,11 +18,12 @@ public class IrBuilder {
     public static CmdArgument cmdArgs = null;
 
     public final String GLOBAL_VARIABLE_PREFIX = "__VAR__";
-    public final String FUNCTION_PREFIX = "__FUNC__";
     public final String INITIAL_FUNCTION = "__INIT";
-    public final String THIS_VARIABLE_NAME = "__THIS";
+    public final String FUNCTION_PREFIX = "__FUNC__";
+    public final String CLASS_CONSTRUCTOR_PREFIX = "__CONSTRUCTOR__";
+    public final String CLASS_PREFIX = "__CLAS__", METHOD_PREFIX = "__MTHD__";
 
-    public final IrTop irRoot = new IrTop();
+    public static final IrTop irRoot = new IrTop();
     public IrFunction currentFunction = null;
     public IrBlock currentBlock = null;
     // scopeStack 中变量名无 GLOBAL_VARIABLE_PREFIX 前缀
@@ -33,9 +34,10 @@ public class IrBuilder {
     public final LinkedList<IrBlock> loopCondBlockStack = new LinkedList<>();
     public final LinkedList<IrBlock> loopNextBlockStack = new LinkedList<>();
 
+
     public IrBuilder(CmdArgument cmdArgs_) {
         cmdArgs = cmdArgs_;
-        scopeStack.push(new HashMap<>());
+        scopeStack.push(new HashMap<>());   // Global scope
     }
 
     public String print() {
@@ -60,9 +62,9 @@ public class IrBuilder {
             var ins = new IrInstruction(IrInstruction.Genre.COMMENT);
             ins.commentInfo = commentInfo;
             currentBlock.instructions.add(ins);
-            if (cmdArgs.contains(CmdArgument.ArgumentType.DEBUG))
-                System.out.println("# " + commentInfo);
         }
+        if (cmdArgs.contains(CmdArgument.ArgumentType.DEBUG))
+            System.out.println("# " + commentInfo);
     }
 
     /**
@@ -70,15 +72,14 @@ public class IrBuilder {
      * Just show the first line of multiline statement, e.g. IF, FOR.
      */
     public void buildSourceCodeComment(AstNode astNode) {
-        if (cmdArgs.contains(CmdArgument.ArgumentType.IR_SOURCE_CODE)) {
-            var ins = new IrInstruction(IrInstruction.Genre.COMMENT);
-            var str = astNode.position.rawText;
-            var end = str.indexOf('\n');
-            ins.commentInfo = (end == -1) ? str : str.substring(0, str.indexOf('\n'));
+        var ins = new IrInstruction(IrInstruction.Genre.COMMENT);
+        var str = astNode.position.rawText;
+        var end = str.indexOf('\n');
+        ins.commentInfo = (end == -1) ? str : str.substring(0, str.indexOf('\n'));
+        if (cmdArgs.contains(CmdArgument.ArgumentType.IR_SOURCE_CODE))
             currentBlock.instructions.add(ins);
-            if (cmdArgs.contains(CmdArgument.ArgumentType.DEBUG))
-                System.out.println("# " + ins.commentInfo);
-        }
+        if (cmdArgs.contains(CmdArgument.ArgumentType.DEBUG))
+            System.out.println("# " + ins.commentInfo);
     }
 
     /**
@@ -190,54 +191,175 @@ public class IrBuilder {
         for (var section : astNode.programSections) {
             switch (section.genre) {
                 case CLASS_DEFINE -> declareClass(section.classDefineNode);
-                case FUNCTION_DEFINE -> declareFunction(section.functionDefine);
+                case FUNCTION_DEFINE -> declareFunction(section.functionDefine, null);
             }
         }
 
         for (var section : astNode.programSections) {
             switch (section.genre) {
-                case VARIABLE_DEFINE -> visitVariableDefine(section.globalVariableDefine, true);
+                case VARIABLE_DEFINE -> visitVariableDefine(
+                        section.globalVariableDefine, true);
                 case CLASS_DEFINE -> buildClass(section.classDefineNode);
-                case FUNCTION_DEFINE -> buildFunction(section.functionDefine);
+                case FUNCTION_DEFINE -> buildFunction(section.functionDefine, null);
             }
         }
     }
 
     public void declareClass(NodeClassDefine astNode) {
-        // todo
+        var clas = new IrClass();
+        clas.name = astNode.name;
+        // 题面 #14-命名空间:"类不可以和变量、函数重名". 故类名无需前缀
+        irRoot.classes.put(clas.name, clas);
+
+        var fieldCnt = 0;
+        for (var fieldDefine : astNode.variableDefines) {
+            var type = new IrType(fieldDefine.type);
+            for (int i = 0, len = fieldDefine.variableTerms.size(); i < len; i++) {
+                clas.fields.put(
+                        fieldDefine.variableTerms.get(i).name,
+                        new Pair<>(fieldCnt++, type));
+            }
+//            IntStream.range(0, fieldDefine.variableTerms.size())
+//                    .forEach(i -> /* sth */);
+        }
+        if (cmdArgs.contains(CmdArgument.ArgumentType.DEBUG)) {
+            // ? 这里省略 String.format 会报错
+            System.out.println(String.format("\nClass '%s' field:\n%s\n",
+                    clas.name, clas.fields));
+        }
+
+        clas.constructor = new IrFunction();
+        clas.constructor.returnType = new IrType(IrType.Genre.VOID);
+        clas.constructor.name = CLASS_CONSTRUCTOR_PREFIX + clas.name;
+        clas.constructor.clas = clas;
+        NodeFunctionDefine constructor = null;
+        for (var methodDefine : astNode.methodDefines) {
+            if (methodDefine.type != null)
+                declareFunction(methodDefine, clas);
+            else constructor = methodDefine;    // Constructor
+        }
+        clas.constructor.arguments.add(new IrId(new IrType(clas).getPointer()));
+        if (constructor != null) {  // Explicit constructor
+            var arguments = constructor.argumentList;
+            if (arguments != null) {
+                for (var astType : arguments.types)
+                    clas.constructor.arguments.add(new IrId(new IrType(astType)));
+            }
+        }
     }
 
-    public void declareFunction(NodeFunctionDefine astNode) {
+    public void declareFunction(NodeFunctionDefine astNode, IrClass clas) {
+        var isMethod = (clas != null);
         var func = new IrFunction();
+
         func.returnType = new IrType(astNode.type);
-        func.name = ((Objects.equals(astNode.name, "main")) ? "" : FUNCTION_PREFIX)
-                + astNode.name;
+        var funcNamePrefix = isMethod
+                ? (CLASS_PREFIX + clas.name + METHOD_PREFIX)
+                : ((Objects.equals(astNode.name, "main")) ? "" : FUNCTION_PREFIX);
+        func.name = funcNamePrefix + astNode.name;
+
+        if (isMethod) {
+            func.clas = clas;
+            // Add 'this'
+            func.arguments.add(new IrId(new IrType(clas).getPointer()));
+        }
         var arguments = astNode.argumentList;
         if (arguments != null) {
             for (var astType : arguments.types)
                 func.arguments.add(new IrId(new IrType(astType)));
         }
 
-        irRoot.functions.put(astNode.name, func);
+        if (isMethod) clas.methods.put(astNode.name, func);
+        else irRoot.functions.put(astNode.name, func);
     }
 
     public void buildClass(NodeClassDefine astNode) {
-        // todo
+        var clas = irRoot.classes.get(astNode.name);
+        for (var methodDefine : astNode.methodDefines)
+            buildFunction(methodDefine, clas);
+        if (clas.constructor.blocks.isEmpty()) {
+            // Generate default empty constructor
+            var onlyBlock = new IrBlock();
+            clas.constructor.returnBlock = onlyBlock;
+            onlyBlock.jumpInstruction = new IrInstruction(
+                    IrInstruction.Genre.RETURN,
+                    new IrType(IrType.Genre.VOID));
+            clas.constructor.blocks.add(onlyBlock);
+        }
+
+        // ? 这一段或许有些冗长且混乱
+        var clasType = new IrType(clas);
+        var thisPtr = clas.constructor.arguments.getFirst();
+        currentBlock = new IrBlock();
+        for (var fieldName : clas.fields.keySet()) {
+//        for (var fieldPair : clas.fields.values()) {
+            var fieldPair = clas.fields.get(fieldName);
+            if (fieldPair.b.genre != IrType.Genre.COMPOSITE)
+                continue;
+            var objIns = new IrInstruction(IrInstruction.Genre.GET_ELEMENT_PTR);
+            objIns.objectType = clasType;
+            objIns.objectPtr = thisPtr;
+            objIns.eleIndexes = new LinkedList<>();
+            objIns.eleIndexes.add(0);
+            objIns.eleIndexes.add(fieldPair.a);
+            objIns.insId = new IrId(fieldPair.b.getPointer());
+            var callIns = new IrInstruction(IrInstruction.Genre.CALL,
+                    objIns.objectType.clas.constructor.returnType);
+            callIns.callName = objIns.insId.type.clas.constructor.name;
+            callIns.callArguments = new LinkedList<>();
+            callIns.callArguments.add(objIns.insId);
+            // Add member object constructor to the beginning of constructor
+            buildComment(String.format("Initialize '%s %s'",
+                    fieldPair.b.clas.name, fieldName));
+            currentBlock.instructions.add(objIns);
+            currentBlock.instructions.add(callIns);
+        }
+        for (int i = currentBlock.instructions.size() - 1; i >= 0; i--) {
+            clas.constructor.blocks.getFirst().instructions
+                    .addFirst(currentBlock.instructions.get(i));
+        }
     }
 
-    public void buildFunction(NodeFunctionDefine astNode) {
-        currentFunction = irRoot.functions.get(astNode.name);
+    public void buildFunction(NodeFunctionDefine astNode, IrClass clas) {
+        var isMethod = (clas != null);
+        currentFunction = isMethod
+                ? (astNode.type == null ? clas.constructor : clas.methods.get(astNode.name))
+                : irRoot.functions.get(astNode.name);
         var firstBlock = new IrBlock();
         currentFunction.blocks.add(firstBlock);
         currentBlock = firstBlock;
 
+        if (cmdArgs.contains(CmdArgument.ArgumentType.DEBUG)) {
+            var str = new StringBuilder();
+            str.append(String.format("\nFunction '%s %s(...)', arguments:\n",
+                    currentFunction.returnType, currentFunction.name));
+            if (astNode.argumentList == null)
+                str.append("No argument\n");
+            else {
+                for (int i = 0, len = astNode.argumentList.identifiers.size();
+                     i < len; i++) {
+                    str.append(currentFunction.arguments.get(i).type)
+                            .append(' ')
+                            .append(astNode.argumentList.identifiers.get(i));
+                    if (i < len - 1) str.append(", ");
+                    else str.append('\n');
+                }
+            }
+            System.out.println(str);
+        }
+
         // Set new scope
         var currentScope = new HashMap<String, IrId>();
+        if (isMethod) {
+            currentScope.put( // Set 'this'
+                    "this", currentFunction.arguments.getFirst());
+        }
         var arguments = astNode.argumentList;
         if (arguments != null) {
             var len = arguments.types.size();
             for (int i = 0; i < len; i++) {
-                var argVal = currentFunction.arguments.get(i);
+                var argVal = currentFunction.arguments.get(
+                        isMethod ? (i + 1) : i);
                 var insAlloca = new IrInstruction(
                         IrInstruction.Genre.ALLOCA,
                         argVal.type);
@@ -283,10 +405,6 @@ public class IrBuilder {
         buildSuite(astNode.suite);
 
         // Jump to return block
-        /* todo
-        if(currentBlock.instructions.isEmpty()){
-            // Set empty current block as return block
-        } */
         buildJumpToBlock(retBlock, true);
         currentFunction.blocks.add(retBlock);
 
@@ -320,30 +438,36 @@ public class IrBuilder {
      * Build variable define instructions and put variable pointer into scopeStack.
      */
     public void buildVariableTerm(NodeType astType, NodeVariableTerm astTerm, boolean isGlobal) {
+        var type = new IrType(astType);
         var initExpr = astTerm.initialExpression;
         IrInstruction ins;
         if (isGlobal) {
-            var type = new IrType(astType);
+            // currentFunction is set to INITIAL_FUNCTION at visitVariableDefine()
             ins = new IrInstruction(
                     IrInstruction.Genre.GLOBAL_VARIABLE,
                     new IrId(type.getPointer(), GLOBAL_VARIABLE_PREFIX + astTerm.name));
             irRoot.variableDefines.add(ins);
             // 将新定义的全局变量 (ins.insId) 放至作用域栈底 (全局变量区域)
             scopeStack.getLast().put(astTerm.name, ins.insId);
-            if (initExpr != null) {
-                // 在 Initial Function 中生成初始化指令
-                var initVal = buildExpression(initExpr, false);
-                buildAssignToMem(initVal, ins.insId);
-            }
+
         } else {
-            ins = new IrInstruction(IrInstruction.Genre.ALLOCA, new IrType(astType));
+            ins = new IrInstruction(IrInstruction.Genre.ALLOCA, type);
             currentBlock.instructions.add(ins);
             // 将新定义的局部变量 (ins.insId) 放至作用域栈顶 (当前局部变量区域)
             scopeStack.peek().put(astTerm.name, ins.insId);
-            if (initExpr != null) {
-                var rstId = buildExpression(initExpr, false);
-                buildAssignToMem(rstId, ins.insId);
-            }
+        }
+        // Initialize variable
+        if (initExpr != null) {
+            var initVal = buildExpression(initExpr, false);
+            buildAssignToMem(initVal, ins.insId);
+        } else if (type.genre == IrType.Genre.COMPOSITE) {  // Object
+            var clas = type.clas;
+            var func = clas.constructor;
+            var callIns = new IrInstruction(IrInstruction.Genre.CALL, func.returnType);
+            callIns.callName = func.name;
+            callIns.callArguments = new LinkedList<>();
+            callIns.callArguments.add(ins.insId);   // Add 'this'
+            currentBlock.instructions.add(callIns);
         }
     }
 
@@ -478,12 +602,8 @@ public class IrBuilder {
                 }
                 buildJumpToBlock(currentFunction.returnBlock, false);
             }
-            case SINGLE_EXPRESSION -> {
-                buildExpression(astNode.singleExpr, false);
-            }
-            case VARIABLE_DEFINE -> {
-                visitVariableDefine(astNode.variableDefine, false);
-            }
+            case SINGLE_EXPRESSION -> buildExpression(astNode.singleExpr, false);
+            case VARIABLE_DEFINE -> visitVariableDefine(astNode.variableDefine, false);
             // case EMPTY
         }
     }
@@ -512,16 +632,38 @@ public class IrBuilder {
                 var atomNode = astNode.atom;
                 IrId atomId = null;
                 switch (atomNode.genre) {
-                    case THIS, IDENTIFIER -> {
-                        var variableName = (atomNode.genre == NodeAtom.Genre.THIS)
-                                ? THIS_VARIABLE_NAME : atomNode.identifier;
-                        for (var scope : scopeStack) {
-                            atomId = scope.get(variableName);
-                            if (atomId != null) break;
+                    case THIS -> atomId = currentFunction.arguments.getFirst();
+                    case IDENTIFIER -> {
+                        var varName = atomNode.identifier;
+                        // Local variable
+                        for (int i = 0, len = scopeStack.size();
+                             (i < len - 1) && (atomId == null); i++) {
+                            atomId = scopeStack.get(i).get(varName);
                         }
+                        // Class field
+                        var clas = currentFunction.clas;
+                        if (atomId == null && clas != null) {
+                            var entry = clas.fields
+                                    .get(atomNode.identifier);
+                            if (entry != null) {
+                                var ins = new IrInstruction(IrInstruction.Genre.GET_ELEMENT_PTR);
+                                ins.objectType = new IrType(clas);
+                                // Get 'this'
+                                ins.objectPtr = currentFunction.arguments.getFirst();
+                                ins.eleIndexes = new LinkedList<>();
+                                ins.eleIndexes.add(0);          // Get class content
+                                ins.eleIndexes.add(entry.a);    // Get pointer of field by its index
+                                ins.insId = new IrId(entry.b.getPointer()); // Set instruction type
+                                currentBlock.instructions.add(ins);
+                                atomId = ins.insId;
+                            }
+                        }
+                        if (atomId == null)
+                            atomId = scopeStack.getLast().get(varName);
                         if (atomId == null) throw new InternalError(
                                 "IR",
-                                "Cannot find identifier definition in buildExpression()");
+                                String.format("Cannot find definition of identifier '%s'" +
+                                        " in buildExpression()", atomNode.identifier));
                         if (!isLeftValue) {
                             // Get variable value when variable at right value expression.
                             atomId = buildGetFromMem(atomId);
@@ -540,25 +682,93 @@ public class IrBuilder {
                 return atomId;
             }
             case MEMBER -> {
-                throwTodoError("buildExpression_2");
-                // todo
+                // * 使用递归解决类方法中 ATOM 为成员变量时, 会生成难以合并的 getelementptr 指令
+                IrId objPtr = buildExpression(astNode.objectExpr, true);
+                IrInstruction ins;
+                if ((!currentBlock.instructions.isEmpty()) &&
+                        (currentBlock.instructions.getLast().genre
+                                == IrInstruction.Genre.GET_ELEMENT_PTR)) {
+                    // 子节点为成员变量, 已生成 getelementptr 指令
+                    ins = currentBlock.instructions.getLast();
+                } else {
+                    ins = new IrInstruction(IrInstruction.Genre.GET_ELEMENT_PTR);
+                    ins.objectType = objPtr.type.getNotPointer();
+                    ins.objectPtr = objPtr;
+                    ins.eleIndexes = new LinkedList<>();
+                    ins.eleIndexes.add(0);
+                    currentBlock.instructions.add(ins);
+                }
+                var fieldPair = objPtr.type.clas.fields
+                        .get(astNode.memberName);
+                ins.eleIndexes.add(fieldPair.a);
+                // Just abandon original IrId
+                ins.insId = new IrId(fieldPair.b.getPointer());
+
+                return isLeftValue ? ins.insId : buildGetFromMem(ins.insId);
+
+                /* * 原实现方式二, 手动收集子节点信息, 将连续成员调用合并为单个 getelementptr 指令
+                var memberNodes = new LinkedList<NodeExpression>();
+                while (astNode.genre == NodeExpression.Genre.MEMBER) {
+                    memberNodes.addFirst(astNode);
+                    astNode = astNode.objectExpr;
+                }
+                IrId objPtr = buildExpression(astNode, true);
+                var ins = new IrInstruction(IrInstruction.Genre.GET_ELEMENT_PTR);
+                ins.objectType = objPtr.type.getNotPointer();
+                ins.objectPtr = objPtr;
+                ins.eleIndexes = new LinkedList<>();
+                ins.eleIndexes.add(0);
+                var objType = objPtr.type;
+                for (var node : memberNodes) {
+                    var fieldPair = objType.clas.fields
+                            .get(node.memberName);
+                    ins.eleIndexes.add(fieldPair.a);
+                    objType = fieldPair.b;
+                }
+                ins.insId = new IrId(objType.getPointer());
+                currentBlock.instructions.add(ins);
+
+                return isLeftValue ? ins.insId : buildGetFromMem(ins.insId);*/
+
+                /* * 原实现方式一, 每一次成员调用均生成一个 getelementptr 指令
+                // Get object pointer
+                var objPtr = buildExpression(astNode.objectExpr, true);
+                // 参考 AST 部分, 类方法调用在 FUNCTION 中实现
+                var ins = new IrInstruction(IrInstruction.Genre.GET_ELEMENT_PTR);
+                ins.objectType = objPtr.type.getNotPointer();
+                ins.objectPtr = objPtr;
+                ins.eleIndexes = new LinkedList<>();
+                ins.eleIndexes.add(0);
+                var fieldPair = objPtr.type.clas.fields
+                        .get(astNode.memberName);
+                ins.eleIndexes.add(fieldPair.a);
+                ins.insId = new IrId(fieldPair.b.getPointer());
+                currentBlock.instructions.add(ins);
+                return isLeftValue ? ins.insId
+                        : buildGetFromMem(ins.insId);*/
             }
             case ARRAY -> {
                 throwTodoError("buildExpression_3");
-                // todo
+                // ! todo
             }
             case FUNCTION -> {
-                String funcName = null;
-                switch (astNode.functionExpr.genre) {
-                    case ATOM -> funcName = astNode.functionExpr.atom.identifier;
-                    case MEMBER -> throwTodoError("Call method");
-                    default -> throwUnexpectedError();
-                }
-                var func = irRoot.functions.get(funcName);
+                var isMethod = (astNode.functionExpr.genre == NodeExpression.Genre.MEMBER);
+                IrFunction func = null;
+                final var funcName = isMethod
+                        ? astNode.functionExpr.memberName
+                        : astNode.functionExpr.atom.identifier;
+                IrId objPtr = null;
+
+                if (isMethod) {
+                    objPtr = buildExpression(astNode.functionExpr.objectExpr, true);
+                    func = objPtr.type.clas.methods.get(funcName);
+                } else func = irRoot.functions.get(funcName);
+
                 var ins = new IrInstruction(IrInstruction.Genre.CALL, func.returnType);
                 ins.callName = func.name;
                 // NodeExpressionList is only used in Function Call
                 ins.callArguments = new LinkedList<>();
+                if (objPtr != null) ins.callArguments.add(objPtr);  // Add 'this'
                 for (var expr : astNode.arguments.expressions)
                     ins.callArguments.add(buildExpression(expr, false));
                 currentBlock.instructions.add(ins);
@@ -573,7 +783,7 @@ public class IrBuilder {
             case NEW -> {
                 var ins = new IrInstruction(IrInstruction.Genre.CALL);
                 throwTodoError("buildExpression_4");
-                // todo Call function 'malloc'
+                // ! todo Call function 'malloc'
             }
             // * Arithmetic
             case SELF -> { // 后缀++/--
@@ -658,9 +868,65 @@ public class IrBuilder {
             }
             case BINARY -> {
                 switch (astNode.operator) {
-                    case AND, OR -> {
-                        // 短路求值
-                        // todo
+                    case AND, OR -> { // phi 指令实现短路求值
+                        var isAND = (astNode.operator == NodeExpression.OpEnum.AND);
+                        var originalJumpIns = currentBlock.jumpInstruction;
+                        var nextBlock = new IrBlock();
+                        var nextExprBlock = new IrBlock();
+
+                        final var boolType = new IrType(IrType.Genre.I1);
+                        var phiIns = new IrInstruction(
+                                IrInstruction.Genre.PHI,
+                                boolType);
+                        phiIns.phiArgs = new LinkedList<>();
+                        // Collect all expression
+                        // 为方便优化, 需要将多个连续 &&/|| 以一个 phi 指令完成
+                        // 连续的 &&/|| 结点在 AST 中是左偏的二叉树
+                        var exprs = new LinkedList<NodeExpression>();
+                        var exprNode = astNode;
+                        while (exprNode.genre == NodeExpression.Genre.BINARY &&
+                                exprNode.operator == (isAND
+                                        ? NodeExpression.OpEnum.AND : NodeExpression.OpEnum.OR)) {
+                            exprs.addFirst(exprNode.rTermExpr);
+                            exprNode = exprNode.lTermExpr;
+                        }
+                        exprs.addFirst(exprNode);
+
+                        for (int i = 0, len = exprs.size(); i < len; i++) {
+                            if (i == 0) {   // First expression
+                                phiIns.phiArgs.add(new Pair<>(
+                                        new IrId(boolType, (isAND ? 0 : 1)),
+                                        currentBlock.label));
+                                buildBranch(
+                                        buildExpression(exprs.get(i), false),
+                                        isAND ? nextExprBlock : nextBlock,
+                                        isAND ? nextBlock : nextExprBlock);
+                            } else if (i < len - 1) {
+                                currentFunction.blocks.add(nextExprBlock);
+                                currentBlock = nextExprBlock;
+                                nextExprBlock = new IrBlock();
+                                phiIns.phiArgs.add(new Pair<>(
+                                        new IrId(boolType, (isAND ? 0 : 1)),
+                                        currentBlock.label));
+                                buildBranch(
+                                        buildExpression(exprs.get(i), false),
+                                        isAND ? nextExprBlock : nextBlock,
+                                        isAND ? nextBlock : nextExprBlock);
+                            } else {    // Last expression
+                                currentFunction.blocks.add(nextExprBlock);
+                                currentBlock = nextExprBlock;
+                                phiIns.phiArgs.add(new Pair<>(
+                                        buildExpression(exprs.get(i), false),
+                                        currentBlock.label));
+                                buildJumpToBlock(nextBlock, false);
+                            }
+                        }
+                        currentFunction.blocks.add(nextBlock);
+                        currentBlock = nextBlock;
+                        currentBlock.jumpInstruction = originalJumpIns;
+
+                        currentBlock.instructions.add(phiIns);
+                        return phiIns.insId;
                     }
                     default -> {
                         var lOperand = buildExpression(astNode.lTermExpr, false);

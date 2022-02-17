@@ -1,6 +1,7 @@
 package frontend.ir;
 
 import frontend.ast.node.NodeType;
+import frontend.ir.node.IrClass;
 import utility.error.InternalError;
 
 import java.util.Objects;
@@ -16,10 +17,15 @@ public class IrType implements Cloneable {
 
     public Genre genre = null;
     public int dimension = 0;   // 多级指针
-    public String className = null;
+    public IrClass clas = null;
 
     public IrType(Genre genre_) {
         genre = genre_;
+    }
+
+    public IrType(IrClass clas_) {
+        genre = Genre.COMPOSITE;
+        clas = clas_;
     }
 
     public IrType(NodeType astType) {
@@ -28,11 +34,13 @@ public class IrType implements Cloneable {
             case INTEGER -> genre = Genre.I32;
             case STRING -> {
                 genre = Genre.COMPOSITE;
-                className = STRING_CLASS_NAME;
+                // todo
+                IrBuilder.throwTodoError("String type");
             }
             case CLASS_NAME -> {
                 genre = Genre.COMPOSITE;
-                className = astType.type.className;
+                clas = IrBuilder.irRoot.classes
+                        .get(astType.type.className);
             }
             case VOID -> genre = Genre.VOID;
             default -> throw new InternalError(
@@ -69,18 +77,10 @@ public class IrType implements Cloneable {
     public String toString() {
         StringBuilder typeName = new StringBuilder();
         switch (genre) {
-            case I1 -> {
-                typeName = new StringBuilder("i1");
-            }
-            case I32 -> {
-                typeName = new StringBuilder("i32");
-            }
-            case VOID -> {
-                typeName = new StringBuilder("void");
-            }
-            case COMPOSITE -> {
-                typeName = new StringBuilder(className);
-            }
+            case I1 -> typeName.append("i1");
+            case I32 -> typeName.append("i32");
+            case VOID -> typeName.append("void");
+            case COMPOSITE -> typeName.append("%class.").append(clas.name);
         }
         typeName.append("*".repeat(dimension));
         return typeName.toString();
@@ -92,8 +92,7 @@ public class IrType implements Cloneable {
                 return "0";
             }
             case COMPOSITE -> {
-                IrBuilder.throwTodoError("toZeroInitString()");
-                return null;
+                return "zeroinitializer";
             }
             default -> throw new InternalError(
                     "IR",
@@ -107,7 +106,7 @@ public class IrType implements Cloneable {
             IrType clone = (IrType) super.clone();
             clone.genre = genre;
             clone.dimension = dimension;
-            clone.className = className;
+            clone.clas = clas;
             return clone;
         } catch (CloneNotSupportedException e) {
             throw new AssertionError();
@@ -119,11 +118,13 @@ public class IrType implements Cloneable {
         if (this == o) return true;
         if (o == null || getClass() != o.getClass()) return false;
         IrType irType = (IrType) o;
-        return dimension == irType.dimension && genre == irType.genre && Objects.equals(className, irType.className);
+        return dimension == irType.dimension
+                && genre == irType.genre
+                && Objects.equals(clas, irType.clas);
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(STRING_CLASS_NAME, genre, dimension, className);
+        return Objects.hash(STRING_CLASS_NAME, genre, dimension, clas);
     }
 }

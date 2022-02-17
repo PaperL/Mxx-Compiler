@@ -5,16 +5,19 @@ import java.util.LinkedList;
 import frontend.ir.IrId;
 import frontend.ir.IrType;
 import frontend.ir.IrBuilder;
+import org.antlr.v4.runtime.misc.Pair;
 
 public class IrInstruction extends IrNode {
     public enum Genre {
         COMMENT,
-        DECLARE, GLOBAL_VARIABLE, TYPE,
+        DECLARE, GLOBAL_VARIABLE,
         ALLOCA,
         LOAD, STORE,
         BRANCH, JUMP,
         CALL, RETURN,
+        PHI,
         ARITH,
+        GET_ELEMENT_PTR,
     }
 
     public Genre genre = null;
@@ -25,7 +28,6 @@ public class IrInstruction extends IrNode {
     // Declare
     public String declareInfo = null;
     // Global Variable
-    // todo Type (for Class Member Variable)
     // Alloca
     // Load
     public IrId loadAddress = null;
@@ -43,7 +45,11 @@ public class IrInstruction extends IrNode {
     public LinkedList<IrId> callArguments = null;
     // Return
     public IrId returnValue = null;
+    // Phi φ
+    // Pair<Value, Label>
+    public LinkedList<Pair<IrId, IrId>> phiArgs = null;
 
+    // Arith
     public enum operatorGenre {
         // I32 and STRING
         ADD, GT, LT, GE, LE,
@@ -54,18 +60,21 @@ public class IrInstruction extends IrNode {
         SHIFT_L, SHIFT_R,
         // I32 and I1
         AND, OR, XOR,
-    }
-    // 一元操作符 ~ 和 ! 均可视为 xor -1
+    }   // 一元操作符 ~ 和 ! 均可视为 xor -1
 
-    // Arith
     public operatorGenre opGenre = null;
     public IrId arithOperandLeft = null;
     public IrId arithOperandRight = null;
 
+    // getelementptr (Member and Array)
+    public IrType objectType;
+    public IrId objectPtr;
+    public LinkedList<Integer> eleIndexes = null;
+
     public IrInstruction(Genre genre_) {
         genre = genre_;
         switch (genre) {
-            case COMMENT, DECLARE, TYPE, BRANCH, JUMP -> {
+            case COMMENT, DECLARE, BRANCH, JUMP, GET_ELEMENT_PTR -> {
             }
             default -> IrBuilder.throwUnexpectedError();
         }
@@ -78,8 +87,8 @@ public class IrInstruction extends IrNode {
     public IrInstruction(Genre genre_, IrType insType) {
         genre = genre_;
         switch (genre) {
-            case LOAD, STORE, CALL,
-                    RETURN, ARITH -> insId = new IrId(insType);
+            case LOAD, STORE, CALL, RETURN,
+                    ARITH, PHI -> insId = new IrId(insType);
             case ALLOCA -> insId = new IrId(insType.getPointer());
             // GLOBAL_VARIABLE should use IrInstruction(Genre, IrId)
             default -> IrBuilder.throwUnexpectedError();
@@ -94,7 +103,7 @@ public class IrInstruction extends IrNode {
     @Override
     public void genIndex() {
         switch (genre) {
-            case ALLOCA, LOAD, ARITH -> insId.setIndex();
+            case ALLOCA, LOAD, ARITH, PHI, GET_ELEMENT_PTR -> insId.setIndex();
             case CALL -> {
                 if (insId.type.genre != IrType.Genre.VOID)
                     insId.setIndex();
@@ -129,10 +138,6 @@ public class IrInstruction extends IrNode {
                         insId,
                         insType.getNotPointer(),
                         insType.getNotPointer().toZeroInitString());
-            }
-            case TYPE -> {
-                // todo
-                IrBuilder.throwTodoError("ins_1");
             }
             case ALLOCA -> {
                 // %1 = alloca i32
@@ -176,8 +181,9 @@ public class IrInstruction extends IrNode {
                     argStrBuilder.append(arg.type).append(' ')
                             .append(arg).append(", ");
                 }
-                argStrBuilder.delete(argStrBuilder.length() - 2,
-                        argStrBuilder.length());    // 删除末尾 ", "
+                if (!callArguments.isEmpty())
+                    argStrBuilder.delete(argStrBuilder.length() - 2,
+                            argStrBuilder.length());    // 删除末尾 ", "
                 return ((insType.genre == IrType.Genre.VOID)
                         ? "" : (insId + " = "))
                         + String.format("call %s @%s(%s)",
@@ -190,9 +196,19 @@ public class IrInstruction extends IrNode {
                     return "ret " + insType;    // ret void
                 else return "ret " + insType + " " + returnValue;   // ret i32 %1
             }
+            case PHI -> {
+                var argBuilder = new StringBuilder();
+                for (var arg : phiArgs)
+                    argBuilder.append(String.format(
+                            "[ %s, %s ], ", arg.a, arg.b));
+                argBuilder.delete(argBuilder.length() - 2, argBuilder.length());
+                return String.format("%s = phi %s %s",
+                        insId,
+                        insType,
+                        argBuilder);
+            }
             case ARITH -> {
                 String opStr = null;
-                // todo
                 switch (opGenre) {
                     case ADD -> opStr = "add";
                     case GT -> opStr = "icmp sgt";
@@ -216,6 +232,18 @@ public class IrInstruction extends IrNode {
                         insId, opStr, insType,
                         arithOperandLeft,
                         arithOperandRight);
+            }
+            case GET_ELEMENT_PTR -> {
+                // %2 = getelementptr %class.CC, %class.CC* %1, i32 0, i32 0
+                var argBuilder = new StringBuilder();
+                for (var id : eleIndexes)
+                    argBuilder.append(String.format("i32 %s, ", id));
+                argBuilder.delete(argBuilder.length() - 2, argBuilder.length());
+                return String.format("%s = getelementptr %s, %s %s, %s",
+                        insId,
+                        objectType,
+                        objectType.getPointer(), objectPtr,
+                        argBuilder);
             }
         }
         IrBuilder.throwTodoError("NO RETURN");

@@ -9,8 +9,8 @@ public class IrFunction extends IrNode {
     public IrType returnType = null;
     // Function name with FUNCTION_PREFIX at beginning
     public String name = null;
+    public IrClass clas = null;
     public LinkedList<IrId> arguments = new LinkedList<>();
-    // public IrRegName  id = null;    // Attributes
 
     public IrId retValPtr = null;
     public IrBlock returnBlock = null;

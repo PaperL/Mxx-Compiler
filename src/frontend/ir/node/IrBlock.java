@@ -1,9 +1,8 @@
 package frontend.ir.node;
 
-import java.util.LinkedList;
-
-import frontend.ir.IrBuilder;
 import frontend.ir.IrId;
+
+import java.util.LinkedList;
 
 public class IrBlock extends IrNode {
     public IrId label = new IrId();
@@ -25,9 +24,10 @@ public class IrBlock extends IrNode {
     @Override
     public String toString() {
         var tot = new StringBuilder();
-        if (!isFirstBlock) {
-            tot.append(label.getLabel()).append(":\n");   // 省略 "0:"
-        } else isFirstBlock = false;
+        var labelId = label.getLabel();     // 即使省略也占用命名
+        if (!isFirstBlock)
+            tot.append(labelId).append(":\n");   // 省略 "0:"
+        else isFirstBlock = false;
         for (var ins : instructions) {
             if (ins.genre != IrInstruction.Genre.COMMENT) tot.append("  ");
             tot.append(ins).append("\n");

@@ -14,6 +14,8 @@ functionDefine: type? IDENTIFIER PAREN_L argumentList? PAREN_R suite;
 argumentList: type IDENTIFIER (COMMA type IDENTIFIER)* COMMA?;
 
 variableDefine: type variableTerm (COMMA variableTerm)* COMMA?;
+// todo regenreate and update parser and ir
+//variableTerm: IDENTIFIER ((ASSIGN expression) | (PAREN_L expressionList? PAREN_R))?;
 variableTerm: IDENTIFIER (ASSIGN expression)?;
 
 type: (VOID | BOOL | INT | STRING | IDENTIFIER (PAREN_L PAREN_R)?) bracket*;
