@@ -1,7 +1,9 @@
 package frontend.ir.node;
 
 import org.antlr.v4.runtime.misc.Pair;
+
 import java.util.LinkedHashMap;
+
 import frontend.ir.IrType;
 
 public class IrClass extends IrNode {
@@ -13,6 +15,8 @@ public class IrClass extends IrNode {
 
     @Override
     public void genIndex() {
+        constructor.genIndex();
+        for (var method : methods.values()) method.genIndex();
     }
 
     @Override
@@ -27,7 +31,7 @@ public class IrClass extends IrNode {
         if (!fields.isEmpty()) fieldsStr.delete(   // 删除末尾 ", "
                 fieldsStr.length() - 2, fieldsStr.length());
         tot.append(String.format("%s = type { %s }\n",
-                new IrType(this),
+                new IrType(this).getNotPointer(),
                 fieldsStr));
         // Constructor
         tot.append('\n').append(constructor);

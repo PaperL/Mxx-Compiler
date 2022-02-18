@@ -10,8 +10,7 @@ public class IrType implements Cloneable {
     public final String STRING_CLASS_NAME = "__STRING";
 
     public enum Genre {
-        I1, I32, VOID, COMPOSITE
-        // ? ARRAY
+        I1, I8, I32, VOID, COMPOSITE
     }
     // No I8
 
@@ -26,8 +25,13 @@ public class IrType implements Cloneable {
     public IrType(IrClass clas_) {
         genre = Genre.COMPOSITE;
         clas = clas_;
+        dimension = 1;
     }
 
+    /**
+     * * For class, type is class pointer
+     * * Object is just reference
+     */
     public IrType(NodeType astType) {
         switch (astType.type.genre) {
             case BOOLEAN -> genre = Genre.I1;
@@ -41,12 +45,14 @@ public class IrType implements Cloneable {
                 genre = Genre.COMPOSITE;
                 clas = IrBuilder.irRoot.classes
                         .get(astType.type.className);
+                dimension++;
             }
             case VOID -> genre = Genre.VOID;
             default -> throw new InternalError(
                     "IR",
                     "Unexpected AstType when Constructing IrType");
         }
+        dimension += astType.type.dimension;
     }
 
     /**
@@ -74,21 +80,43 @@ public class IrType implements Cloneable {
         return ret;
     }
 
+    public int sizeof() {
+        int size = 0;
+        if (genre == Genre.COMPOSITE) {
+            if (dimension != 1) size = 4;
+            else {
+                for (var field : clas.fields.values())
+                    size += field.b.sizeof();
+            }
+        } else if (dimension != 0) size = 4;
+        else {
+            switch (genre) {
+                case I1 -> size = 1;
+                case I8 -> size = 1;
+                case I32 -> size = 4;
+                default -> IrBuilder.throwUnexpectedError();
+            }
+        }
+        return size;
+    }
+
     public String toString() {
         StringBuilder typeName = new StringBuilder();
         switch (genre) {
             case I1 -> typeName.append("i1");
+            case I8 -> typeName.append("i8");
             case I32 -> typeName.append("i32");
             case VOID -> typeName.append("void");
             case COMPOSITE -> typeName.append("%class.").append(clas.name);
         }
+        if (dimension < 0) IrBuilder.throwUnexpectedError();
         typeName.append("*".repeat(dimension));
         return typeName.toString();
     }
 
     public String toZeroInitString() {
         switch (genre) {
-            case I1, I32 -> {
+            case I1, I8, I32 -> {
                 return "0";
             }
             case COMPOSITE -> {

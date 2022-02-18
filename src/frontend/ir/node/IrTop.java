@@ -17,6 +17,7 @@ public class IrTop extends IrNode {
 
     @Override
     public void genIndex() {
+        for (var clas: classes.values()) clas.genIndex();
         for (var func : functions.values()) func.genIndex();
     }
 
@@ -29,13 +30,13 @@ public class IrTop extends IrNode {
                 "; === Declare ===\n\n");
         for (var declare : declares) tot.append(declare).append('\n');
 
+        tot.append("\n\n; === Global Variable ===\n\n");
+        for (var varDef : variableDefines) tot.append(varDef).append('\n');
+
         tot.append("\n\n; === Class Field ===\n\n");
         for (var clas : classes.values())
             tot.append(clas).append("\n");
         if (!classes.isEmpty()) tot.deleteCharAt(tot.length() - 1); // 多余空行
-
-        tot.append("\n\n; === Global Variable ===\n\n");
-        for (var varDef : variableDefines) tot.append(varDef).append('\n');
 
         tot.append("\n\n; === Function ===\n\n");
         for (var func : functions.values())

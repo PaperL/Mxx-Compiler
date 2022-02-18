@@ -150,4 +150,5 @@
 - LLVM IR 指令中类型指操作数的类型，在绝大多数情况下等同于指令结果的类型，但 `icmp` 指令除外，例如 `icmp eq i32 %1, %2`，该指令返回值始终为 `i1`
 - LLVM IR `phi` 指令支持大于等于 2 个块的情况，但当前仅实现 2 个块
 - 类中 `this` 指针作为不可更改的变量出现，故在 IR 中该变量被访问时无需 `load` 而可直接使用
+- LLVM IR 中不允许 `void*`, 应使用 `i8*` (https://llvm.org/docs/LangRef.html#pointer-type)
 

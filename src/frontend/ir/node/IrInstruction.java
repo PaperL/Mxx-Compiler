@@ -8,6 +8,7 @@ import frontend.ir.IrBuilder;
 import org.antlr.v4.runtime.misc.Pair;
 
 public class IrInstruction extends IrNode {
+    // region BASIC
     public enum Genre {
         COMMENT,
         DECLARE, GLOBAL_VARIABLE,
@@ -18,6 +19,7 @@ public class IrInstruction extends IrNode {
         PHI,
         ARITH,
         GET_ELEMENT_PTR,
+        BITCAST,
     }
 
     public Genre genre = null;
@@ -29,6 +31,7 @@ public class IrInstruction extends IrNode {
     public String declareInfo = null;
     // Global Variable
     // Alloca
+    public IrId allocaQuantity = null;
     // Load
     public IrId loadAddress = null;
     // Store
@@ -67,9 +70,12 @@ public class IrInstruction extends IrNode {
     public IrId arithOperandRight = null;
 
     // getelementptr (Member and Array)
-    public IrType objectType;
     public IrId objectPtr;
-    public LinkedList<Integer> eleIndexes = null;
+    public LinkedList<IrId> eleIndexes = null;
+
+    // bitcast (Directly cast pointer type)
+    public IrId castPtr;
+    // endregion
 
     public IrInstruction(Genre genre_) {
         genre = genre_;
@@ -88,7 +94,7 @@ public class IrInstruction extends IrNode {
         genre = genre_;
         switch (genre) {
             case LOAD, STORE, CALL, RETURN,
-                    ARITH, PHI -> insId = new IrId(insType);
+                    ARITH, PHI, BITCAST -> insId = new IrId(insType);
             case ALLOCA -> insId = new IrId(insType.getPointer());
             // GLOBAL_VARIABLE should use IrInstruction(Genre, IrId)
             default -> IrBuilder.throwUnexpectedError();
@@ -103,7 +109,8 @@ public class IrInstruction extends IrNode {
     @Override
     public void genIndex() {
         switch (genre) {
-            case ALLOCA, LOAD, ARITH, PHI, GET_ELEMENT_PTR -> insId.setIndex();
+            case ALLOCA, LOAD, ARITH, PHI,
+                    GET_ELEMENT_PTR, BITCAST -> insId.setIndex();
             case CALL -> {
                 if (insId.type.genre != IrType.Genre.VOID)
                     insId.setIndex();
@@ -141,9 +148,13 @@ public class IrInstruction extends IrNode {
             }
             case ALLOCA -> {
                 // %1 = alloca i32
-                return String.format("%s = alloca %s",
+                // %2 = alloca i1, i32 3    // bool[3]
+                var quantityStr = (allocaQuantity == null)
+                        ? "" : (", i32 " + allocaQuantity);
+                return String.format("%s = alloca %s%s",
                         insId,
-                        insType.getNotPointer());
+                        insType.getNotPointer(),
+                        quantityStr);
             }
             case LOAD -> {
                 // %1 = load i32, i32* @a
@@ -237,13 +248,19 @@ public class IrInstruction extends IrNode {
                 // %2 = getelementptr %class.CC, %class.CC* %1, i32 0, i32 0
                 var argBuilder = new StringBuilder();
                 for (var id : eleIndexes)
-                    argBuilder.append(String.format("i32 %s, ", id));
+                    argBuilder.append(String.format(
+                            "%s %s, ", id.type, id));
                 argBuilder.delete(argBuilder.length() - 2, argBuilder.length());
                 return String.format("%s = getelementptr %s, %s %s, %s",
                         insId,
-                        objectType,
-                        objectType.getPointer(), objectPtr,
+                        objectPtr.type.getNotPointer(),
+                        objectPtr.type, objectPtr,
                         argBuilder);
+            }
+            case BITCAST -> {
+                // %2 = bitcast i8* %1 to i32*
+                return String.format("%s = bitcast %s %s to %s",
+                        insId, castPtr.type, castPtr, insType);
             }
         }
         IrBuilder.throwTodoError("NO RETURN");

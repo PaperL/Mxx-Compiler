@@ -78,7 +78,6 @@ public class IrId {
                 return ("@" + globalName);
             }
             case LOCAL, LABEL -> {
-                setIndex();
                 return ("%" + finalId);
             }
             case CONSTANT -> {

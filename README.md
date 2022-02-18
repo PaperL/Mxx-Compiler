@@ -13,7 +13,7 @@
 - 一个用 Java 编写的 Mx* 语言编译器, 功能为将字符串格式的源代码文件编译为汇编代码
 - 本项目为 ACM 班 20 级大二大作业, 题面见: [Compiler-2022](https://github.com/ACMClassCourses/Compiler-Design-Implementation)
 - 目前进度: `IR & Assembly`
-- 代码量: `2905 lines`（除空行与注释）
+- 代码量: `3029 lines`（除空行与注释）
 
 
 
