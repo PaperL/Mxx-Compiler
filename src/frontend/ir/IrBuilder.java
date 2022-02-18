@@ -467,6 +467,12 @@ public class IrBuilder {
             callIns.callName = func.name;
             callIns.callArguments = new LinkedList<>();
             callIns.callArguments.add(ins.insId);   // Add 'this'
+            if (astTerm.constructorArguments != null) {
+                for (var exprNode : astTerm.constructorArguments.expressions) {
+                    callIns.callArguments.add(
+                            buildExpression(exprNode, false));
+                }
+            }
             currentBlock.instructions.add(callIns);
         }
     }

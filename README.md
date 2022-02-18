@@ -13,7 +13,7 @@
 - 一个用 Java 编写的 Mx* 语言编译器, 功能为将字符串格式的源代码文件编译为汇编代码
 - 本项目为 ACM 班 20 级大二大作业, 题面见: [Compiler-2022](https://github.com/ACMClassCourses/Compiler-Design-Implementation)
 - 目前进度: `IR & Assembly`
-- 代码量: `2869 lines`（除空行与注释）
+- 代码量: `2905 lines`（除空行与注释）
 
 
 
@@ -25,10 +25,11 @@
   
 - 各部分具体实现说明详见 [DETAIL.md](https://github.com/PaperL/Mxx-Compiler/blob/main/DETAIL.md)
 
-- 题面基础要求以外实现的功能
+- 实现题面未定义功能 (标记 🍸 表示该功能不支持 Semantic Check)
   - 支持 ` \* *\ ` 注释
   - 支持逗号分割的列表末可有逗号 (例如: `fun(1, 2, 3,);`)
   - 支持含有前缀 `++` / `--` 的表达式作为左值
+  - 🍸 支持含参构造函数
   
 - 具体使用方式可参考 [localTest.bash](https://github.com/PaperL/Mxx-Compiler/blob/main/localTest.bash), 下表为程序运行附加参数
 

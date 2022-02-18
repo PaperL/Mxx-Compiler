@@ -87,6 +87,9 @@ public class AstBuilder extends MxxParserBaseVisitor<AstNode> {
         node.name = checkIdentifier(ctx.IDENTIFIER().getText(), ctx);
         var expression = ctx.expression();
         if (expression != null) node.initialExpression = (NodeExpression) visit(expression);
+
+        if (ctx.expressionList() != null)
+            node.constructorArguments = (NodeExpressionList) visit(ctx.expressionList());
         return node;
     }
 
