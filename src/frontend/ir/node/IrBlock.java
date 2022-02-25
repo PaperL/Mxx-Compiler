@@ -5,7 +5,7 @@ import frontend.ir.IrId;
 import java.util.LinkedList;
 
 public class IrBlock extends IrNode {
-    public IrId label = new IrId();
+    public IrId label = new IrId(IrId.Genre.LABEL);
     public LinkedList<IrInstruction> instructions = new LinkedList<>();
     public IrInstruction jumpInstruction = null;
 

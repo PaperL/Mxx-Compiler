@@ -11,7 +11,9 @@ import utility.error.InternalError;
  */
 public class IrId {
     public enum Genre {
-        GLOBAL, LOCAL, CONSTANT, LABEL
+        GLOBAL, LOCAL, CONSTANT,
+        NULL,
+        LABEL,
     }
 
     public Genre genre = null;
@@ -28,8 +30,8 @@ public class IrId {
     /**
      * @return LLVM label name
      */
-    public IrId() {
-        genre = Genre.LABEL;
+    public IrId(Genre genre_) {
+        genre = genre_;
     }
 
     /**
@@ -83,10 +85,12 @@ public class IrId {
             case CONSTANT -> {
                 return Integer.toString(constantValue);
             }
+            case NULL -> {
+                return "null";
+            }
         }
-        throw new InternalError(
-                "IR",
-                "Unexpected error in IrId.toString()");
+        IrBuilder.throwUnexpectedError();
+        return null;
     }
 
 

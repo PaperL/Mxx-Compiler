@@ -1,5 +1,6 @@
 package frontend.ir;
 
+import java.util.LinkedHashMap;
 import java.util.LinkedList;
 import java.util.HashMap;
 import java.util.Objects;
@@ -17,13 +18,34 @@ public class IrBuilder {
     // region BASIC
     public static CmdArgument cmdArgs = null;
 
+    // Internal naming prefix
     public final String GLOBAL_VARIABLE_PREFIX = "__VAR__";
-    public final String INITIAL_FUNCTION = "__INIT";
-    public final String NEW_FUNCTION = "__NEW_ON_HEAP";
-    public final String NEW_ARRAY_FUNCTION = "__NEW_ARRAY";
+    public final String CONSTANT_STRING_PREFIX = "__CONSTANT_STR__";
     public final String FUNCTION_PREFIX = "__FUNC__";
     public final String CLASS_CONSTRUCTOR_PREFIX = "__CONSTRUCTOR__";
     public final String CLASS_PREFIX = "__CLAS__", METHOD_PREFIX = "__MTHD__";
+
+    // Built-in basic functions
+    public final String INITIAL_FUNCTION = "__INIT";
+    public final String NEW_FUNCTION = "__NEW_ON_HEAP";
+    public final String NEW_ARRAY_FUNCTION = "__NEW_ARRAY";
+    // Built-in system functions
+    public final String PRINT_FUNCTION = "__PRINT";
+    public final String PRINTLN_FUNCTION = "__PRINTLN";
+    public final String PRINT_INT_FUNCTION = "__PRINT_INT";
+    public final String PRINTLN_INT_FUNCTION = "__PRINTLN_INT";
+    public final String GET_STRING_FUNCTION = "__GET_STRING";
+    public final String GET_INT_FUNCTION = "__GET_INT";
+    public final String TO_STRING_FUNCTION = "__TO_STRING";
+    // Bulit-in string functions
+    public final String STRING_ADD_FUNCTION = "__STRING_ADD";
+    public final String STRING_EQUAL_FUNCTION = "__STRING_EQUAL";
+    public final String STRING_NOT_EQUAL_FUNCTION = "__STRING_NOT_EQUAL";
+    public final String STRING_LESS_FUNCTION = "__STRING_LESS";
+    public final String STRING_GREATER_FUNCTION = "__STRING_GREATER";
+    public final String STRING_LESS_OR_EQUAL_FUNCTION = "__STRING_LESS_OR_EQUAL";
+    public final String STRING_GREATER_OR_EQUAL_FUNCTION = "__STRING_GREATER_OR_EQUAL";
+
 
     public static final IrTop irRoot = new IrTop();
     public IrFunction currentFunction = null;
@@ -31,20 +53,124 @@ public class IrBuilder {
     // scopeStack 中变量名无 GLOBAL_VARIABLE_PREFIX 前缀
     // 但对应的 IrId 名称含有前缀
     public final LinkedList<HashMap<String, IrId>> scopeStack = new LinkedList<>();
+    // 常量字符串计数器
+    public int constantStringCnt = 0;
 
     // For Continue and Break, is 'null' when out of loop
     public final LinkedList<IrBlock> loopCondBlockStack = new LinkedList<>();
     public final LinkedList<IrBlock> loopNextBlockStack = new LinkedList<>();
 
-
     public IrBuilder(CmdArgument cmdArgs_) {
         cmdArgs = cmdArgs_;
         scopeStack.push(new HashMap<>());   // Global scope
+        init();
     }
 
     public String print() {
         irRoot.genIndex();
         return irRoot.toString();
+    }
+
+    public void setFunction(String callName, String insideName, IrType returnType,
+                            LinkedHashMap<String, IrFunction> funcMap) {
+        var func = new IrFunction();
+        func.name = insideName;
+        func.returnType = returnType;
+        funcMap.put(callName, func);
+    }
+
+    public void setFunction(String funcName, IrType returnType,
+                            LinkedHashMap<String, IrFunction> funcMap) {
+        var func = new IrFunction();
+        func.name = funcName;
+        func.returnType = returnType;
+        funcMap.put(funcName, func);
+    }
+
+    public void init() {
+        // Basic information
+        buildDeclare(String.format("""
+                        target datalayout = "e-m:e-p:32:32-i64:64-n32-S128"
+                        target triple = "riscv32"
+                                        
+                        declare i8* @%s(i32)
+                        declare i8* @%s(i32, i32, i32*)
+                                                
+                        declare void @%s(i8*)
+                        declare void @%s(i8*)
+                        declare void @%s(i32)
+                        declare void @%s(i32)
+                        declare i8* @%s()
+                        declare i32 %s()
+                        declare i8* @%s(i32)
+                                                
+                        declare i8* @%s(i8*, i8*)
+                        declare i1  @%s(i8*, i8*)
+                        declare i1  @%s(i8*, i8*)
+                        declare i1  @%s(i8*, i8*)
+                        declare i1  @%s(i8*, i8*)
+                        declare i1  @%s(i8*, i8*)
+                        declare i1  @%s(i8*, i8*)""",
+                NEW_FUNCTION,
+                NEW_ARRAY_FUNCTION,
+
+                PRINT_FUNCTION,
+                PRINTLN_FUNCTION,
+                PRINT_INT_FUNCTION,
+                PRINTLN_INT_FUNCTION,
+                GET_STRING_FUNCTION,
+                GET_INT_FUNCTION,
+                TO_STRING_FUNCTION,
+
+                STRING_ADD_FUNCTION,
+                STRING_EQUAL_FUNCTION,
+                STRING_NOT_EQUAL_FUNCTION,
+                STRING_LESS_FUNCTION,
+                STRING_GREATER_FUNCTION,
+                STRING_LESS_OR_EQUAL_FUNCTION,
+                STRING_GREATER_OR_EQUAL_FUNCTION));
+
+        // Set built-in system functions
+        var funcMap = irRoot.functions;
+        // * 'string' type equals to 'i8*'
+        var voidType = new IrType(IrType.Genre.VOID);
+        var strType = (new IrType(IrType.Genre.I8)).getPointer();
+        // void print(string str);
+        setFunction("print", PRINT_FUNCTION, voidType, funcMap);
+        // void println(string str);
+        setFunction("println", PRINTLN_FUNCTION, voidType, funcMap);
+        // void printInt(int n);
+        setFunction("printInt", PRINT_INT_FUNCTION, voidType, funcMap);
+        // void printlnInt(int n);
+        setFunction("printlnInt", PRINTLN_INT_FUNCTION, voidType, funcMap);
+        // string getString();
+        setFunction("getString", GET_STRING_FUNCTION, strType, funcMap);
+        // int getInt();
+        setFunction("getInt", GET_INT_FUNCTION, new IrType(IrType.Genre.I32), funcMap);
+        // string toString(int i);
+        setFunction("toString", TO_STRING_FUNCTION, strType, funcMap);
+
+        // String functions
+        var boolType = new IrType(IrType.Genre.I1);
+        setFunction(STRING_ADD_FUNCTION, strType, funcMap);
+        setFunction(STRING_EQUAL_FUNCTION, boolType, funcMap);
+        setFunction(STRING_NOT_EQUAL_FUNCTION, boolType, funcMap);
+        setFunction(STRING_LESS_FUNCTION, boolType, funcMap);
+        setFunction(STRING_GREATER_FUNCTION, boolType, funcMap);
+        setFunction(STRING_LESS_OR_EQUAL_FUNCTION, boolType, funcMap);
+        setFunction(STRING_GREATER_OR_EQUAL_FUNCTION, boolType, funcMap);
+
+        // Add initialization function
+        // * 初始化函数只有一个 Block
+        IrFunction initFunc = new IrFunction();
+        initFunc.returnType = new IrType(IrType.Genre.VOID);
+        initFunc.name = INITIAL_FUNCTION;
+        var initFuncBlock = new IrBlock();
+        initFuncBlock.jumpInstruction = new IrInstruction(
+                IrInstruction.Genre.RETURN,
+                initFunc.returnType);
+        initFunc.blocks.add(initFuncBlock);
+        irRoot.functions.put(initFunc.name, initFunc);
     }
 
     // endregion
@@ -177,29 +303,8 @@ public class IrBuilder {
     // region Top Structure
     // Build* functions add sth to IR
     // Visit* functions just traverse AST
+
     public void buildRoot(NodeRoot astNode) {
-        // Basic information
-        buildDeclare(String.format("""
-                        target datalayout = "e-m:e-p:32:32-i64:64-n32-S128"
-                        target triple = "riscv32"
-                                        
-                        declare i8* @%s(i32)
-                        declare i8* @%s(i32, i32, i32*)""",
-                NEW_FUNCTION,
-                NEW_ARRAY_FUNCTION));
-
-        // Add initialization function
-        // * 初始化函数只有一个 Block
-        IrFunction initFunc = new IrFunction();
-        initFunc.returnType = new IrType(IrType.Genre.VOID);
-        initFunc.name = INITIAL_FUNCTION;
-        var initFuncBlock = new IrBlock();
-        initFuncBlock.jumpInstruction = new IrInstruction(
-                IrInstruction.Genre.RETURN,
-                initFunc.returnType);
-        initFunc.blocks.add(initFuncBlock);
-        irRoot.functions.put(initFunc.name, initFunc);
-
         // Depth-first traversal AST tree
         // 函数和类支持前向引用, 需要先收集符号
         // 而全局变量不支持前向引用
@@ -471,7 +576,6 @@ public class IrBuilder {
             irRoot.variableDefines.add(ins);
             // 将新定义的全局变量 (ins.insId) 放至作用域栈底 (全局变量区域)
             scopeStack.getLast().put(astTerm.name, ins.insId);
-
         } else {
             ins = new IrInstruction(IrInstruction.Genre.ALLOCA, type);
             currentBlock.instructions.add(ins);
@@ -706,7 +810,20 @@ public class IrBuilder {
                         atomId = new IrId(new IrType(IrType.Genre.I1),
                                 (atomNode.booleanValue) ? 1 : 0);   // Trans Boolean to I1
                     }
-                    default -> throwTodoError("buildExpression_1");
+                    case STRING_CONSTANT -> {
+                        var strName = CONSTANT_STRING_PREFIX + constantStringCnt++;
+                        // 同全局变量定义
+                        var ins = new IrInstruction(
+                                IrInstruction.Genre.GLOBAL_VARIABLE,
+                                new IrId((new IrType(IrType.Genre.I8,
+                                        atomNode.stringConstant.length() + 1)),
+                                        strName));
+                        ins.globalConstantString = atomNode.stringConstant + "\\00";
+                        irRoot.variableDefines.add(ins);
+                        scopeStack.getLast().put(strName, ins.insId);
+                        atomId = ins.insId; // return i8*
+                    }
+                    case NULL -> atomId = new IrId(IrId.Genre.NULL);
                 }
                 return atomId;
             }
@@ -750,7 +867,22 @@ public class IrBuilder {
 
                 if (isMethod) {
                     objPtr = buildExpression(astNode.functionExpr.objectExpr, false);
-                    func = objPtr.type.clas.methods.get(funcName);
+                    if (objPtr.type.isArray()) {
+                        // Get size of array
+                        if ((!funcName.equals("size"))
+                                || (astNode.arguments != null)) throwUnexpectedError();
+                        var castIns = new IrInstruction(IrInstruction.Genre.BITCAST,
+                                (new IrType(IrType.Genre.I32)).getPointer());
+                        castIns.castPtr = objPtr;
+                        currentBlock.instructions.add(castIns);
+                        var getPtrIns = new IrInstruction(IrInstruction.Genre.GET_ELEMENT_PTR);
+                        getPtrIns.insId = new IrId(castIns.insId.type);
+                        getPtrIns.objectPtr = castIns.insId;
+                        getPtrIns.eleIndexes = new LinkedList<>();
+                        getPtrIns.eleIndexes.add(createI32Constant(-1));
+                        currentBlock.instructions.add(getPtrIns);
+                        return buildGetFromMem(getPtrIns.insId);
+                    } else func = objPtr.type.clas.methods.get(funcName);
                 } else func = irRoot.functions.get(funcName);
 
                 var ins = new IrInstruction(IrInstruction.Genre.CALL, func.returnType);
@@ -758,6 +890,7 @@ public class IrBuilder {
                 // NodeExpressionList is only used in Function Call
                 ins.callArguments = new LinkedList<>();
                 if (objPtr != null) ins.callArguments.add(objPtr);  // Add 'this'
+                // ? todo 这里 astNode.arguments 可能会是 null ?
                 for (var expr : astNode.arguments.expressions)
                     ins.callArguments.add(buildExpression(expr, false));
                 currentBlock.instructions.add(ins);
@@ -766,6 +899,8 @@ public class IrBuilder {
             case ASSIGN -> {
                 var rValue = buildExpression(astNode.rValue, false);
                 var lValuePointer = buildExpression(astNode.lValue, true);
+                if (rValue.genre == IrId.Genre.NULL)
+                    rValue.type = lValuePointer.type.getNotPointer();
                 buildAssignToMem(rValue, lValuePointer);
                 return lValuePointer;
             }
@@ -1011,6 +1146,24 @@ public class IrBuilder {
                     default -> {
                         var lOperand = buildExpression(astNode.lTermExpr, false);
                         var rOperand = buildExpression(astNode.rTermExpr, false);
+                        if (astNode.operator == NodeExpression.OpEnum.EQ
+                                || astNode.operator == NodeExpression.OpEnum.NOT_EQ) {
+                            var isEq = (astNode.operator == NodeExpression.OpEnum.EQ);
+                            if (lOperand.genre == IrId.Genre.NULL || rOperand.genre == IrId.Genre.NULL) {
+                                if (lOperand.genre == rOperand.genre) {
+                                    // * 这里对于 null == null 的判断直接优化掉
+                                    return (new IrId(new IrType(IrType.Genre.I1),
+                                            (isEq ? 1 : 0)));
+                                } else if(lOperand.genre== IrId.Genre.NULL){
+                                    // null == obj
+                                    lOperand.type = rOperand.type;
+                                } else {
+                                    // 实际上该分支可以删除, 因为 IrInstruction 输出
+                                    // 比较类型时使用左操作数的类型
+                                    rOperand.type = lOperand.type;
+                                }
+                            }
+                        }
                         if (!lOperand.type.equals(rOperand.type)) throw new InternalError(
                                 "IR",
                                 "Left and Right Operand of NodeExpression(BINARY) have Different Type in buildExpression()");

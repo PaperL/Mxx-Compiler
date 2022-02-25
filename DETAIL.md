@@ -15,12 +15,21 @@
 
 
 
-## 具体实现备注
+## 题面笔记
 
 > 关于 g4 文件中的 program & programSection 节点\
 > 题面 13.4 要求: 全局变量和局部变量不支持前向引用\
 > 故不能将 programSection 规则直接在 program 中展开\
 > 13.5: 函数和类的声明都应该在顶层，作用域为全局，支持前向引用（forward reference）
+
+- `string`
+  - 具体实现直接视为 `i8*`
+  - 题面 7.1 中描述：`string`类型：字符串是引用类型，可以改变它的值但是本身不能被改变（immutable）。
+  - 此处 `immutable` 指 Java 这类语言中的对象的成员变量不可被修改，类似 C++ 中 `const`，而 `string` 变量可以更改指向的对象
+- `null`
+  - 仅数组和类允许为 `null`
+  - 相关操作仅有赋值和比较
+
 
 
 

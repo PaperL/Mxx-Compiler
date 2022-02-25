@@ -30,6 +30,7 @@ public class IrInstruction extends IrNode {
     // Declare
     public String declareInfo = null;
     // Global Variable
+    public String globalConstantString = null;
     // Alloca
     public IrId allocaQuantity = null;
     // Load
@@ -140,11 +141,20 @@ public class IrInstruction extends IrNode {
                 return declareInfo;
             }
             case GLOBAL_VARIABLE -> {
-                // @a = global i32 0
-                return String.format("%s = global %s %s",
-                        insId,
-                        insType.getNotPointer(),
-                        insType.getNotPointer().toZeroInitString());
+                if (insType.arrayLength != 0) {
+                    // @__CONSTANT_STR__1 = private unnamed_addr constant [5 x i8] c"abcd\00", align 1
+                    return String.format("%s = private unnamed_addr constant [%d x i8] "
+                                    + "c\"%s\", align 1 ",
+                            insId,
+                            insType.arrayLength,
+                            globalConstantString);
+                } else {
+                    // @a = global i32 0
+                    return String.format("%s = global %s %s",
+                            insId,
+                            insType.getNotPointer(),
+                            insType.getNotPointer().toZeroInitString());
+                }
             }
             case ALLOCA -> {
                 // %1 = alloca i32

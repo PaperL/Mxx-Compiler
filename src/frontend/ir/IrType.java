@@ -12,14 +12,22 @@ public class IrType implements Cloneable {
     public enum Genre {
         I1, I8, I32, VOID, COMPOSITE
     }
-    // No I8
+    // I8 only used for string
 
     public Genre genre = null;
     public int dimension = 0;   // 多级指针
     public IrClass clas = null;
+    // Constant string
+    public int arrayLength = 0;
 
     public IrType(Genre genre_) {
         genre = genre_;
+    }
+
+    public IrType(Genre genre_, int arrayLen) {
+        genre = genre_;
+        arrayLength = arrayLen;
+        dimension = 1;
     }
 
     public IrType(IrClass clas_) {
@@ -37,9 +45,8 @@ public class IrType implements Cloneable {
             case BOOLEAN -> genre = Genre.I1;
             case INTEGER -> genre = Genre.I32;
             case STRING -> {
-                genre = Genre.COMPOSITE;
-                // todo
-                IrBuilder.throwTodoError("String type");
+                genre = Genre.I8;
+                dimension++;
             }
             case CLASS_NAME -> {
                 genre = Genre.COMPOSITE;
@@ -78,6 +85,10 @@ public class IrType implements Cloneable {
                 "Current dimension is 0 in IrType.getNotPointer()");
         ret.dimension = dimension - 1;
         return ret;
+    }
+
+    public boolean isArray() {
+        return (dimension > (genre == Genre.COMPOSITE ? 1 : 0));
     }
 
     public int sizeof() {
