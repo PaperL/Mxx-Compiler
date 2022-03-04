@@ -101,7 +101,7 @@ public class IrBuilder {
                         declare void @%s(i32)
                         declare void @%s(i32)
                         declare i8* @%s()
-                        declare i32 %s()
+                        declare i32 @%s()
                         declare i8* @%s(i32)
                                                 
                         declare i8* @%s(i8*, i8*)
@@ -1154,7 +1154,7 @@ public class IrBuilder {
                                     // * 这里对于 null == null 的判断直接优化掉
                                     return (new IrId(new IrType(IrType.Genre.I1),
                                             (isEq ? 1 : 0)));
-                                } else if(lOperand.genre== IrId.Genre.NULL){
+                                } else if (lOperand.genre == IrId.Genre.NULL) {
                                     // null == obj
                                     lOperand.type = rOperand.type;
                                 } else {

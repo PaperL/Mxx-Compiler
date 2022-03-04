@@ -160,4 +160,14 @@
 - LLVM IR `phi` 指令支持大于等于 2 个块的情况，但当前仅实现 2 个块
 - 类中 `this` 指针作为不可更改的变量出现，故在 IR 中该变量被访问时无需 `load` 而可直接使用
 - LLVM IR 中不允许 `void*`, 应使用 `i8*` (https://llvm.org/docs/LangRef.html#pointer-type)
+- 将 C 语言代码编译成 riscv-32 指令
+  - `clang -emit-llvm -S built_in.c -I /usr/include --target=riscv32-unknown-elf`
+    - 要求安装 `rescv32 toolchain`（见 `/opt/riscv/bin/`）
 
+
+
+## 其他笔记
+
+- `gnu是组织; gcc是编译器; g++是gcc开一些编译选项的alias; llvm是个project; clang是llvm project的编译器`
+
+- Compile 中 Target 是与 Source 相对的概念，Compile 就是从 Source (Code) 到 Target (Assembly) 的过程。而 Asm 往往和 CPU 架构 (即指令集), 平台, 系统, ABI 有关 (可见https://clang.llvm.org/docs/CrossCompilation.html)
