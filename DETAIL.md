@@ -187,4 +187,3 @@
 - Compile 中 Target 是与 Source 相对的概念，Compile 就是从 Source (Code) 到 Target (Assembly) 的过程。而 Asm 往往和 CPU 架构 (即指令集), 平台, 系统, ABI 有关 (可见https://clang.llvm.org/docs/CrossCompilation.html)
 - ABI (Application Binary Interface) 应用程序二进制接口，为一系列规范 / 约定
   - Register 名称
-
