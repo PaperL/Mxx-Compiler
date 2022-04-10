@@ -3,8 +3,8 @@ package utility.error;
 import frontend.ast.AstPosition;
 
 abstract public class Error extends RuntimeException {
-    protected final String errorType, message;
-    protected final AstPosition position;
+    public final String errorType, message;
+    public final AstPosition position;
 
     public Error(String errType, String msg, AstPosition pos) {
         this.errorType = errType;

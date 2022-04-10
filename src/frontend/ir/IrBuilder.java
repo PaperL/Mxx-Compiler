@@ -46,7 +46,7 @@ public class IrBuilder {
     public final String STRING_LESS_OR_EQUAL_FUNCTION = "__STRING_LESS_OR_EQUAL";
     public final String STRING_GREATER_OR_EQUAL_FUNCTION = "__STRING_GREATER_OR_EQUAL";
 
-
+    // * Builer's Member Variables
     public static final IrTop irRoot = new IrTop();
     public IrFunction currentFunction = null;
     public IrBlock currentBlock = null;
@@ -101,7 +101,7 @@ public class IrBuilder {
                         declare void @%s(i32)
                         declare void @%s(i32)
                         declare i8* @%s()
-                        declare i32 %s()
+                        declare i32 @%s()
                         declare i8* @%s(i32)
                                                 
                         declare i8* @%s(i8*, i8*)
@@ -903,6 +903,7 @@ public class IrBuilder {
                     rValue.type = lValuePointer.type.getNotPointer();
                 buildAssignToMem(rValue, lValuePointer);
                 return lValuePointer;
+                
             }
             case NEW -> {
                 // In LLVM IR, 'VOID*' should be 'i8*'
@@ -1154,7 +1155,7 @@ public class IrBuilder {
                                     // * 这里对于 null == null 的判断直接优化掉
                                     return (new IrId(new IrType(IrType.Genre.I1),
                                             (isEq ? 1 : 0)));
-                                } else if(lOperand.genre== IrId.Genre.NULL){
+                                } else if (lOperand.genre == IrId.Genre.NULL) {
                                     // null == obj
                                     lOperand.type = rOperand.type;
                                 } else {

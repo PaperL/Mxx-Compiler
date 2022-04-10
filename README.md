@@ -12,8 +12,8 @@
 
 - 一个用 Java 编写的 Mx* 语言编译器, 功能为将字符串格式的源代码文件编译为汇编代码
 - 本项目为 ACM 班 20 级大二大作业, 题面见: [Compiler-2022](https://github.com/ACMClassCourses/Compiler-Design-Implementation)
-- 目前进度: `IR & Assembly`
-- 代码量: `3029 lines`（除空行与注释）
+- 目前进度: `Assembly`
+- 代码量: `3341 lines`（除空行与注释）
 
 
 
@@ -33,46 +33,52 @@
   
 - 具体使用方式可参考 [localTest.bash](https://github.com/PaperL/Mxx-Compiler/blob/main/localTest.bash), 下表为程序运行附加参数
 
-  - | 参数名称             | 参数功能                                            |
-    | -------------------- | --------------------------------------------------- |
-    | **--debug**          | 运行过程中输出易读的调试信息                        |
-    | **--local**          | 使用仓库自带测试数据, 并于终端输出程序运行情况      |
-    | **--semantic**       | 仅执行语法及语义检查                                |
-    | **--ir-source-code** | 输出 LLVM IR 时额外以注释的形式在对应位置输出源代码 |
+  - | 参数名称               | 参数功能                                       |
+    | ---------------------- | ---------------------------------------------- |
+    | **--debug**            | 运行过程中输出易读的调试信息                   |
+    | **--local**            | 使用仓库自带测试数据, 并于终端输出程序运行情况 |
+    | **--semantic**         | 仅执行语法及语义检查                           |
+    | **--ir**               | 仅生成 LLVM IR 并输出                          |
+    | **--ir-source-code**   | 输出 LLVM IR 时添加源代码注释                  |
+    | **--assembly-comment** | 输出汇编程序时添加注释                         |
+    | **-O**                 | 开启所有优化                                   |
 
 
 
+## 源代码结构
 
-## 源代码文件结构
+> 斜体为包名，加粗类名表示后续类与该类有实现或继承关系
 
 - Main
-- frontend
-    - parser *(Antlr4 生成)*
+- *frontend*
+    - *parser (由第三方库 Antlr4 生成)*
         - MxxLexer
         - MxxParser
-        - MxxParserBaseListener
-        - MxxParserListener
-        - MxxParserBaseVisitor
-        - MxxParserVisitor
-
-    - ast
-        - node
+        - **MxxParserListener**, MxxParserBaseListener
+        - **MxxParserVisitor**, MxxParserBaseVisitor
+        
+    - *ast*
+    - *node*
             - **AstNode**, NodeRoot, NodeProgramSection, NodeClassDefine, NodeFunctionDefine, NodeVariableDefine, NodeType, NodeArgumentList, NodeSuite, NodeVariableTerm, NodeExpression, NodeBracket, NodeStatement, NodeExpressionList, NodeAtom
-
-        - scope
-            - **VariableScope**, BroadScope, ClassScope, FunctionScope
-
+    
+        - *scope*
+        - **VariableScope**, BroadScope, ClassScope, FunctionScope
+    
         - AstPosition, AstType
-        - AstBuilder, ForwardCollector, SemanticChecker
-
-    - ir
-        - node
-            - **IrNode**, IrTop, IrFunction, IrBlock, IrInsturction
-
-        - IrType, IrId
-        - IrBuilder
-
-- utility
-    - error
+    - AstBuilder, ForwardCollector, SemanticChecker
+    
+    - *ir*
+    - *node*
+            - **IrNode**, IrTop, IrClass, IrFunction, IrBlock, IrInsturction
+    - IrType, IrId
+        - IrBuilder, IrOptimizer
+- *backend*
+    - *asm*
+        - *node*
+            - **AsmNode**, AsmTop, AsmFunction, AsmBlock, AsmInstruction
+        - AsmId, AsmStackFrame
+        - AsmBuilder, AsmOptimizer
+- *utility*
+    - *error*
         - **Error**, SyntaxError, SemanticError, InternalError
     - CmdArgument

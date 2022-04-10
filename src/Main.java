@@ -1,6 +1,8 @@
 import java.io.*;
+import java.util.Objects;
 import java.util.Scanner;
 
+import backend.asm.AsmBuilder;
 import org.antlr.v4.runtime.CharStreams;
 import org.antlr.v4.runtime.CommonTokenStream;
 
@@ -15,6 +17,7 @@ import frontend.ast.AstBuilder;
 import frontend.ast.ForwardCollector;
 import frontend.ast.SemanticChecker;
 import frontend.ir.IrBuilder;
+import utility.error.InternalError;
 
 public class Main {
     public static void main(String[] args) throws Exception {
@@ -39,9 +42,10 @@ public class Main {
 //        if (!rstFile.exists()) rstFile.createNewFile();
         var rstOut = new FileWriter(rstFile);   // FileWriter 会自动创建文件
 
+        var allStageFinished = false;
         try {
-            // * Frontend
-            // Semantic check
+            // ! FRONTEND
+            // * Lexically analyze and parse
             // MxxLexer, MxxParser, ParseTree 等均来自 Antlr4 生成
             var lexer = new MxxLexer(CharStreams.fromStream(inputStream));
             lexer.removeErrorListeners();
@@ -64,34 +68,48 @@ public class Main {
             forwardCollector.collectRoot(astRoot);
             outputStream.println("\033[36m🔨 Collecting forward reference symbol finished.\033[0m");
             // Class, class method and function name are collected
+
+            // * Semantic Check
             var semanticChecker = new SemanticChecker(forwardCollector.globalScope);
             semanticChecker.checkRoot(astRoot);
             outputStream.println("\033[36m🔨 Semantic check finished.\033[0m");
+            if (cmdArgs.contains(CmdArgument.ArgumentType.SEMANTIC))
+                throw new InternalError("Finished", "Semantic Check");
 
-            if (!cmdArgs.contains(CmdArgument.ArgumentType.SEMANTIC)) {
-                // Generate LLVM IR
-                var IrBuilder = new IrBuilder(cmdArgs);
-                IrBuilder.buildRoot(astRoot);
-                rstOut.write(IrBuilder.print());
-                outputStream.println("\033[36m🔨 IR generation finished.\033[0m");
+            // * Generate LLVM IR
+            var irBuilder = new IrBuilder(cmdArgs);
+            irBuilder.buildRoot(astRoot);
+            outputStream.println("\033[36m🔨 IR generation finished.\033[0m");
+            outputStream.println("\033[33m🎗️ Frontend worked successfully.\033[0m");
+            if (cmdArgs.contains(CmdArgument.ArgumentType.IR)) {
+                rstOut.write(irBuilder.print());
+                throw new InternalError("Finished", "Generate LLVM IR");
             }
 
-            outputStream.println("\033[33m🎗️ Frontend worked successfully.\033[0m");
+            // ! BACKEND
+            // * Generate Assembly
+            var AsmBuilder = new AsmBuilder(cmdArgs);
+            AsmBuilder.buildRoot(irBuilder.irRoot);
+            rstOut.write(AsmBuilder.print());
+            outputStream.println("\033[33m🎗️ Backend worked successfully.\033[0m");
+            allStageFinished = true;
 
-            // * Backend
-            // Generate Assembly
-            // todo
-//            stdOut.println("\033[33m🎗️ Backend worked successfully.\033[0m");
-        } catch (Error error) {
+        } catch (Error err) {
 //            System.err.println(error);
-            error.printStackTrace();    // 输出异常位置
-            outputStream.println("\033[31m⚠️ Process terminated with error.\033[0m");
-            throw new RuntimeException("Compiling failed.");
+            if (Objects.equals(err.errorType, "Finished"))
+                outputStream.println("Compiler stops at stage \"" + err.message + "\".");
+            else {
+                err.printStackTrace();    // 输出异常位置
+                outputStream.println("\033[31m⚠️ Process terminated with error.\033[0m");
+                throw new RuntimeException("Compiling failed.");
+            }
         }
-        outputStream.println("\033[32m🎉 All work successfully finished.\033[0m");
-        if (!cmdArgs.contains(CmdArgument.ArgumentType.SEMANTIC))
+        if (allStageFinished) outputStream.println("\033[32m🎉 All work successfully finished.\033[0m");
+        if (cmdArgs.contains(CmdArgument.ArgumentType.SEMANTIC))
+            outputStream.println("No compiling result.");
+        else if (cmdArgs.contains(CmdArgument.ArgumentType.IR))
             outputStream.println("See IR result in \"output.ll\"");
-
+        else outputStream.println("See Assembly result in \"output.s\"");
         rstOut.close();
     }
 }

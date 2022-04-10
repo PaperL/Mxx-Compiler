@@ -22,6 +22,7 @@
 > 故不能将 programSection 规则直接在 program 中展开\
 > 13.5: 函数和类的声明都应该在顶层，作用域为全局，支持前向引用（forward reference）
 
+- 本作业样例见 [Yx 语言编译器 Demo](https://github.com/ZYHowell/Yx)
 - `string`
   - 具体实现直接视为 `i8*`
   - 题面 7.1 中描述：`string`类型：字符串是引用类型，可以改变它的值但是本身不能被改变（immutable）。
@@ -160,4 +161,30 @@
 - LLVM IR `phi` 指令支持大于等于 2 个块的情况，但当前仅实现 2 个块
 - 类中 `this` 指针作为不可更改的变量出现，故在 IR 中该变量被访问时无需 `load` 而可直接使用
 - LLVM IR 中不允许 `void*`, 应使用 `i8*` (https://llvm.org/docs/LangRef.html#pointer-type)
+- 将 C 语言代码编译成 riscv-32 指令
+  - `clang -emit-llvm -S built_in.c -I /usr/include --target=riscv32-unknown-elf`
+    - 要求安装 `rescv32 toolchain`（见 `/opt/riscv/bin/`）
+
+
+
+## ASM
+
+- Clang 生成的 `.s` 文件中，形如 `.LBB0_2` 的块名含义为：
+  - **L**ocal、**B**asic **B**lock、**0**-based Index、**2**th Block
+
+
+
+## TODO
+
+- IR 优化
+  - 删除无分支块间跳转语句
+
+
+
+## 其他笔记
+
+- `gnu是组织; gcc是编译器; g++是gcc开一些编译选项的alias; llvm是个project; clang是llvm project的编译器`
+- Compile 中 Target 是与 Source 相对的概念，Compile 就是从 Source (Code) 到 Target (Assembly) 的过程。而 Asm 往往和 CPU 架构 (即指令集), 平台, 系统, ABI 有关 (可见https://clang.llvm.org/docs/CrossCompilation.html)
+- ABI (Application Binary Interface) 应用程序二进制接口，为一系列规范 / 约定
+  - Register 名称
 
