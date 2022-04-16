@@ -1,13 +1,14 @@
+// JDK
 import java.io.*;
 import java.util.Objects;
 import java.util.Scanner;
-
-import backend.asm.AsmBuilder;
+// Third Party
 import org.antlr.v4.runtime.CharStreams;
 import org.antlr.v4.runtime.CommonTokenStream;
-
+// Local
 import utility.CmdArgument;
 import utility.error.Error;
+import utility.error.InternalError;
 
 import frontend.parser.MxxLexer;
 import frontend.parser.MxxParser;
@@ -17,7 +18,10 @@ import frontend.ast.AstBuilder;
 import frontend.ast.ForwardCollector;
 import frontend.ast.SemanticChecker;
 import frontend.ir.IrBuilder;
-import utility.error.InternalError;
+
+import backend.optimization.IrOptimizer;
+import backend.asm.AsmBuilder;
+import backend.optimization.AsmOptimizer;
 
 public class Main {
     public static void main(String[] args) throws Exception {
@@ -45,7 +49,7 @@ public class Main {
         var allStageFinished = false;
         try {
             // ! FRONTEND
-            // * Lexically analyze and parse
+            // * Lexically analyze and parse the source code, get AST
             // MxxLexer, MxxParser, ParseTree 等均来自 Antlr4 生成
             var lexer = new MxxLexer(CharStreams.fromStream(inputStream));
             lexer.removeErrorListeners();
@@ -69,14 +73,14 @@ public class Main {
             outputStream.println("\033[36m🔨 Collecting forward reference symbol finished.\033[0m");
             // Class, class method and function name are collected
 
-            // * Semantic Check
+            // * Semantic Check on AST
             var semanticChecker = new SemanticChecker(forwardCollector.globalScope);
             semanticChecker.checkRoot(astRoot);
             outputStream.println("\033[36m🔨 Semantic check finished.\033[0m");
             if (cmdArgs.contains(CmdArgument.ArgumentType.SEMANTIC))
                 throw new InternalError("Finished", "Semantic Check");
 
-            // * Generate LLVM IR
+            // * Generate LLVM IR from AST
             var irBuilder = new IrBuilder(cmdArgs);
             irBuilder.buildRoot(astRoot);
             outputStream.println("\033[36m🔨 IR generation finished.\033[0m");
@@ -85,15 +89,26 @@ public class Main {
                 rstOut.write(irBuilder.print());
                 throw new InternalError("Finished", "Generate LLVM IR");
             }
+            var irResult = IrBuilder.irRoot;
 
             // ! BACKEND
-            // * Generate Assembly
-            var AsmBuilder = new AsmBuilder(cmdArgs);
-            AsmBuilder.buildRoot(irBuilder.irRoot);
-            rstOut.write(AsmBuilder.print());
+            // * Optimize IR
+            var irOptimizer = new IrOptimizer(cmdArgs);
+            irOptimizer.work(irResult);
+
+            // * Generate Assembly from IR
+            var asmBuilder = new AsmBuilder(cmdArgs);
+            asmBuilder.buildRoot(irResult);
+            var asmResult = AsmBuilder.asmRoot;
+
+            // * Optimize Assembly
+            var asmOptimizer = new AsmOptimizer(cmdArgs);
+            asmOptimizer.work(asmResult);
+
+            // Finish Compiling
+            rstOut.write(asmBuilder.print());
             outputStream.println("\033[33m🎗️ Backend worked successfully.\033[0m");
             allStageFinished = true;
-
         } catch (Error err) {
 //            System.err.println(error);
             if (Objects.equals(err.errorType, "Finished"))
