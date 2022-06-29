@@ -1,9 +1,6 @@
 package frontend.ir;
 
-import java.util.LinkedHashMap;
-import java.util.LinkedList;
-import java.util.HashMap;
-import java.util.Objects;
+import java.util.*;
 
 import org.antlr.v4.runtime.misc.Pair;  // Not Java STL
 import utility.CmdArgument;
@@ -25,28 +22,51 @@ public class IrBuilder {
     public final String CLASS_CONSTRUCTOR_PREFIX = "__CONSTRUCTOR__";
     public final String CLASS_PREFIX = "__CLAS__", METHOD_PREFIX = "__MTHD__";
 
-    // Built-in basic functions
-    public final String INITIAL_FUNCTION = "__INIT";
-    public final String NEW_FUNCTION = "__NEW_ON_HEAP";
-    public final String NEW_ARRAY_FUNCTION = "__NEW_ARRAY";
-    // Built-in system functions
-    public final String PRINT_FUNCTION = "__PRINT";
-    public final String PRINTLN_FUNCTION = "__PRINTLN";
-    public final String PRINT_INT_FUNCTION = "__PRINT_INT";
-    public final String PRINTLN_INT_FUNCTION = "__PRINTLN_INT";
-    public final String GET_STRING_FUNCTION = "__GET_STRING";
-    public final String GET_INT_FUNCTION = "__GET_INT";
-    public final String TO_STRING_FUNCTION = "__TO_STRING";
-    // Bulit-in string functions
-    public final String STRING_ADD_FUNCTION = "__STRING_ADD";
-    public final String STRING_EQUAL_FUNCTION = "__STRING_EQUAL";
-    public final String STRING_NOT_EQUAL_FUNCTION = "__STRING_NOT_EQUAL";
-    public final String STRING_LESS_FUNCTION = "__STRING_LESS";
-    public final String STRING_GREATER_FUNCTION = "__STRING_GREATER";
-    public final String STRING_LESS_OR_EQUAL_FUNCTION = "__STRING_LESS_OR_EQUAL";
-    public final String STRING_GREATER_OR_EQUAL_FUNCTION = "__STRING_GREATER_OR_EQUAL";
+    // Internal Functions
+    public final Map<String, String> internalFuncName = Map.ofEntries(
+            // Built-in basic functions
+            Map.entry("_init", "__INIT"),
+            Map.entry("_new", "__NEW_ON_HEAP"),
+            Map.entry("_new_array", "__NEW_ARRAY"),
+            // Built-in system functions
+            Map.entry("print", "__PRINT"),
+            Map.entry("println", "__PRINTLN"),
+            Map.entry("printInt", "__PRINT_INT"),
+            Map.entry("printlnInt", "__PRINTLN_INT"),
+            Map.entry("getString", "__GET_STRING"),
+            Map.entry("getInt", "__GET_INT"),
+            Map.entry("toString", "__TO_STRING"),
+            // Built-in string functions
+            Map.entry("_string_add", "__STRING_ADD"),
+            Map.entry("_string_equal", "__STRING_EQUAL"),
+            Map.entry("_string_not_equal", "__STRING_NOT_EQUAL"),
+            Map.entry("_string_less", "__STRING_LESS"),
+            Map.entry("_string_greater", "__STRING_GREATER"),
+            Map.entry("_string_less_or_equal", "__STRING_LESS_OR_EQUAL"),
+            Map.entry("_string_greater_or_equal", "__STRING_GREATER_OR_EQUAL")
+    );
+//    public final String INITIAL_FUNCTION = "__INIT";
+//    // Built-in basic functions
+//    public final String NEW_FUNCTION = "__NEW_ON_HEAP";
+//    public final String NEW_ARRAY_FUNCTION = "__NEW_ARRAY";
+//    // Built-in system functions
+//    public final String PRINT_FUNCTION = "__PRINT";
+//    public final String PRINTLN_FUNCTION = "__PRINTLN";
+//    public final String PRINT_INT_FUNCTION = "__PRINT_INT";
+//    public final String PRINTLN_INT_FUNCTION = "__PRINTLN_INT";
+//    public final String GET_STRING_FUNCTION = "__GET_STRING";
+//    public final String GET_INT_FUNCTION = "__GET_INT";
+//    public final String TO_STRING_FUNCTION = "__TO_STRING";
+//    // Bulit-in string functions
+//    public final String STRING_ADD_FUNCTION = "__STRING_ADD";
+//    public final String STRING_EQUAL_FUNCTION = "__STRING_EQUAL";
+//    public final String STRING_NOT_EQUAL_FUNCTION = "__STRING_NOT_EQUAL";
+//    public final String STRING_LESS_FUNCTION = "__STRING_LESS";
+//    public final String STRING_GREATER_FUNCTION = "__STRING_GREATER";
+//    public final String STRING_LESS_OR_EQUAL_FUNCTION = "__STRING_LESS_OR_EQUAL";
+//    public final String STRING_GREATER_OR_EQUAL_FUNCTION = "__STRING_GREATER_OR_EQUAL";
 
-    // * Builer's Member Variables
+
     public static final IrTop irRoot = new IrTop();
     public IrFunction currentFunction = null;
     public IrBlock currentBlock = null;
@@ -87,84 +107,88 @@ public class IrBuilder {
         funcMap.put(funcName, func);
     }
 
+    // * Built-in
     public void init() {
         // Basic information
         buildDeclare(String.format("""
                         target datalayout = "e-m:e-p:32:32-i64:64-n32-S128"
                         target triple = "riscv32"
                                         
-                        declare i8* @%s(i32)
-                        declare i8* @%s(i32, i32, i32*)
+                        declare i8*  @%s(i32)
+                        declare i8*  @%s(i32, i32, i32*)
                                                 
                         declare void @%s(i8*)
                         declare void @%s(i8*)
                         declare void @%s(i32)
                         declare void @%s(i32)
-                        declare i8* @%s()
-                        declare i32 @%s()
-                        declare i8* @%s(i32)
+                        declare i8*  @%s()
+                        declare i32  @%s()
+                        declare i8*  @%s(i32)
                                                 
-                        declare i8* @%s(i8*, i8*)
-                        declare i1  @%s(i8*, i8*)
-                        declare i1  @%s(i8*, i8*)
-                        declare i1  @%s(i8*, i8*)
-                        declare i1  @%s(i8*, i8*)
-                        declare i1  @%s(i8*, i8*)
-                        declare i1  @%s(i8*, i8*)""",
-                NEW_FUNCTION,
-                NEW_ARRAY_FUNCTION,
+                        declare i8*  @%s(i8*, i8*)
+                        declare i1   @%s(i8*, i8*)
+                        declare i1   @%s(i8*, i8*)
+                        declare i1   @%s(i8*, i8*)
+                        declare i1   @%s(i8*, i8*)
+                        declare i1   @%s(i8*, i8*)
+                        declare i1   @%s(i8*, i8*)""",
+                internalFuncName.get("_new"),
+                internalFuncName.get("_new_array"),
 
-                PRINT_FUNCTION,
-                PRINTLN_FUNCTION,
-                PRINT_INT_FUNCTION,
-                PRINTLN_INT_FUNCTION,
-                GET_STRING_FUNCTION,
-                GET_INT_FUNCTION,
-                TO_STRING_FUNCTION,
+                internalFuncName.get("print"),
+                internalFuncName.get("println"),
+                internalFuncName.get("printInt"),
+                internalFuncName.get("printlnInt"),
+                internalFuncName.get("getString"),
+                internalFuncName.get("getInt"),
+                internalFuncName.get("toString"),
 
-                STRING_ADD_FUNCTION,
-                STRING_EQUAL_FUNCTION,
-                STRING_NOT_EQUAL_FUNCTION,
-                STRING_LESS_FUNCTION,
-                STRING_GREATER_FUNCTION,
-                STRING_LESS_OR_EQUAL_FUNCTION,
-                STRING_GREATER_OR_EQUAL_FUNCTION));
+                internalFuncName.get("_string_add"),
+                internalFuncName.get("_string_equal"),
+                internalFuncName.get("_string_not_equal"),
+                internalFuncName.get("_string_less"),
+                internalFuncName.get("_string_greater"),
+                internalFuncName.get("_string_less_or_equal"),
+                internalFuncName.get("_string_greater_or_equal")
+        ));
 
-        // Set built-in system functions
-        var funcMap = irRoot.functions;
-        // * 'string' type equals to 'i8*'
-        var voidType = new IrType(IrType.Genre.VOID);
-        var strType = (new IrType(IrType.Genre.I8)).getPointer();
-        // void print(string str);
-        setFunction("print", PRINT_FUNCTION, voidType, funcMap);
-        // void println(string str);
-        setFunction("println", PRINTLN_FUNCTION, voidType, funcMap);
-        // void printInt(int n);
-        setFunction("printInt", PRINT_INT_FUNCTION, voidType, funcMap);
-        // void printlnInt(int n);
-        setFunction("printlnInt", PRINTLN_INT_FUNCTION, voidType, funcMap);
-        // string getString();
-        setFunction("getString", GET_STRING_FUNCTION, strType, funcMap);
-        // int getInt();
-        setFunction("getInt", GET_INT_FUNCTION, new IrType(IrType.Genre.I32), funcMap);
-        // string toString(int i);
-        setFunction("toString", TO_STRING_FUNCTION, strType, funcMap);
 
-        // String functions
-        var boolType = new IrType(IrType.Genre.I1);
-        setFunction(STRING_ADD_FUNCTION, strType, funcMap);
-        setFunction(STRING_EQUAL_FUNCTION, boolType, funcMap);
-        setFunction(STRING_NOT_EQUAL_FUNCTION, boolType, funcMap);
-        setFunction(STRING_LESS_FUNCTION, boolType, funcMap);
-        setFunction(STRING_GREATER_FUNCTION, boolType, funcMap);
-        setFunction(STRING_LESS_OR_EQUAL_FUNCTION, boolType, funcMap);
-        setFunction(STRING_GREATER_OR_EQUAL_FUNCTION, boolType, funcMap);
+//        // Set built-in system functions
+//        var funcMap = irRoot.functions;
+//        // * 'string' type equals to 'i8*'
+//        var voidType = new IrType(IrType.Genre.VOID);
+//        var strType = (new IrType(IrType.Genre.I8)).getPointer();
+//        // void print(string str);
+//        setFunction("print", PRINT_FUNCTION, voidType, funcMap);
+//        // void println(string str);
+//        setFunction("println", PRINTLN_FUNCTION, voidType, funcMap);
+//        // void printInt(int n);
+//        setFunction("printInt", PRINT_INT_FUNCTION, voidType, funcMap);
+//        // void printlnInt(int n);
+//        setFunction("printlnInt", PRINTLN_INT_FUNCTION, voidType, funcMap);
+//        // string getString();
+//        setFunction("getString", GET_STRING_FUNCTION, strType, funcMap);
+//        // int getInt();
+//        setFunction("getInt", GET_INT_FUNCTION, new IrType(IrType.Genre.I32), funcMap);
+//        // string toString(int i);
+//        setFunction("toString", TO_STRING_FUNCTION, strType, funcMap);
+//
+//        // String functions
+//        var boolType = new IrType(IrType.Genre.I1);
+//        setFunction(STRING_ADD_FUNCTION, strType, funcMap);
+//        setFunction(STRING_EQUAL_FUNCTION, boolType, funcMap);
+//        setFunction(STRING_NOT_EQUAL_FUNCTION, boolType, funcMap);
+//        setFunction(STRING_LESS_FUNCTION, boolType, funcMap);
+//        setFunction(STRING_GREATER_FUNCTION, boolType, funcMap);
+//        setFunction(STRING_LESS_OR_EQUAL_FUNCTION, boolType, funcMap);
+//        setFunction(STRING_GREATER_OR_EQUAL_FUNCTION, boolType, funcMap);
+
 
         // Add initialization function
         // * 初始化函数只有一个 Block
         IrFunction initFunc = new IrFunction();
         initFunc.returnType = new IrType(IrType.Genre.VOID);
-        initFunc.name = INITIAL_FUNCTION;
+        initFunc.name = internalFuncName.get("_init");
         var initFuncBlock = new IrBlock();
         initFuncBlock.jumpInstruction = new IrInstruction(
                 IrInstruction.Genre.RETURN,
@@ -326,6 +350,8 @@ public class IrBuilder {
     }
 
     public void declareClass(NodeClassDefine astNode) {
+        if (astNode.builtIn) return;  // Just ignore built-in classes
+
         var clas = new IrClass();
         clas.name = astNode.name;
         // 题面 #14-命名空间:"类不可以和变量、函数重名". 故类名无需前缀
@@ -369,14 +395,21 @@ public class IrBuilder {
     }
 
     public void declareFunction(NodeFunctionDefine astNode, IrClass clas) {
+        // DO NOT ignore built-in functions
+
         var isMethod = (clas != null);
         var func = new IrFunction();
 
+        func.builtIn = astNode.builtIn;
         func.returnType = new IrType(astNode.type);
-        var funcNamePrefix = isMethod
-                ? (CLASS_PREFIX + clas.name + METHOD_PREFIX)
-                : ((Objects.equals(astNode.name, "main")) ? "" : FUNCTION_PREFIX);
-        func.name = funcNamePrefix + astNode.name;
+        if (astNode.builtIn)
+            func.name = internalFuncName.get(astNode.name);
+        else if (isMethod)
+            func.name = CLASS_PREFIX + clas.name + METHOD_PREFIX
+                    + astNode.name;
+        else if (Objects.equals(astNode.name, "main"))
+            func.name = "main";
+        else func.name = FUNCTION_PREFIX + astNode.name;
 
         if (isMethod) {
             func.clas = clas;
@@ -394,6 +427,8 @@ public class IrBuilder {
     }
 
     public void buildClass(NodeClassDefine astNode) {
+        if (astNode.builtIn) return;  // Just skip built-in classes
+
         var clas = irRoot.classes.get(astNode.name);
         for (var methodDefine : astNode.methodDefines)
             buildFunction(methodDefine, clas);
@@ -442,6 +477,8 @@ public class IrBuilder {
     }
 
     public void buildFunction(NodeFunctionDefine astNode, IrClass clas) {
+        if (astNode.builtIn) return; // Just skip built-in functions
+
         var isMethod = (clas != null);
         currentFunction = isMethod
                 ? (astNode.type == null ? clas.constructor : clas.methods.get(astNode.name))
@@ -552,7 +589,7 @@ public class IrBuilder {
     // region Statement
     public void visitVariableDefine(NodeVariableDefine astNode, boolean isGlobal) {
         if (isGlobal) {
-            currentFunction = irRoot.functions.get(INITIAL_FUNCTION);
+            currentFunction = irRoot.functions.get(internalFuncName.get("_init"));
             currentBlock = currentFunction.blocks.getLast();
         }
         buildSourceCodeComment(astNode);
@@ -868,6 +905,7 @@ public class IrBuilder {
                 if (isMethod) {
                     objPtr = buildExpression(astNode.functionExpr.objectExpr, false);
                     if (objPtr.type.isArray()) {
+                        // * INLINE
                         // Get size of array
                         if ((!funcName.equals("size"))
                                 || (astNode.arguments != null)) throwUnexpectedError();
@@ -890,9 +928,10 @@ public class IrBuilder {
                 // NodeExpressionList is only used in Function Call
                 ins.callArguments = new LinkedList<>();
                 if (objPtr != null) ins.callArguments.add(objPtr);  // Add 'this'
-                // ? todo 这里 astNode.arguments 可能会是 null ?
-                for (var expr : astNode.arguments.expressions)
-                    ins.callArguments.add(buildExpression(expr, false));
+                if (astNode.arguments != null) {
+                    for (var expr : astNode.arguments.expressions)
+                        ins.callArguments.add(buildExpression(expr, false));
+                }
                 currentBlock.instructions.add(ins);
                 return ins.insId;
             }
@@ -903,7 +942,7 @@ public class IrBuilder {
                     rValue.type = lValuePointer.type.getNotPointer();
                 buildAssignToMem(rValue, lValuePointer);
                 return lValuePointer;
-                
+
             }
             case NEW -> {
                 // In LLVM IR, 'VOID*' should be 'i8*'
@@ -928,7 +967,7 @@ public class IrBuilder {
                         var callIns = new IrInstruction(
                                 IrInstruction.Genre.CALL,
                                 i8PtrType);
-                        callIns.callName = NEW_ARRAY_FUNCTION;
+                        callIns.callName = internalFuncName.get("_new_array");
                         callIns.callArguments = new LinkedList<>();
                         callIns.callArguments.add(
                                 createI32Constant(newType.sizeof()));
@@ -984,7 +1023,7 @@ public class IrBuilder {
                     var callIns = new IrInstruction(
                             IrInstruction.Genre.CALL,
                             i8PtrType);
-                    callIns.callName = NEW_FUNCTION;
+                    callIns.callName = internalFuncName.get("_new");
                     callIns.callArguments = new LinkedList<>();
                     callIns.callArguments.add(
                             createI32Constant(

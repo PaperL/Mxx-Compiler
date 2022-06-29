@@ -3,6 +3,7 @@ package frontend.ast.node;
 import frontend.ast.AstPosition;
 
 public class NodeFunctionDefine extends AstNode {
+    public boolean builtIn = false;
     public NodeType type = null;
     public String name = null;
     public NodeArgumentList argumentList = null;

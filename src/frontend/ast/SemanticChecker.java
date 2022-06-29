@@ -3,6 +3,7 @@ package frontend.ast;
 import java.util.Objects;
 import java.util.LinkedList;
 import java.util.ArrayList;
+
 import utility.error.SemanticError;
 import frontend.ast.node.*;
 import frontend.ast.scope.*;
@@ -29,154 +30,9 @@ public class SemanticChecker {
         scopeStack = new LinkedList<>();
         scopeStack.push(globalScope_);
         scopeGenreStack = new LinkedList<>();
-
-        // region Built-in function
-        // void print(string str);
-        globalScope.defineFunction(createFunction(
-                new AstType(AstType.Genre.VOID, false),
-                "print",
-                new AstType(AstType.Genre.STRING, false),
-                "str"
-        ));
-        // void println(string str);
-        globalScope.defineFunction(createFunction(
-                new AstType(AstType.Genre.VOID, false),
-                "println",
-                new AstType(AstType.Genre.STRING, false),
-                "str"
-        ));
-        // void printInt(int n);
-        globalScope.defineFunction(createFunction(
-                new AstType(AstType.Genre.VOID, false),
-                "printInt",
-                new AstType(AstType.Genre.INTEGER, false),
-                "n"
-        ));
-        // void printlnInt(int n);
-        globalScope.defineFunction(createFunction(
-                new AstType(AstType.Genre.VOID, false),
-                "printlnInt",
-                new AstType(AstType.Genre.INTEGER, false),
-                "n"
-        ));
-        // string getString();
-        globalScope.defineFunction(createFunction(
-                new AstType(AstType.Genre.STRING, false),
-                "getString",
-                null,
-                null
-        ));
-        // int getInt();
-        globalScope.defineFunction(createFunction(
-                new AstType(AstType.Genre.INTEGER, false),
-                "getInt",
-                null,
-                null
-        ));
-        // string toString(int i);
-        globalScope.defineFunction(createFunction(
-                new AstType(AstType.Genre.STRING, false),
-                "toString",
-                new AstType(AstType.Genre.INTEGER, false),
-                "i"
-        ));
-        // endregion
-
-        // region Built-in method
-        var nullPos = new AstPosition(-1, -1);
-
-        globalScope.defineClass(builtInStringClassName, nullPos);
-        var stringClass = globalScope.getClass(builtInStringClassName, nullPos);
-        // int length();
-        stringClass.defineMethod(createFunction(
-                new AstType(AstType.Genre.INTEGER, false),
-                "length",
-                null,
-                null
-        ));
-        // string substring(int left, int right);
-        stringClass.defineMethod(createFunction(
-                new AstType(AstType.Genre.STRING, false),
-                "substring",
-                new AstType(AstType.Genre.INTEGER, false), new AstType(AstType.Genre.INTEGER, false),
-                "left", "right"
-        ));
-        // int parseInt();
-        stringClass.defineMethod(createFunction(
-                new AstType(AstType.Genre.INTEGER, false),
-                "parseInt",
-                null,
-                null
-        ));
-        // int ord(int pos);
-        stringClass.defineMethod(createFunction(
-                new AstType(AstType.Genre.INTEGER, false),
-                "ord",
-                new AstType(AstType.Genre.INTEGER, false),
-                "pos"
-        ));
-
-        globalScope.defineClass(builtInArrayClassName, nullPos);
-        var arrayClass = globalScope.getClass(builtInArrayClassName, nullPos);
-        // int size();
-        arrayClass.defineMethod(createFunction(
-                new AstType(AstType.Genre.INTEGER, false),
-                "size",
-                null,
-                null
-        ));
-        // endregion
     }
 
     // region Tools
-    // Built-in function with single or none argument
-    public NodeFunctionDefine createFunction(
-            AstType returnType,
-            String name,
-            AstType argumentType,      // Built-in functions have no more
-            String argumentName     // than one argument.
-    ) {
-        var pos = new AstPosition(-1, -1);  // null position
-        var node = new NodeFunctionDefine(pos);
-        node.type = new NodeType(pos);
-        node.type.type = returnType;
-        node.name = name;
-        node.argumentList = new NodeArgumentList(pos);
-        if (argumentType != null) {
-            var typeNode = new NodeType(pos);
-            typeNode.type = argumentType;
-            node.argumentList.types.add(typeNode);
-            node.argumentList.identifiers.add(argumentName);
-        }
-        node.suite = new NodeSuite(pos);
-        return node;
-    }
-
-    // Built-in function with two argument
-    public NodeFunctionDefine createFunction(
-            AstType returnType,
-            String name,
-            AstType argumentType1, AstType argumentType2,
-            String argumentName1, String argumentName2
-    ) {
-        var pos = new AstPosition(-1, -1);  // null position
-        var node = new NodeFunctionDefine(pos);
-        node.type = new NodeType(pos);
-        node.type.type = returnType;
-        node.name = name;
-        node.argumentList = new NodeArgumentList(pos);
-        var typeNode1 = new NodeType(pos);
-        var typeNode2 = new NodeType(pos);
-        typeNode1.type = argumentType1;
-        typeNode2.type = argumentType2;
-        node.argumentList.types.add(typeNode1);
-        node.argumentList.types.add(typeNode2);
-        node.argumentList.identifiers.add(argumentName1);
-        node.argumentList.identifiers.add(argumentName2);
-        node.suite = new NodeSuite(pos);
-        return node;
-    }
-
     // Jump check
     public boolean in_loop() {
         for (var genre : scopeGenreStack)
@@ -221,6 +77,9 @@ public class SemanticChecker {
         // And the rule that class member variable cannot
         // be initialized when defining is also managed
         // in class ForwardCollector.
+
+        if (node.builtIn) return;  // Just skip built-in classes
+
         currentClassName = node.name;
         var classScope = globalScope.getClass(currentClassName, node.position);
         var currentScope = new VariableScope(globalScope);
@@ -236,6 +95,7 @@ public class SemanticChecker {
     }
 
     public void checkFunctionDefine(NodeFunctionDefine node) {
+        if (node.builtIn) return;   // Just skip built-in functions
         // Same as comment of NodeClassDefine
         var currentScope = new VariableScope(globalScope);
         if (in_class()) {

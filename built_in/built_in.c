@@ -71,4 +71,4 @@ char __STRING_GREATER(char *str1, char *str2) { return (strcmp(str1, str2) > 0);
 
 char __STRING_LESS_OR_EQUAL(char *str1, char *str2) { return (strcmp(str1, str2) <= 0); }
 
-char __STRING_GREATER_OR_EQUAL(char *str1, char *str2) { return (strcmp(str1, str2) >= 0);
+char __STRING_GREATER_OR_EQUAL(char *str1, char *str2) { return (strcmp(str1, str2) >= 0); }

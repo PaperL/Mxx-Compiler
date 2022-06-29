@@ -65,6 +65,7 @@ public class Main {
             NodeRoot astRoot;
             var astBuilder = new AstBuilder();
             astRoot = (NodeRoot) astBuilder.visit(parseTreeRoot);
+            astBuilder.generateBuiltIn(astRoot);
             outputStream.println("\033[36m🔨 Building AST finished.\033[0m");
             // AST 树构建完成后, package frontend.parser 不再被使用
 

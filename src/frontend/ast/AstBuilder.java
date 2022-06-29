@@ -8,12 +8,18 @@ import frontend.ast.node.*;
 
 public class AstBuilder extends MxxParserBaseVisitor<AstNode> {
 
+    public final String builtInStringClassName = "__STRING__";
+    public final String builtInArrayClassName = "__ARRAY__";
+
+    // region tools
     public String checkIdentifier(String text, ParserRuleContext ctx) {
         if (text.charAt(0) == '_')
             throw new SemanticError("Get identifier begins with '_'", new AstPosition(ctx));
         return text;
     }
+    // endregion
 
+    // region ast
     @Override
     public AstNode visitProgram(MxxParser.ProgramContext ctx) {
         var node = new NodeRoot(new AstPosition(ctx));
@@ -429,6 +435,168 @@ public class AstBuilder extends MxxParserBaseVisitor<AstNode> {
 
         return node;
     }
+    // endregion
+
+    // region built-in
+
+    public NodeProgramSection generateProgramSection(NodeFunctionDefine node) {
+        var section = new NodeProgramSection(null);
+        section.genre = NodeProgramSection.Genre.FUNCTION_DEFINE;
+        section.functionDefine = node;
+        return section;
+    }
+
+    public NodeProgramSection generateProgramSection(NodeClassDefine node) {
+        var section = new NodeProgramSection(null);
+        section.genre = NodeProgramSection.Genre.CLASS_DEFINE;
+        section.classDefineNode = node;
+        return section;
+    }
+
+    // * Built-in
+    public void generateBuiltIn(NodeRoot node) {
+        // region Built-in function
+
+        // void print(string str);
+        node.programSections.add(generateProgramSection(createBuiltInFunction(
+                new AstType(AstType.Genre.VOID, false),
+                "print",
+                new AstType(AstType.Genre.STRING, false),
+                "str"
+        )));
+        // void println(string str);
+        node.programSections.add(generateProgramSection(createBuiltInFunction(
+                new AstType(AstType.Genre.VOID, false),
+                "println",
+                new AstType(AstType.Genre.STRING, false),
+                "str"
+        )));
+        // void printInt(int n);
+        node.programSections.add(generateProgramSection(createBuiltInFunction(
+                new AstType(AstType.Genre.VOID, false),
+                "printInt",
+                new AstType(AstType.Genre.INTEGER, false),
+                "n"
+        )));
+        // void printlnInt(int n);
+        node.programSections.add(generateProgramSection(createBuiltInFunction(
+                new AstType(AstType.Genre.VOID, false),
+                "printlnInt",
+                new AstType(AstType.Genre.INTEGER, false),
+                "n"
+        )));
+        // string getString();
+        node.programSections.add(generateProgramSection(createBuiltInFunction(
+                new AstType(AstType.Genre.STRING, false),
+                "getString"
+        )));
+        // int getInt();
+        node.programSections.add(generateProgramSection(createBuiltInFunction(
+                new AstType(AstType.Genre.INTEGER, false),
+                "getInt"
+        )));
+        // string toString(int i);
+        node.programSections.add(generateProgramSection(createBuiltInFunction(
+                new AstType(AstType.Genre.STRING, false),
+                "toString",
+                new AstType(AstType.Genre.INTEGER, false),
+                "i"
+        )));
+        // endregion
+
+        // region Built-in method
+
+        var stringClass = new NodeClassDefine(null);
+        stringClass.builtIn = true;
+        stringClass.name = builtInStringClassName;
+        node.programSections.add(generateProgramSection(stringClass));
+        // int length();
+        stringClass.methodDefines.add(createBuiltInFunction(
+                new AstType(AstType.Genre.INTEGER, false),
+                "length"
+        ));
+        // string substring(int left, int right);
+        stringClass.methodDefines.add(createBuiltInFunction(
+                new AstType(AstType.Genre.STRING, false),
+                "substring",
+                new AstType(AstType.Genre.INTEGER, false), new AstType(AstType.Genre.INTEGER, false),
+                "left", "right"
+        ));
+        // int parseInt();
+        stringClass.methodDefines.add(createBuiltInFunction(
+                new AstType(AstType.Genre.INTEGER, false),
+                "parseInt"
+        ));
+        // int ord(int pos);
+        stringClass.methodDefines.add(createBuiltInFunction(
+                new AstType(AstType.Genre.INTEGER, false),
+                "ord",
+                new AstType(AstType.Genre.INTEGER, false),
+                "pos"
+        ));
+
+        var arrayClass = new NodeClassDefine(null);
+        arrayClass.builtIn = true;
+        arrayClass.name = builtInArrayClassName;
+        node.programSections.add(generateProgramSection(arrayClass));
+        // int size();
+        arrayClass.methodDefines.add(createBuiltInFunction(
+                new AstType(AstType.Genre.INTEGER, false),
+                "size"
+        ));
+        // endregion
+    }
+
+    // Built-in function without argument
+    public NodeFunctionDefine createBuiltInFunction(
+            AstType returnType,
+            String name
+    ) {
+        var node = new NodeFunctionDefine(null);
+        node.builtIn = true;
+        node.type = new NodeType(null);
+        node.type.type = returnType;
+        node.name = name;
+        node.argumentList = new NodeArgumentList(null);
+        node.suite = new NodeSuite(null);
+        return node;
+    }
+
+    // Built-in function with one argument
+    public NodeFunctionDefine createBuiltInFunction(
+            AstType returnType,
+            String name,
+            AstType argumentType,      // Built-in functions have no more
+            String argumentName     // than one argument.
+    ) {
+        var node = createBuiltInFunction(returnType, name);
+        var typeNode = new NodeType(null);
+        typeNode.type = argumentType;
+        node.argumentList.types.add(typeNode);
+        node.argumentList.identifiers.add(argumentName);
+        return node;
+    }
+
+    // Built-in function with two arguments
+    public NodeFunctionDefine createBuiltInFunction(
+            AstType returnType,
+            String name,
+            AstType argumentType1, AstType argumentType2,
+            String argumentName1, String argumentName2
+    ) {
+        var node = createBuiltInFunction(returnType, name);
+        var typeNode1 = new NodeType(null);
+        var typeNode2 = new NodeType(null);
+        typeNode1.type = argumentType1;
+        typeNode2.type = argumentType2;
+        node.argumentList.types.add(typeNode1);
+        node.argumentList.types.add(typeNode2);
+        node.argumentList.identifiers.add(argumentName1);
+        node.argumentList.identifiers.add(argumentName2);
+        return node;
+    }
+
+    // endregion
 }
 
 

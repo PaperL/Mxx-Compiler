@@ -6,6 +6,7 @@ import frontend.ir.IrId;
 import frontend.ir.IrType;
 
 public class IrFunction extends IrNode {
+    public boolean builtIn = false;
     public IrType returnType = null;
     // Function name with FUNCTION_PREFIX at beginning
     public String name = null;
@@ -25,6 +26,7 @@ public class IrFunction extends IrNode {
 
     @Override
     public String toString() {
+        if (builtIn) return "";
         IrId.clearIndexCounter();
         var tot = new StringBuilder();
         // define i32 @main(i32 %1, i8 %2) {
