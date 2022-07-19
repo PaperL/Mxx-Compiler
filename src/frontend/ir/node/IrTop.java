@@ -1,8 +1,9 @@
 package frontend.ir.node;
 
+import frontend.ir.IrBuilder;
+
 import java.util.LinkedHashMap;
 import java.util.LinkedList;
-import frontend.ir.IrBuilder;
 
 public class IrTop extends IrNode {
     public LinkedList<IrInstruction> declares = new LinkedList<>();
@@ -17,7 +18,7 @@ public class IrTop extends IrNode {
 
     @Override
     public void genIndex() {
-        for (var clas: classes.values()) clas.genIndex();
+        for (var clas : classes.values()) clas.genIndex();
         for (var func : functions.values()) func.genIndex();
     }
 

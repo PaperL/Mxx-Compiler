@@ -2,7 +2,7 @@ build:
 	bash run/build.bash
 
 test_ir:
-	python3 run/ir_local_judge.py
+	python3 run/ir_local_judge.py $(TESTCASE)
 
 clean:
 	rm -r bin

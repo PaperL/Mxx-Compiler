@@ -6,15 +6,6 @@ import java.util.List;
 public class CmdArgument {
     public ArrayList<String> arguments;
 
-    public enum ArgumentType {
-        DEBUG, LOCAL,
-        SEMANTIC,
-        IR, IR_SOURCE_CODE,
-        ASSEMBLY_COMMENT,
-        STACK_SIZE,
-        OPTIMIZATION,
-    }
-
     public CmdArgument(String[] args) {
         arguments = new ArrayList<>(List.of(args));
     }
@@ -60,5 +51,14 @@ public class CmdArgument {
     @Override
     public String toString() {
         return arguments.toString();
+    }
+
+    public enum ArgumentType {
+        DEBUG, LOCAL,
+        SEMANTIC,
+        IR, IR_SOURCE_CODE,
+        ASSEMBLY_COMMENT,
+        STACK_SIZE,
+        OPTIMIZATION,
     }
 }

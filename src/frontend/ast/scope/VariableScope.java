@@ -1,10 +1,11 @@
 package frontend.ast.scope;
 
-import java.util.Objects;
-import java.util.HashMap;
-import utility.error.SemanticError;
 import frontend.ast.AstPosition;
 import frontend.ast.AstType;
+import utility.error.SemanticError;
+
+import java.util.HashMap;
+import java.util.Objects;
 
 public class VariableScope {
     public final BroadScope globalScope;

@@ -1,3 +1,3 @@
 set ff=UNIX
 set -e
-cat | java -ea -cp lib/antlr-4.9.1-complete.jar:bin Main --local --ir
+cat | java -ea -cp third_party/antlr-runtime-4.9.2.jar:bin Main --debug --ir --ir-source-code

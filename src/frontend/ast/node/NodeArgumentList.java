@@ -1,7 +1,8 @@
 package frontend.ast.node;
 
-import java.util.ArrayList;
 import frontend.ast.AstPosition;
+
+import java.util.ArrayList;
 
 public class NodeArgumentList extends AstNode {
     public ArrayList<NodeType> types = new ArrayList<>();

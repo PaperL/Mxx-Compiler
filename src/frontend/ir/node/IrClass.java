@@ -1,12 +1,12 @@
 package frontend.ir.node;
 
+import frontend.ir.IrType;
 import org.antlr.v4.runtime.misc.Pair;
 
 import java.util.LinkedHashMap;
 
-import frontend.ir.IrType;
-
 public class IrClass extends IrNode {
+    public boolean builtIn = false;
     public String name = null;
     // Field name, index and type
     public LinkedHashMap<String, Pair<Integer, IrType>> fields = new LinkedHashMap<>();
@@ -21,6 +21,7 @@ public class IrClass extends IrNode {
 
     @Override
     public String toString() {
+        if (builtIn) return "";
         var tot = new StringBuilder();
 //        if (IrBuilder.cmdArgs.contains(CmdArgument.ArgumentType.IR_SOURCE_CODE))
 //            tot.append(String.format("; Class %s\n", name));

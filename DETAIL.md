@@ -192,7 +192,10 @@
 
 ## TODO
 
-- 检查 IR 中数组相关代码的正确性
+- 完善内建函数
+  - 完成 built_in.c
+  - 把新函数加入 internalFuncName
+
 - 实现 Assembly 部分
 - IR 优化
 - Assembly 优化

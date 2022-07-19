@@ -1,27 +1,47 @@
 package frontend.ir;
 
-import java.util.*;
-
-import org.antlr.v4.runtime.misc.Pair;  // Not Java STL
-import utility.CmdArgument;
-import utility.error.InternalError;
+import frontend.ast.AstBuilder;
 import frontend.ast.node.*;
 import frontend.ir.node.*;
+import org.antlr.v4.runtime.misc.Pair;
+import utility.CmdArgument;
+import utility.error.InternalError;
+
+import java.util.*;
 
 /**
  * Build sequential structure LLVM IR from AST
  */
 public class IrBuilder {
+    public static final IrTop irRoot = new IrTop();
     // region BASIC
     public static CmdArgument cmdArgs = null;
-
     // Internal naming prefix
     public final String GLOBAL_VARIABLE_PREFIX = "__VAR__";
     public final String CONSTANT_STRING_PREFIX = "__CONSTANT_STR__";
     public final String FUNCTION_PREFIX = "__FUNC__";
     public final String CLASS_CONSTRUCTOR_PREFIX = "__CONSTRUCTOR__";
     public final String CLASS_PREFIX = "__CLAS__", METHOD_PREFIX = "__MTHD__";
-
+    //    public final String INITIAL_FUNCTION = "__INIT";
+//    // Built-in basic functions
+//    public final String NEW_FUNCTION = "__NEW_ON_HEAP";
+//    public final String NEW_ARRAY_FUNCTION = "__NEW_ARRAY";
+//    // Built-in system functions
+//    public final String PRINT_FUNCTION = "__PRINT";
+//    public final String PRINTLN_FUNCTION = "__PRINTLN";
+//    public final String PRINT_INT_FUNCTION = "__PRINT_INT";
+//    public final String PRINTLN_INT_FUNCTION = "__PRINTLN_INT";
+//    public final String GET_STRING_FUNCTION = "__GET_STRING";
+//    public final String GET_INT_FUNCTION = "__GET_INT";
+//    public final String TO_STRING_FUNCTION = "__TO_STRING";
+//    // Bulit-in string functions
+//    public final String STRING_ADD_FUNCTION = "__STRING_ADD";
+//    public final String STRING_EQUAL_FUNCTION = "__STRING_EQUAL";
+//    public final String STRING_NOT_EQUAL_FUNCTION = "__STRING_NOT_EQUAL";
+//    public final String STRING_LESS_FUNCTION = "__STRING_LESS";
+//    public final String STRING_GREATER_FUNCTION = "__STRING_GREATER";
+//    public final String STRING_LESS_OR_EQUAL_FUNCTION = "__STRING_LESS_OR_EQUAL";
+//    public final String STRING_GREATER_OR_EQUAL_FUNCTION = "__STRING_GREATER_OR_EQUAL";
     // Internal Functions
     public final Map<String, String> internalFuncName = Map.ofEntries(
             // Built-in basic functions
@@ -45,45 +65,31 @@ public class IrBuilder {
             Map.entry("_string_less_or_equal", "__STRING_LESS_OR_EQUAL"),
             Map.entry("_string_greater_or_equal", "__STRING_GREATER_OR_EQUAL")
     );
-//    public final String INITIAL_FUNCTION = "__INIT";
-//    // Built-in basic functions
-//    public final String NEW_FUNCTION = "__NEW_ON_HEAP";
-//    public final String NEW_ARRAY_FUNCTION = "__NEW_ARRAY";
-//    // Built-in system functions
-//    public final String PRINT_FUNCTION = "__PRINT";
-//    public final String PRINTLN_FUNCTION = "__PRINTLN";
-//    public final String PRINT_INT_FUNCTION = "__PRINT_INT";
-//    public final String PRINTLN_INT_FUNCTION = "__PRINTLN_INT";
-//    public final String GET_STRING_FUNCTION = "__GET_STRING";
-//    public final String GET_INT_FUNCTION = "__GET_INT";
-//    public final String TO_STRING_FUNCTION = "__TO_STRING";
-//    // Bulit-in string functions
-//    public final String STRING_ADD_FUNCTION = "__STRING_ADD";
-//    public final String STRING_EQUAL_FUNCTION = "__STRING_EQUAL";
-//    public final String STRING_NOT_EQUAL_FUNCTION = "__STRING_NOT_EQUAL";
-//    public final String STRING_LESS_FUNCTION = "__STRING_LESS";
-//    public final String STRING_GREATER_FUNCTION = "__STRING_GREATER";
-//    public final String STRING_LESS_OR_EQUAL_FUNCTION = "__STRING_LESS_OR_EQUAL";
-//    public final String STRING_GREATER_OR_EQUAL_FUNCTION = "__STRING_GREATER_OR_EQUAL";
-
-
-    public static final IrTop irRoot = new IrTop();
-    public IrFunction currentFunction = null;
-    public IrBlock currentBlock = null;
     // scopeStack 中变量名无 GLOBAL_VARIABLE_PREFIX 前缀
     // 但对应的 IrId 名称含有前缀
     public final LinkedList<HashMap<String, IrId>> scopeStack = new LinkedList<>();
-    // 常量字符串计数器
-    public int constantStringCnt = 0;
-
     // For Continue and Break, is 'null' when out of loop
     public final LinkedList<IrBlock> loopCondBlockStack = new LinkedList<>();
     public final LinkedList<IrBlock> loopNextBlockStack = new LinkedList<>();
+    public IrFunction currentFunction = null;
+    public IrBlock currentBlock = null;
+    // 常量字符串计数器
+    public int constantStringCnt = 0;
 
     public IrBuilder(CmdArgument cmdArgs_) {
         cmdArgs = cmdArgs_;
         scopeStack.push(new HashMap<>());   // Global scope
         init();
+    }
+
+    // region TOOL
+    public static void throwTodoError(String pos) throws InternalError {
+        // ! This function SHOULD NOT be used at any finished program.
+        throw new InternalError("IR_DEBUG", "TODO: " + pos);
+    }
+
+    public static void throwUnexpectedError() throws InternalError {
+        throw new InternalError("IR_UNEXPECTED", "");
     }
 
     public String print() {
@@ -98,6 +104,8 @@ public class IrBuilder {
         func.returnType = returnType;
         funcMap.put(callName, func);
     }
+
+    // endregion
 
     public void setFunction(String funcName, IrType returnType,
                             LinkedHashMap<String, IrFunction> funcMap) {
@@ -195,18 +203,6 @@ public class IrBuilder {
                 initFunc.returnType);
         initFunc.blocks.add(initFuncBlock);
         irRoot.functions.put(initFunc.name, initFunc);
-    }
-
-    // endregion
-
-    // region TOOL
-    public static void throwTodoError(String pos) throws InternalError {
-        // ! This function SHOULD NOT be used at any finished program.
-        throw new InternalError("IR_DEBUG", "TODO: " + pos);
-    }
-
-    public static void throwUnexpectedError() throws InternalError {
-        throw new InternalError("IR_UNEXPECTED", "");
     }
 
     public IrId createI32Constant(int k) {
@@ -350,9 +346,9 @@ public class IrBuilder {
     }
 
     public void declareClass(NodeClassDefine astNode) {
-        if (astNode.builtIn) return;  // Just ignore built-in classes
-
+        // DO NOT ignore built-in classes
         var clas = new IrClass();
+        clas.builtIn = astNode.builtIn;
         clas.name = astNode.name;
         // 题面 #14-命名空间:"类不可以和变量、函数重名". 故类名无需前缀
         irRoot.classes.put(clas.name, clas);
@@ -370,8 +366,8 @@ public class IrBuilder {
         }
         if (cmdArgs.contains(CmdArgument.ArgumentType.DEBUG)) {
             // ? 这里省略 String.format 会报错
-            System.out.println(String.format("\nClass '%s' field:\n%s\n",
-                    clas.name, clas.fields));
+            System.out.printf("\nClass '%s' field:\n%s\n%n",
+                    clas.name, clas.fields);
         }
 
         clas.constructor = new IrFunction();
@@ -427,7 +423,7 @@ public class IrBuilder {
     }
 
     public void buildClass(NodeClassDefine astNode) {
-        if (astNode.builtIn) return;  // Just skip built-in classes
+        if (astNode.builtIn) return;  // Just ignore built-in classes
 
         var clas = irRoot.classes.get(astNode.name);
         for (var methodDefine : astNode.methodDefines)
@@ -487,6 +483,7 @@ public class IrBuilder {
         currentFunction.blocks.add(firstBlock);
         currentBlock = firstBlock;
 
+        // Declare return variable
         if (cmdArgs.contains(CmdArgument.ArgumentType.DEBUG)) {
             var str = new StringBuilder();
             str.append(String.format("\nFunction '%s %s(...)', arguments:\n",
@@ -505,8 +502,6 @@ public class IrBuilder {
             }
             System.out.println(str);
         }
-
-        // Declare return variable
         boolean returnVoid = (currentFunction.returnType.genre == IrType.Genre.VOID);
         if (!returnVoid) {
             buildComment("Function return value");
@@ -563,6 +558,17 @@ public class IrBuilder {
                 new IrId(currentFunction.returnType)
                 : loadRetValIns.insId;
         retBlock.jumpInstruction = retIns;
+
+        // Call void __INIT() in main()
+        if (Objects.equals(currentFunction.name, "main")) {
+            buildComment("Global variables initialization");
+            var callIns = new IrInstruction(
+                    IrInstruction.Genre.CALL,
+                    new IrType(IrType.Genre.VOID));
+            callIns.callName = internalFuncName.get("_init");
+            callIns.callArguments = new LinkedList<>();
+            currentBlock.instructions.add(callIns);
+        }
 
         // Build statements of function body
         buildSuite(astNode.suite);
@@ -850,15 +856,26 @@ public class IrBuilder {
                     case STRING_CONSTANT -> {
                         var strName = CONSTANT_STRING_PREFIX + constantStringCnt++;
                         // 同全局变量定义
-                        var ins = new IrInstruction(
+                        var globalIns = new IrInstruction(
                                 IrInstruction.Genre.GLOBAL_VARIABLE,
                                 new IrId((new IrType(IrType.Genre.I8,
-                                        atomNode.stringConstant.length() + 1)),
+                                        atomNode.stringConstant.length() + 1)
+                                        .getPointer()),
                                         strName));
-                        ins.globalConstantString = atomNode.stringConstant + "\\00";
-                        irRoot.variableDefines.add(ins);
-                        scopeStack.getLast().put(strName, ins.insId);
-                        atomId = ins.insId; // return i8*
+                        globalIns.globalConstantString = atomNode.stringConstant + "\\00";
+                        irRoot.variableDefines.add(globalIns);
+                        scopeStack.getLast().put(strName, globalIns.insId);
+
+                        var i8PtrType = new IrType(IrType.Genre.I8);
+                        i8PtrType.dimension = 1;
+                        var getPtrIns = new IrInstruction(IrInstruction.Genre.GET_ELEMENT_PTR);
+                        getPtrIns.insId = new IrId(i8PtrType);
+                        getPtrIns.objectPtr = globalIns.insId;
+                        getPtrIns.eleIndexes = new LinkedList<>(
+                                Collections.nCopies(2, createI32Constant(0)));
+                        currentBlock.instructions.add(getPtrIns);
+
+                        atomId = getPtrIns.insId; // return i8*
                     }
                     case NULL -> atomId = new IrId(IrId.Genre.NULL);
                 }
@@ -905,22 +922,27 @@ public class IrBuilder {
                 if (isMethod) {
                     objPtr = buildExpression(astNode.functionExpr.objectExpr, false);
                     if (objPtr.type.isArray()) {
-                        // * INLINE
-                        // * Array Size
-                        // Get size of array
-                        if ((!funcName.equals("size"))
-                                || (astNode.arguments != null)) throwUnexpectedError();
-                        var castIns = new IrInstruction(IrInstruction.Genre.BITCAST,
-                                (new IrType(IrType.Genre.I32)).getPointer());
-                        castIns.castPtr = objPtr;
-                        currentBlock.instructions.add(castIns);
-                        var getPtrIns = new IrInstruction(IrInstruction.Genre.GET_ELEMENT_PTR);
-                        getPtrIns.insId = new IrId(castIns.insId.type);
-                        getPtrIns.objectPtr = castIns.insId;
-                        getPtrIns.eleIndexes = new LinkedList<>();
-                        getPtrIns.eleIndexes.add(createI32Constant(-1));
-                        currentBlock.instructions.add(getPtrIns);
-                        return buildGetFromMem(getPtrIns.insId);
+                        if (funcName.equals("size") || funcName.equals("length")) {
+                            if (astNode.arguments != null) throwUnexpectedError();
+                            else {
+                                // * INLINE
+                                // * Array/String Size/Length
+                                var castIns = new IrInstruction(IrInstruction.Genre.BITCAST,
+                                        (new IrType(IrType.Genre.I32)).getPointer());
+                                castIns.castPtr = objPtr;
+                                currentBlock.instructions.add(castIns);
+                                var getPtrIns = new IrInstruction(IrInstruction.Genre.GET_ELEMENT_PTR);
+                                getPtrIns.insId = new IrId(castIns.insId.type);
+                                getPtrIns.objectPtr = castIns.insId;
+                                getPtrIns.eleIndexes = new LinkedList<>();
+                                getPtrIns.eleIndexes.add(createI32Constant(-1));
+                                currentBlock.instructions.add(getPtrIns);
+                                return buildGetFromMem(getPtrIns.insId);
+                            }
+                        } else  // * String built-in method
+                            func = irRoot.classes.get(AstBuilder.builtInStringClassName)
+                                    .methods.get(funcName);
+                        //irRoot.functions.get(internalFuncName.get(funcName));
                     } else func = objPtr.type.clas.methods.get(funcName);
                 } else func = irRoot.functions.get(funcName);
 

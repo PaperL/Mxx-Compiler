@@ -1,15 +1,15 @@
 package frontend.ast;
 
+import frontend.ast.node.*;
+import frontend.parser.MxxParser;
+import frontend.parser.MxxParserBaseVisitor;
 import org.antlr.v4.runtime.ParserRuleContext;
 import utility.error.SemanticError;
-import frontend.parser.MxxParserBaseVisitor;
-import frontend.parser.MxxParser;
-import frontend.ast.node.*;
 
 public class AstBuilder extends MxxParserBaseVisitor<AstNode> {
 
-    public final String builtInStringClassName = "__STRING__";
-    public final String builtInArrayClassName = "__ARRAY__";
+    public static final String builtInStringClassName = "__STRING__";
+    public static final String builtInArrayClassName = "__ARRAY__";
 
     // region tools
     public String checkIdentifier(String text, ParserRuleContext ctx) {
@@ -416,6 +416,8 @@ public class AstBuilder extends MxxParserBaseVisitor<AstNode> {
         if (string != null) {
             node.genre = NodeAtom.Genre.STRING_CONSTANT;
             node.stringConstant = checkIdentifier(string.getText(), ctx);
+            node.stringConstant = node.stringConstant
+                    .substring(1, node.stringConstant.length() - 1);
         }
         var decimalInteger = ctx.DECIMAL_INTEGER();
         if (decimalInteger != null) {

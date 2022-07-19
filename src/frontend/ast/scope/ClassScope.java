@@ -1,9 +1,10 @@
 package frontend.ast.scope;
 
-import java.util.HashMap;
-import utility.error.SemanticError;
 import frontend.ast.AstPosition;
 import frontend.ast.node.NodeFunctionDefine;
+import utility.error.SemanticError;
+
+import java.util.HashMap;
 
 // Stores class member variables and methods information.
 public class ClassScope extends VariableScope {

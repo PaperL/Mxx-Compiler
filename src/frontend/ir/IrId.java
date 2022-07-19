@@ -1,7 +1,5 @@
 package frontend.ir;
 
-import utility.error.InternalError;
-
 /**
  * IR Identifier
  * Store both type and value of global variable, local variable, constant value.
@@ -10,21 +8,12 @@ import utility.error.InternalError;
  * For convenience, constructor's arguments do not contain genre.
  */
 public class IrId {
-    public enum Genre {
-        GLOBAL, LOCAL, CONSTANT,
-        NULL,
-        LABEL,
-    }
-
+    private static int staticLastRegId = 0;
     public Genre genre = null;
 
     public IrType type = null;
-
-    private static int staticLastRegId = 0;
     public int finalId = -1;    // Local Value
-
     public String globalName;   // Global Variable or Function
-
     public int constantValue = 0;   // Constant Integer
 
     /**
@@ -91,6 +80,12 @@ public class IrId {
         }
         IrBuilder.throwUnexpectedError();
         return null;
+    }
+
+    public enum Genre {
+        GLOBAL, LOCAL, CONSTANT,
+        NULL,
+        LABEL,
     }
 
 

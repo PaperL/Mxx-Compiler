@@ -5,17 +5,16 @@ import frontend.ir.node.*;
 import utility.CmdArgument;
 
 public class AsmBuilder {
-// region BASIC
-    public static CmdArgument cmdArgs = null;
-
     // * Builder's Member Variables
     public static final AsmTop asmRoot = new AsmTop();
+    // region BASIC
+    public static CmdArgument cmdArgs = null;
 
     public AsmBuilder(CmdArgument cmdArgs_) {
         cmdArgs = cmdArgs_;
     }
 
-    public String print(){
+    public String print() {
         return asmRoot.toString();
     }
 
@@ -27,15 +26,15 @@ public class AsmBuilder {
 
     public void buildRoot(IrTop irNode) {
         // declares 仅供使用 Clang 测试 LLVM IR 正确性
-        for(var globalVariableDefine:irNode.variableDefines)
+        for (var globalVariableDefine : irNode.variableDefines)
             buildInstruction(globalVariableDefine);
-        for(var clas:irNode.classes.values())
+        for (var clas : irNode.classes.values())
             buildClass(clas);
-        for(var func:irNode.functions.values())
+        for (var func : irNode.functions.values())
             buildFunction(func);
     }
 
-    public void buildClass(IrClass irNode){
+    public void buildClass(IrClass irNode) {
 
     }
 
@@ -51,7 +50,7 @@ public class AsmBuilder {
 
     }
 
-    public void registerAllocation(){
+    public void registerAllocation() {
         // todo
     }
 

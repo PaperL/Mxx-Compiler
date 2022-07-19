@@ -1,7 +1,8 @@
 package frontend.ast.node;
 
-import java.util.ArrayList;
 import frontend.ast.AstPosition;
+
+import java.util.ArrayList;
 
 public class NodeVariableDefine extends AstNode {
     public NodeType type = null;

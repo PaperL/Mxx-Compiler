@@ -1,8 +1,11 @@
 package frontend.ast;
 
-import utility.error.SemanticError;
+import frontend.ast.node.NodeClassDefine;
+import frontend.ast.node.NodeFunctionDefine;
+import frontend.ast.node.NodeProgramSection;
+import frontend.ast.node.NodeRoot;
 import frontend.ast.scope.BroadScope;
-import frontend.ast.node.*;
+import utility.error.SemanticError;
 
 /**
  * Collects forward reference symbol (class and function)

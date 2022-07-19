@@ -5,20 +5,19 @@ import frontend.ir.IrId;
 import java.util.LinkedList;
 
 public class IrBlock extends IrNode {
+    public static boolean isFirstBlock = true;
     public IrId label = new IrId(IrId.Genre.LABEL);
     public LinkedList<IrInstruction> instructions = new LinkedList<>();
     public IrInstruction jumpInstruction = null;
+
+    public static void setFirstBlock() {
+        isFirstBlock = true;
+    }
 
     @Override
     public void genIndex() {
         label.setIndex();
         for (var ins : instructions) ins.genIndex();
-    }
-
-    public static boolean isFirstBlock = true;
-
-    public static void setFirstBlock() {
-        isFirstBlock = true;
     }
 
     @Override

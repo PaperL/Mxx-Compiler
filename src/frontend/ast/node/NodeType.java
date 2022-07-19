@@ -1,8 +1,9 @@
 package frontend.ast.node;
 
-import java.util.ArrayList;
 import frontend.ast.AstPosition;
 import frontend.ast.AstType;
+
+import java.util.ArrayList;
 
 public class NodeType extends AstNode {
     public AstType type;

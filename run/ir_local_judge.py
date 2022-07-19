@@ -1,11 +1,12 @@
 # Written by RainyMemory
 #!python3
 
+import sys
 import os
 import time
 
-test_cases_dir = 'run/testcase/codegen'
-compile_cmd = "bash ./build.bash"
+test_cases_dir = 'run/testcase/codegen/'
+compile_cmd = "bash run/build.bash"
 excluded_test_cases = [] # ["foo.mx"]
 builtin_path = "./built_in/built_in.ll"
 bin_path = "./testbin/"
@@ -17,15 +18,21 @@ use_llvm = True
 llc_cmd = 'llc'
 
 color_red = "\033[0;31m"
+color_yellow = "\033[1;33m"
 color_green = "\033[0;32m"
 color_none = "\033[0m"
 
 
 def collect_test_cases():
     test_cases = []
-    for f in os.listdir(test_cases_dir):
-        if os.path.splitext(f)[1] == '.mx':
-            test_cases.append(f)
+    if len(sys.argv) > 1:
+        for f in os.listdir(test_cases_dir):
+            if os.path.splitext(f)[1] == '.mx' and f.find(sys.argv[1]) != -1:
+                test_cases.append(f)
+    else:
+        for f in os.listdir(test_cases_dir):
+            if os.path.splitext(f)[1] == '.mx':
+                test_cases.append(f)
     print(len(test_cases))
     for s in excluded_test_cases:
         if s in test_cases:
@@ -52,6 +59,12 @@ def parse_test_case(test_case_path):
 
 
 def main():
+
+    print('Project Directory:' + color_green)
+    os.system('pwd')
+    input(color_none + 'Please ensure it is the project root directory.')
+    os.system('mkdir -p testbin')
+
     if os.system(compile_cmd):
         print(color_red + "Fail when building your compiler...")
         return
@@ -64,7 +77,7 @@ def main():
     max_len = max(len(i) for i in test_cases)
     max_len += 5
     for t in test_cases:
-        if halt_on_3_fails and (continue_fail > 2):
+        if halt_on_3_fails and (continue_fail > 0):
             exit(1)
         total += 1
         src_text, input_text, output_text = parse_test_case(test_cases_dir + t)
@@ -75,21 +88,24 @@ def main():
         with open('./testbin/test.ans', 'w') as f:
             f.write(output_text)
 
-        print(t + ':', end='')
+        print(color_yellow + t + color_none + ':', end='')
         for i in range(len(t), max_len):
             print(end=' ')
         start = time.time()
-        if os.system('bash ./ir.bash < ./testbin/test.mx > ./testbin/test.ll'):
+        if os.system('bash run/ir.bash < ./testbin/test.mx'):
             print(color_red + "Compilation Failed" + color_none)
             continue_fail += 1
             continue
+        os.system('mv output.ll testbin/test.ll')
         print("(T=%.2fs)" % (time.time() - start), end=" ")
-        os.system("clang ./testbin/test.ll ./testbin/b.ll -o ./testbin/a.out -Wno-override-module")
-        # if os.system("./bin/a.out < ./bin/test.in > ./bin/test.out"):
-        #     print(color_red + "Runtime Error" + color_none)
-        #     continue_fail += 1
-        #     continue
-        os.system("./testbin/a.out < ./testbin/test.in > ./testbin/test.out")
+        if os.system("clang ./testbin/test.ll ./testbin/b.ll -o ./testbin/a.out -Wno-override-module > /dev/null"):
+            print(color_red + "Link Error" + color_none)
+            continue_fail += 1
+            continue
+        if os.system("./testbin/a.out < ./testbin/test.in > ./testbin/test.out"):
+            print(color_red + "Runtime Error" + color_none)
+            continue_fail += 1
+            continue
         if os.system('diff -B -b ./testbin/test.out ./testbin/test.ans > ./testbin/diff.out'):
             print(color_red + "Wrong Answer" + color_none)
             continue_fail += 1

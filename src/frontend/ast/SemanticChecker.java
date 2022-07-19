@@ -1,29 +1,26 @@
 package frontend.ast;
 
-import java.util.Objects;
-import java.util.LinkedList;
-import java.util.ArrayList;
-
-import utility.error.SemanticError;
 import frontend.ast.node.*;
-import frontend.ast.scope.*;
+import frontend.ast.scope.BroadScope;
+import frontend.ast.scope.FunctionScope;
+import frontend.ast.scope.VariableScope;
+import utility.error.SemanticError;
+
+import java.util.ArrayList;
+import java.util.LinkedList;
+import java.util.Objects;
 
 
 public class SemanticChecker {
-    // ? 应该优先使用 private 变量和方法
-
-    public final String builtInStringClassName = "__STRING__";
-    public final String builtInArrayClassName = "__ARRAY__";
-
-    public enum ScopeGenre {CLASS, FUNCTION, LOOP}
-
-    public String currentClassName = null;
-    // Class has "this", function has "return"
-    // and loop has "continue" and "break".
-
-    public LinkedList<VariableScope> scopeStack;
+    // todo 将该常量放入 utility
+    public static final String builtInStringClassName = AstBuilder.builtInStringClassName;
+    public static final String builtInArrayClassName = AstBuilder.builtInArrayClassName;
     public final BroadScope globalScope;
     public final LinkedList<ScopeGenre> scopeGenreStack;
+    // Class has "this", function has "return"
+    // and loop has "continue" and "break".
+    public String currentClassName = null;
+    public LinkedList<VariableScope> scopeStack;
 
     public SemanticChecker(BroadScope globalScope_) {
         globalScope = globalScope_;
@@ -51,9 +48,6 @@ public class SemanticChecker {
             if (genre == ScopeGenre.CLASS) return true;
         return false;
     }
-    // endregion
-
-    // region Check_Node
 
     public void checkRoot(NodeRoot node) {
         for (var section : node.programSections) checkProgramSection(section);
@@ -61,6 +55,9 @@ public class SemanticChecker {
         if (!globalScope.functions.containsKey("main"))
             throw new SemanticError("Missing 'main' function", node.position);
     }
+    // endregion
+
+    // region Check_Node
 
     public void checkProgramSection(NodeProgramSection node) {
         switch (node.genre) {
@@ -427,7 +424,7 @@ public class SemanticChecker {
             }
             case FUNCTION -> {
                 // * 在此处解决成员方法调用可以避免很多麻烦
-                // Only string has built-in method
+                // Only string(array/pointer) has built-in method
                 // * Call string type constant's built-in method is undefined behavior
 
                 FunctionScope functionScope = null;
@@ -728,6 +725,8 @@ public class SemanticChecker {
             );
         }
     }
+
+    public enum ScopeGenre {CLASS, FUNCTION, LOOP}
 
     // endregion
 }

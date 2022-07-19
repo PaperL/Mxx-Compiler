@@ -4,7 +4,7 @@ import backend.asm.AsmId;
 
 import java.util.LinkedList;
 
-public class AsmBlock extends AsmNode{
+public class AsmBlock extends AsmNode {
 // region BASIC
 
     public AsmId label = new AsmId(AsmId.Genre.LABEL);

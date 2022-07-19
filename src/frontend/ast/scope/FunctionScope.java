@@ -1,9 +1,10 @@
 package frontend.ast.scope;
 
-import java.util.ArrayList;
-import utility.error.SemanticError;
 import frontend.ast.AstType;
 import frontend.ast.node.NodeFunctionDefine;
+import utility.error.SemanticError;
+
+import java.util.ArrayList;
 
 // Store function claim information (return type and arguments)
 public class FunctionScope extends VariableScope {

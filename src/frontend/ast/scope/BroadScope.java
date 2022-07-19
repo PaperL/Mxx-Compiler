@@ -1,10 +1,11 @@
 package frontend.ast.scope;
 
-import java.util.HashMap;
-import utility.error.SemanticError;
 import frontend.ast.AstPosition;
 import frontend.ast.AstType;
 import frontend.ast.node.NodeFunctionDefine;
+import utility.error.SemanticError;
+
+import java.util.HashMap;
 
 /**
  * Manages name of global class, function and variable.

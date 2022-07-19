@@ -1,11 +1,10 @@
 package frontend.parser;
 
+import frontend.ast.AstPosition;
 import org.antlr.v4.runtime.BaseErrorListener;
 import org.antlr.v4.runtime.RecognitionException;
 import org.antlr.v4.runtime.Recognizer;
-
 import utility.error.SyntaxError;
-import frontend.ast.AstPosition;
 
 public class Antlr4ErrorListener extends BaseErrorListener {
     @Override

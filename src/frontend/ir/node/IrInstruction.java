@@ -1,30 +1,15 @@
 package frontend.ir.node;
 
-import java.util.LinkedList;
-
+import frontend.ir.IrBuilder;
 import frontend.ir.IrId;
 import frontend.ir.IrType;
-import frontend.ir.IrBuilder;
 import org.antlr.v4.runtime.misc.Pair;
 
-public class IrInstruction extends IrNode {
-    // region BASIC
-    public enum Genre {
-        COMMENT,
-        DECLARE, GLOBAL_VARIABLE,
-        ALLOCA,
-        LOAD, STORE,
-        BRANCH, JUMP,
-        CALL, RETURN,
-        PHI,
-        ARITH,
-        GET_ELEMENT_PTR,
-        BITCAST,
-    }
+import java.util.LinkedList;
 
+public class IrInstruction extends IrNode {
     public Genre genre = null;
     public IrId insId = null;   // Instruction result
-
     // Comment
     public String commentInfo = null;
     // Declare
@@ -52,31 +37,14 @@ public class IrInstruction extends IrNode {
     // Phi φ
     // Pair<Value, Label>
     public LinkedList<Pair<IrId, IrId>> phiArgs = null;
-
-    // Arith
-    public enum operatorGenre {
-        // I32 and STRING
-        ADD, GT, LT, GE, LE,
-        // I1, I32 and STRING
-        EQ, NEQ,
-        // I32
-        SUB, MUL, DIV, MOD,
-        SHIFT_L, SHIFT_R,
-        // I32 and I1
-        AND, OR, XOR,
-    }   // 一元操作符 ~ 和 ! 均可视为 xor -1
-
     public operatorGenre opGenre = null;
     public IrId arithOperandLeft = null;
     public IrId arithOperandRight = null;
-
     // getelementptr (Member and Array)
     public IrId objectPtr;
     public LinkedList<IrId> eleIndexes = null;
-
     // bitcast (Directly cast pointer type)
     public IrId castPtr;
-    // endregion
 
     public IrInstruction(Genre genre_) {
         genre = genre_;
@@ -101,6 +69,7 @@ public class IrInstruction extends IrNode {
             default -> IrBuilder.throwUnexpectedError();
         }
     }
+    // endregion
 
     public IrInstruction(Genre genre_, IrId id) {
         genre = genre_;
@@ -141,12 +110,12 @@ public class IrInstruction extends IrNode {
                 return declareInfo;
             }
             case GLOBAL_VARIABLE -> {
-                if (insType.arrayLength != 0) {
+                if (insType.arrayLength != -1) {
                     // @__CONSTANT_STR__1 = private unnamed_addr constant [5 x i8] c"abcd\00", align 1
-                    return String.format("%s = private unnamed_addr constant [%d x i8] "
+                    return String.format("%s = private unnamed_addr constant %s "
                                     + "c\"%s\", align 1 ",
                             insId,
-                            insType.arrayLength,
+                            insType.getNotPointer(),
                             globalConstantString);
                 } else {
                     // @a = global i32 0
@@ -264,7 +233,8 @@ public class IrInstruction extends IrNode {
                 return String.format("%s = getelementptr %s, %s %s, %s",
                         insId,
                         objectPtr.type.getNotPointer(),
-                        objectPtr.type, objectPtr,
+                        objectPtr.type,
+                        objectPtr,
                         argBuilder);
             }
             case BITCAST -> {
@@ -276,4 +246,31 @@ public class IrInstruction extends IrNode {
         IrBuilder.throwTodoError("NO RETURN");
         return null;
     }
+
+    // region BASIC
+    public enum Genre {
+        COMMENT,
+        DECLARE, GLOBAL_VARIABLE,
+        ALLOCA,
+        LOAD, STORE,
+        BRANCH, JUMP,
+        CALL, RETURN,
+        PHI,
+        ARITH,
+        GET_ELEMENT_PTR,
+        BITCAST,
+    }
+
+    // Arith
+    public enum operatorGenre {
+        // I32 and STRING
+        ADD, GT, LT, GE, LE,
+        // I1, I32 and STRING
+        EQ, NEQ,
+        // I32
+        SUB, MUL, DIV, MOD,
+        SHIFT_L, SHIFT_R,
+        // I32 and I1
+        AND, OR, XOR,
+    }   // 一元操作符 ~ 和 ! 均可视为 xor -1
 }

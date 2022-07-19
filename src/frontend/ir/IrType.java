@@ -8,17 +8,12 @@ import java.util.Objects;
 
 public class IrType implements Cloneable {
     public final String STRING_CLASS_NAME = "__STRING";
-
-    public enum Genre {
-        I1, I8, I32, VOID, COMPOSITE
-    }
-    // I8 only used for string
-
     public Genre genre = null;
+    // I8 only used for string
     public int dimension = 0;   // 多级指针
     public IrClass clas = null;
     // Constant string
-    public int arrayLength = 0;
+    public int arrayLength = -1;
 
     public IrType(Genre genre_) {
         genre = genre_;
@@ -27,7 +22,7 @@ public class IrType implements Cloneable {
     public IrType(Genre genre_, int arrayLen) {
         genre = genre_;
         arrayLength = arrayLen;
-        dimension = 1;
+        dimension = 0;
     }
 
     public IrType(IrClass clas_) {
@@ -121,11 +116,16 @@ public class IrType implements Cloneable {
             case COMPOSITE -> typeName.append("%class.").append(clas.name);
         }
         if (dimension < 0) IrBuilder.throwUnexpectedError();
-        typeName.append("*".repeat(dimension));
+        else if (arrayLength == -1) // Pointer instead of Array
+            typeName.append("*".repeat(dimension));
+        else // ! Only i8 Array
+            return String.format("[%d x i8]", arrayLength)
+                    + "*".repeat(dimension);
         return typeName.toString();
     }
 
     public String toZeroInitString() {
+        if (dimension != 0) return "null";
         switch (genre) {
             case I1, I8, I32 -> {
                 return "0";
@@ -165,5 +165,9 @@ public class IrType implements Cloneable {
     @Override
     public int hashCode() {
         return Objects.hash(STRING_CLASS_NAME, genre, dimension, clas);
+    }
+
+    public enum Genre {
+        I1, I8, I32, VOID, COMPOSITE
     }
 }

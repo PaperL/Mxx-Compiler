@@ -1,27 +1,25 @@
 // JDK
-import java.io.*;
-import java.util.Objects;
-import java.util.Scanner;
-// Third Party
+
+import backend.asm.AsmBuilder;
+import backend.optimization.AsmOptimizer;
+import backend.optimization.IrOptimizer;
+import frontend.ast.AstBuilder;
+import frontend.ast.ForwardCollector;
+import frontend.ast.SemanticChecker;
+import frontend.ast.node.NodeRoot;
+import frontend.ir.IrBuilder;
+import frontend.parser.Antlr4ErrorListener;
+import frontend.parser.MxxLexer;
+import frontend.parser.MxxParser;
 import org.antlr.v4.runtime.CharStreams;
 import org.antlr.v4.runtime.CommonTokenStream;
-// Local
 import utility.CmdArgument;
 import utility.error.Error;
 import utility.error.InternalError;
 
-import frontend.parser.MxxLexer;
-import frontend.parser.MxxParser;
-import frontend.parser.Antlr4ErrorListener;
-import frontend.ast.node.NodeRoot;
-import frontend.ast.AstBuilder;
-import frontend.ast.ForwardCollector;
-import frontend.ast.SemanticChecker;
-import frontend.ir.IrBuilder;
-
-import backend.optimization.IrOptimizer;
-import backend.asm.AsmBuilder;
-import backend.optimization.AsmOptimizer;
+import java.io.*;
+import java.util.Objects;
+import java.util.Scanner;
 
 public class Main {
     public static void main(String[] args) throws Exception {

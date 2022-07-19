@@ -2,7 +2,7 @@ package backend.asm.node;
 
 import java.util.LinkedList;
 
-public class AsmTop extends AsmNode{
+public class AsmTop extends AsmNode {
 //region BASIC
 
     // Declaration

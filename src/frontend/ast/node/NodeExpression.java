@@ -1,18 +1,11 @@
 package frontend.ast.node;
 
-import java.util.ArrayList;
 import frontend.ast.AstPosition;
 
+import java.util.ArrayList;
+
 public class NodeExpression extends AstNode {
-    public enum Genre {
-        PAREN, ATOM, MEMBER, ARRAY, FUNCTION,   // term
-        ASSIGN, NEW,                            // command
-        SELF, UNARY, BINARY,                    // arithmetic
-        LAMBDA
-    }
-
     public Genre genre = null;
-
     // * Term
     // region term
     // PAREN
@@ -28,16 +21,36 @@ public class NodeExpression extends AstNode {
     // FUNCTION
     public NodeExpression functionExpr = null;
     public NodeExpressionList arguments = null;
-    // endregion
-
     // * Command
     // region command
     // ASSIGN
     public NodeExpression lValue = null;
+    // endregion
     public NodeExpression rValue = null;
     // NEW
     public NodeType type = null;
+    public OpEnum operator = null;
     // endregion
+    public NodeExpression termExpr = null;
+    public NodeExpression lTermExpr = null;
+    public NodeExpression rTermExpr = null;
+    // LAMBDA
+    public NodeArgumentList lambdaArgumentList = null;
+    public NodeSuite lambdaSuite = null;
+
+    // endregion
+    public NodeExpressionList lambdaExpressionList = null;
+
+    public NodeExpression(AstPosition position) {
+        super(position);
+    }
+
+    public enum Genre {
+        PAREN, ATOM, MEMBER, ARRAY, FUNCTION,   // term
+        ASSIGN, NEW,                            // command
+        SELF, UNARY, BINARY,                    // arithmetic
+        LAMBDA
+    }
 
     // * Arithmetic
     // region arithmetic
@@ -47,22 +60,5 @@ public class NodeExpression extends AstNode {
         MUL, DIV, MOD, SHIFT_L, SHIFT_R,
         GT, LT, GE, LE, EQ, NOT_EQ,
         BIT_AND, BIT_OR, CARET, AND, OR
-    }
-
-    public OpEnum operator = null;
-
-    public NodeExpression termExpr = null;
-    public NodeExpression lTermExpr = null;
-    public NodeExpression rTermExpr = null;
-
-    // endregion
-
-    // LAMBDA
-    public NodeArgumentList lambdaArgumentList = null;
-    public NodeSuite lambdaSuite = null;
-    public NodeExpressionList lambdaExpressionList = null;
-
-    public NodeExpression(AstPosition position) {
-        super(position);
     }
 }

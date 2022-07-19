@@ -1,9 +1,9 @@
 package frontend.ir.node;
 
-import java.util.LinkedList;
-
 import frontend.ir.IrId;
 import frontend.ir.IrType;
+
+import java.util.LinkedList;
 
 public class IrFunction extends IrNode {
     public boolean builtIn = false;

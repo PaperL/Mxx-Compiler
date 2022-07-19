@@ -5,16 +5,7 @@ package frontend.ast;
  */
 public class AstType {
     public boolean isVariable;
-
-    public enum Genre {
-        BOOLEAN, INTEGER, STRING,   // built-in type
-        CLASS_NAME,                 // class name
-        VOID,                       // function return type
-        NULL,                       // expression value
-    }
-
     public Genre genre = null;
-
     public String className = null;      // class name
     public int dimension = 0;
 
@@ -42,5 +33,12 @@ public class AstType {
             else return true;
         }
         return false;
+    }
+
+    public enum Genre {
+        BOOLEAN, INTEGER, STRING,   // built-in type
+        CLASS_NAME,                 // class name
+        VOID,                       // function return type
+        NULL,                       // expression value
     }
 }
