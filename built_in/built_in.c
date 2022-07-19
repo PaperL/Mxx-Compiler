@@ -5,7 +5,14 @@
 #define PTR_SIZE sizeof(char*)
 #define INT_SIZE sizeof(int)
 
-char *__NEW_ON_HEAP(int size) { return (char *) malloc(size); }
+// char *__NEW_ON_HEAP(int size) { return (char *) malloc(size); }
+//
+// declare i8* @malloc(i32)
+//
+// define i8* @__NEW_ON_HEAP(i32 %0) {
+//   %2 = call i8* @malloc(i32 %0)
+//   ret i8* %2
+// }
 
 char *__NEW_ARRAY(int size, int dimension, int *arraySize) {
     void *ptr;
@@ -15,10 +22,10 @@ char *__NEW_ARRAY(int size, int dimension, int *arraySize) {
         *(int *) (ptr - INT_SIZE) = *arraySize;
     }
     if (dimension > 1) {
-        ptr = malloc(PTR_SIZE * (*arraySize) + INT_SIZE) + INT_SIZE;
-        *(int *) (ptr - INT_SIZE) = *arraySize;
-        for (int i = 0; i < *arraySize; i++)
-            ((char **) ptr)[i] = __NEW_ARRAY(size, dimension - 1, arraySize + 1);
+    ptr = malloc(PTR_SIZE * (*arraySize) + INT_SIZE) + INT_SIZE;
+    *(int *) (ptr - INT_SIZE) = *arraySize;
+    for (int i = 0; i < *arraySize; i++)
+        ((char **) ptr)[i] = __NEW_ARRAY(size, dimension - 1, arraySize + 1);
     }
     return (char *) ptr;
 }

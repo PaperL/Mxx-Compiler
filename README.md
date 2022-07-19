@@ -31,7 +31,7 @@
   - 支持含有前缀 `++` / `--` 的表达式作为左值
   - 🍸 支持含参构造函数
   
-- 具体使用方式可参考 [localTest.bash](https://github.com/PaperL/Mxx-Compiler/blob/main/localTest.bash), 下表为程序运行附加参数
+- 下表为程序运行附加参数, 运行脚本见 [DETAIL.md](https://github.com/PaperL/Mxx-Compiler/blob/main/DETAIL.md) 说明
 
   - | 参数名称               | 参数功能                                       |
     | ---------------------- | ---------------------------------------------- |

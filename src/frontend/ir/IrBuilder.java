@@ -26,7 +26,7 @@ public class IrBuilder {
     public final Map<String, String> internalFuncName = Map.ofEntries(
             // Built-in basic functions
             Map.entry("_init", "__INIT"),
-            Map.entry("_new", "__NEW_ON_HEAP"),
+            Map.entry("_new", "malloc"),
             Map.entry("_new_array", "__NEW_ARRAY"),
             // Built-in system functions
             Map.entry("print", "__PRINT"),
@@ -906,6 +906,7 @@ public class IrBuilder {
                     objPtr = buildExpression(astNode.functionExpr.objectExpr, false);
                     if (objPtr.type.isArray()) {
                         // * INLINE
+                        // * Array Size
                         // Get size of array
                         if ((!funcName.equals("size"))
                                 || (astNode.arguments != null)) throwUnexpectedError();
@@ -948,6 +949,7 @@ public class IrBuilder {
                 // In LLVM IR, 'VOID*' should be 'i8*'
                 var i8PtrType = new IrType(IrType.Genre.I8);
                 i8PtrType.dimension = 1;
+                var i32Type = new IrType(IrType.Genre.I32);
                 var newType = new IrType(astNode.type);
                 var arrayDimension = newType.dimension;
                 // For class, newType is class pointer
@@ -956,12 +958,54 @@ public class IrBuilder {
                 if (arrayDimension > 0) {
                     IrId newArrayPtr;
                     if (arrayDimension == 1) {
-                        var allocaIns = new IrInstruction(
-                                IrInstruction.Genre.ALLOCA, newType.getNotPointer());
-                        allocaIns.allocaQuantity = buildExpression(
+                        buildComment("One-dimensional array");
+                        // Calculate (array_size + 4) first
+                        var arraySize = buildExpression(
                                 astNode.type.brackets.get(0).expression, false);
-                        currentBlock.instructions.add(allocaIns);
-                        newArrayPtr = allocaIns.insId;
+                        // ? arraySzie.type must be I32
+                        var mulIns = new IrInstruction(
+                                IrInstruction.Genre.ARITH, i32Type);
+                        mulIns.opGenre = IrInstruction.operatorGenre.MUL;
+                        mulIns.arithOperandLeft = createI32Constant(newType.sizeof());
+                        mulIns.arithOperandRight = arraySize;
+                        currentBlock.instructions.add(mulIns);
+                        var addIns = new IrInstruction(
+                                IrInstruction.Genre.ARITH, i32Type);
+                        addIns.opGenre = IrInstruction.operatorGenre.ADD;
+                        addIns.arithOperandLeft = mulIns.insId;
+                        addIns.arithOperandRight = createI32Constant(4);
+                        currentBlock.instructions.add(addIns);
+                        // Allocate memory of (size+4) size
+                        var callIns = new IrInstruction(
+                                IrInstruction.Genre.CALL, i8PtrType);
+                        callIns.callName = internalFuncName.get("_new");
+                        callIns.callArguments = new LinkedList<>();
+                        callIns.callArguments.add(addIns.insId);
+                        currentBlock.instructions.add(callIns);
+                        // Cast i8* to i32* type and store size of array
+                        var castIns1 = new IrInstruction(
+                                IrInstruction.Genre.BITCAST, i32Type.getPointer());
+                        castIns1.castPtr = callIns.insId;
+                        currentBlock.instructions.add(castIns1);
+                        var storeIns = new IrInstruction(
+                                IrInstruction.Genre.STORE, i32Type);
+                        storeIns.storeAddress = castIns1.insId;
+                        storeIns.storeData = arraySize;
+                        currentBlock.instructions.add(storeIns);
+                        // Get array pointer and cast to correct type
+                        var getPtrIns = new IrInstruction(
+                                IrInstruction.Genre.GET_ELEMENT_PTR);
+                        getPtrIns.insId = new IrId(castIns1.insId.type); // i32*
+                        getPtrIns.objectPtr = castIns1.insId;
+                        getPtrIns.eleIndexes = new LinkedList<>();
+                        getPtrIns.eleIndexes.add(createI32Constant(1));
+                        currentBlock.instructions.add(getPtrIns);
+                        var castIns2 = new IrInstruction(
+                                IrInstruction.Genre.BITCAST, newType);
+                        castIns2.castPtr = getPtrIns.insId;
+                        currentBlock.instructions.add(castIns2);
+                        // Result
+                        newArrayPtr = castIns2.insId;
                     } else {
                         buildComment("Multidimensional array");
                         var callIns = new IrInstruction(
@@ -974,8 +1018,8 @@ public class IrBuilder {
                         callIns.callArguments.add(
                                 createI32Constant(arrayDimension));
                         // 生成存储每一维数组大小的数组
-                        var allocaIns = new IrInstruction(IrInstruction.Genre.ALLOCA,
-                                new IrType(IrType.Genre.I32));
+                        var allocaIns = new IrInstruction(
+                                IrInstruction.Genre.ALLOCA, i32Type);
                         allocaIns.allocaQuantity = createI32Constant(arrayDimension);
                         currentBlock.instructions.add(allocaIns);
                         var arrayPtr = allocaIns.insId;
@@ -994,7 +1038,7 @@ public class IrBuilder {
                             }
                             var storeIns = new IrInstruction(
                                     IrInstruction.Genre.STORE,
-                                    new IrType(IrType.Genre.I32));
+                                    i32Type);
                             storeIns.storeAddress = storePtr;
                             currentBlock.instructions.add(storeIns);
 

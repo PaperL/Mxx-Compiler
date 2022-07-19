@@ -1,12 +1,5 @@
 # Mxx Compiler 实现说明
 
-## 代码风格
-
-- 遵循 Java 命名规范
-- 关于多态
-    - 减少多态使用，可以减少文件数量以使得源代码文件结构更为简洁
-    - 多态类代码量较少，可直接使用枚举实现多态，例如 `frontend.ast.node.NodeExpression`
-
 ## 项目环境配置
 
 - 关于 **riscv32-unknown-elf toolchain**
@@ -32,6 +25,20 @@
 - 代码中部分注释使用 IDEA 插件 [Comments Highlighter](https://plugins.jetbrains.com/plugin/12895-comments-highlighter) 提供高亮
 - 代码量统计使用 IDEA 插件 [Statistic](https://plugins.jetbrains.com/plugin/4509-statistic) 完成, 统计方式为计算由本人创建 / 修改的文件中的代码总行数 (
   纯空行与注释行不计)
+
+## 运行方式
+
+- 参考 `run` 文件夹下脚本
+- 测试数据来自 [Compiler-2021-testcases](https://github.com/ZYHowell/Compiler-2021-testcases/tree/main), 相对位置说明示例：`codegen2` 文件夹应位于 `run/testcase/codegen2` 路径
+- 指令可在项目根目录下使用 `make` 执行
+  - 详见 `makefile`
+
+## 代码风格
+
+- 遵循 Java 命名规范
+- 关于多态
+    - 减少多态使用，可以减少文件数量以使得源代码文件结构更为简洁
+    - 多态类代码量较少，可直接使用枚举实现多态，例如 `frontend.ast.node.NodeExpression`
 
 ## 题面笔记
 

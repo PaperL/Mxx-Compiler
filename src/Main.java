@@ -31,7 +31,7 @@ public class Main {
         if (cmdArgs.contains(CmdArgument.ArgumentType.LOCAL)) {
             System.out.println("Please input testcase name:");
             inputStream = new FileInputStream(
-                    "test/all/" + (new Scanner(System.in)).nextLine() + ".mx");
+                    "test/" + (new Scanner(System.in)).nextLine() + ".mx");
             outputStream = System.out;
         } else {
             inputStream = System.in;
@@ -69,12 +69,12 @@ public class Main {
             outputStream.println("\033[36m🔨 Building AST finished.\033[0m");
             // AST 树构建完成后, package frontend.parser 不再被使用
 
+            // * Semantic Check on AST
             var forwardCollector = new ForwardCollector();
             forwardCollector.collectRoot(astRoot);
             outputStream.println("\033[36m🔨 Collecting forward reference symbol finished.\033[0m");
             // Class, class method and function name are collected
 
-            // * Semantic Check on AST
             var semanticChecker = new SemanticChecker(forwardCollector.globalScope);
             semanticChecker.checkRoot(astRoot);
             outputStream.println("\033[36m🔨 Semantic check finished.\033[0m");
