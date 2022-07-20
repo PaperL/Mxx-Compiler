@@ -1,5 +1,6 @@
 test/
 *test*
+!run/testcase
 
 # IDE
 .vscode/
