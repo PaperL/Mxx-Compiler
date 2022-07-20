@@ -2,17 +2,8 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#define PTR_SIZE sizeof(char*)
+#define PTR_SIZE sizeof(char *)
 #define INT_SIZE sizeof(int)
-
-// char *__NEW_ON_HEAP(int size) { return (char *) malloc(size); }
-//
-// declare i8* @malloc(i32)
-//
-// define i8* @__NEW_ON_HEAP(i32 %0) {
-//   %2 = call i8* @malloc(i32 %0)
-//   ret i8* %2
-// }
 
 // * BASIC
 char *__NEW_ARRAY(int size, int dimension, int *arraySize) {
@@ -20,15 +11,15 @@ char *__NEW_ARRAY(int size, int dimension, int *arraySize) {
     // Dimension mustn't be 0
     if (dimension == 1) {
         ptr = malloc(size * (*arraySize) + INT_SIZE) + INT_SIZE;
-        *(int *) (ptr - INT_SIZE) = *arraySize;
+        *(int *)(ptr - INT_SIZE) = *arraySize;
     }
     if (dimension > 1) {
-    ptr = malloc(PTR_SIZE * (*arraySize) + INT_SIZE) + INT_SIZE;
-    *(int *) (ptr - INT_SIZE) = *arraySize;
-    for (int i = 0; i < *arraySize; i++)
-        ((char **) ptr)[i] = __NEW_ARRAY(size, dimension - 1, arraySize + 1);
+        ptr = malloc(PTR_SIZE * (*arraySize) + INT_SIZE) + INT_SIZE;
+        *(int *)(ptr - INT_SIZE) = *arraySize;
+        for (int i = 0; i < *arraySize; i++)
+            ((char **)ptr)[i] = __NEW_ARRAY(size, dimension - 1, arraySize + 1);
     }
-    return (char *) ptr;
+    return (char *)ptr;
 }
 
 // * NORMAL
@@ -41,9 +32,9 @@ void __PRINT_INT(int val) { printf("%d", val); }
 void __PRINTLN_INT(int val) { printf("%d\n", val); }
 
 char *__GET_STRING() {
-    char *str = (char *) malloc(256 + INT_SIZE) + INT_SIZE;
+    char *str = (char *)malloc(256 + INT_SIZE) + INT_SIZE;
     scanf("%255s", str);
-    *(int *) (str - INT_SIZE) = strlen(str);
+    *(int *)(str - INT_SIZE) = strlen(str);
     return str;
 }
 
@@ -54,9 +45,9 @@ int __GET_INT() {
 }
 
 char *__TO_STRING(int val) {
-    char *str = (char *) malloc(13 + INT_SIZE) + INT_SIZE;
+    char *str = (char *)malloc(13 + INT_SIZE) + INT_SIZE;
     // -2147483648
-    *(int *) (str - INT_SIZE) = strlen(str);
+    *(int *)(str - INT_SIZE) = strlen(str);
     sprintf(str, "%d", val);
     return str;
 }
@@ -64,38 +55,56 @@ char *__TO_STRING(int val) {
 // * STRING
 char *__STRING_ADD(char *str1, char *str2) {
     int len = strlen(str1) + strlen(str2);
-    char *str = (char *) malloc(len + 1 + INT_SIZE) + INT_SIZE;
-    *(int *) (str - INT_SIZE) = len;
+    char *str = (char *)malloc(len + 1 + INT_SIZE) + INT_SIZE;
+    *(int *)(str - INT_SIZE) = len;
     strcpy(str, str1);
     strcat(str, str2);
     return str;
 }
 
-char __STRING_EQUAL(char *str1, char *str2) { return (strcmp(str1, str2) == 0); }
+char __STRING_EQUAL(char *str1, char *str2) {
+    return (strcmp(str1, str2) == 0);
+}
 
-char __STRING_NOT_EQUAL(char *str1, char *str2) { return (strcmp(str1, str2) != 0); }
+char __STRING_NOT_EQUAL(char *str1, char *str2) {
+    return (strcmp(str1, str2) != 0);
+}
 
 char __STRING_LESS(char *str1, char *str2) { return (strcmp(str1, str2) < 0); }
 
-char __STRING_GREATER(char *str1, char *str2) { return (strcmp(str1, str2) > 0); }
+char __STRING_GREATER(char *str1, char *str2) {
+    return (strcmp(str1, str2) > 0);
+}
 
-char __STRING_LESS_OR_EQUAL(char *str1, char *str2) { return (strcmp(str1, str2) <= 0); }
+char __STRING_LESS_OR_EQUAL(char *str1, char *str2) {
+    return (strcmp(str1, str2) <= 0);
+}
 
-char __STRING_GREATER_OR_EQUAL(char *str1, char *str2) { return (strcmp(str1, str2) >= 0); }
+char __STRING_GREATER_OR_EQUAL(char *str1, char *str2) {
+    return (strcmp(str1, str2) >= 0);
+}
 
-// todo
-char* __STRING_SUBSTRING(char *str, int left,int right) {
-    int len = right-left;
-    char *substr = (char*) malloc(len + 1 + INT_SIZE) + INT_SIZE;
-    *(int *) (substr - INT_SIZE) = len;
-    strncpy(substr, str+left, len);
+char *__STRING_SUBSTRING(char *str, int left, int right) {
+    int len = right - left;
+    char *substr = (char *)malloc(len + 1 + INT_SIZE) + INT_SIZE;
+    *(int *)(substr - INT_SIZE) = len;
+    strncpy(substr, str + left, len);
     substr[len] = '\0';
+    return substr;
 }
 
 int __STRING_PARSE_INT(char *str) {
-
+    char sign = 0;
+    int k = 0;
+    while ((*str < '0' || *str > '9') && *str != '\0') {
+        if (*str == '-') sign = 1;
+        str++;
+    }
+    while (*str >= '0' && *str <= '9') {
+        k = k * 10 - 48 + *str;
+        str++;
+    }
+    return (sign ? -k : k);
 }
 
-int __STRING_ORD(char *str, int pos){
-    return (int)str[pos];
-}
+int __STRING_ORD(char *str, int pos) { return (int)str[pos]; }

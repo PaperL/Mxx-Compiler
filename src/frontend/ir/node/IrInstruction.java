@@ -37,6 +37,7 @@ public class IrInstruction extends IrNode {
     // Phi φ
     // Pair<Value, Label>
     public LinkedList<Pair<IrId, IrId>> phiArgs = null;
+    // Arithmetic
     public operatorGenre opGenre = null;
     public IrId arithOperandLeft = null;
     public IrId arithOperandRight = null;

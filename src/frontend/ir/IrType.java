@@ -86,6 +86,10 @@ public class IrType implements Cloneable {
         return (dimension > (genre == Genre.COMPOSITE ? 1 : 0));
     }
 
+    public boolean isString() {
+        return (genre == Genre.I8 && dimension == 1);
+    }
+
     public int sizeof() {
         int size = 0;
         if (genre == Genre.COMPOSITE) {

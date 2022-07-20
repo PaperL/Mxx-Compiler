@@ -6,6 +6,7 @@ import frontend.ir.node.*;
 import org.antlr.v4.runtime.misc.Pair;
 import utility.CmdArgument;
 import utility.error.InternalError;
+import utility.error.SemanticError;
 
 import java.util.*;
 
@@ -63,7 +64,11 @@ public class IrBuilder {
             Map.entry("_string_less", "__STRING_LESS"),
             Map.entry("_string_greater", "__STRING_GREATER"),
             Map.entry("_string_less_or_equal", "__STRING_LESS_OR_EQUAL"),
-            Map.entry("_string_greater_or_equal", "__STRING_GREATER_OR_EQUAL")
+            Map.entry("_string_greater_or_equal", "__STRING_GREATER_OR_EQUAL"),
+            Map.entry("substring", "__STRING_SUBSTRING"),
+            Map.entry("parseInt", "__STRING_PARSE_INT"),
+            Map.entry("ord", "__STRING_ORD")
+
     );
     // scopeStack 中变量名无 GLOBAL_VARIABLE_PREFIX 前缀
     // 但对应的 IrId 名称含有前缀
@@ -134,12 +139,18 @@ public class IrBuilder {
                         declare i8*  @%s(i32)
                                                 
                         declare i8*  @%s(i8*, i8*)
-                        declare i1   @%s(i8*, i8*)
-                        declare i1   @%s(i8*, i8*)
-                        declare i1   @%s(i8*, i8*)
-                        declare i1   @%s(i8*, i8*)
-                        declare i1   @%s(i8*, i8*)
-                        declare i1   @%s(i8*, i8*)""",
+                        declare i8   @%s(i8*, i8*)
+                        declare i8   @%s(i8*, i8*)
+                        declare i8   @%s(i8*, i8*)
+                        declare i8   @%s(i8*, i8*)
+                        declare i8   @%s(i8*, i8*)
+                        declare i8   @%s(i8*, i8*)
+                                                
+                        declare i8*  @%s(i8*, i32, i32)
+                        declare i32  @%s(i8*)
+                        declare i32  @%s(i8*, i32)
+                                                
+                        """,
                 internalFuncName.get("_new"),
                 internalFuncName.get("_new_array"),
 
@@ -157,7 +168,11 @@ public class IrBuilder {
                 internalFuncName.get("_string_less"),
                 internalFuncName.get("_string_greater"),
                 internalFuncName.get("_string_less_or_equal"),
-                internalFuncName.get("_string_greater_or_equal")
+                internalFuncName.get("_string_greater_or_equal"),
+
+                internalFuncName.get("substring"),
+                internalFuncName.get("parseInt"),
+                internalFuncName.get("ord")
         ));
 
 
@@ -205,9 +220,12 @@ public class IrBuilder {
         irRoot.functions.put(initFunc.name, initFunc);
     }
 
+    public IrId createI8Constant(int k) {
+        return (new IrId(new IrType(IrType.Genre.I8), k));
+    }
+
     public IrId createI32Constant(int k) {
-        return (new IrId(
-                new IrType(IrType.Genre.I32), k));
+        return (new IrId(new IrType(IrType.Genre.I32), k));
     }
 
     public void buildDeclare(String declareInfo) {
@@ -975,7 +993,8 @@ public class IrBuilder {
                 var newType = new IrType(astNode.type);
                 var arrayDimension = newType.dimension;
                 // For class, newType is class pointer
-                if (newType.genre == IrType.Genre.COMPOSITE) arrayDimension--;
+                if (newType.genre == IrType.Genre.COMPOSITE
+                        || newType.genre == IrType.Genre.I8) arrayDimension--;
                 // New array
                 if (arrayDimension > 0) {
                     IrId newArrayPtr;
@@ -1064,6 +1083,10 @@ public class IrBuilder {
                             storeIns.storeAddress = storePtr;
                             currentBlock.instructions.add(storeIns);
 
+                            // ! bug
+                            // todo
+                            if (i >= astNode.type.brackets.size())
+                                throw new SemanticError("brackets", astNode.position);
                             var indexExprNode = astNode.type
                                     .brackets.get(i).expression;
                             if (indexExprNode == null) {
@@ -1272,27 +1295,59 @@ public class IrBuilder {
                         }
                         if (!lOperand.type.equals(rOperand.type)) throw new InternalError(
                                 "IR",
-                                "Left and Right Operand of NodeExpression(BINARY) have Different Type in buildExpression()");
-                        IrType insType;
-                        switch (astNode.operator) {
-                            case GT, LT, GE, LE, EQ, NOT_EQ -> insType = new IrType(IrType.Genre.I1);
-                            default -> insType = lOperand.type;
+                                "Left and Right Operand of NodeExpression(BINARY) " +
+                                        "have Different Type in buildExpression()");
+                        if (!lOperand.type.isString()) {
+                            IrType insType;
+                            switch (astNode.operator) {
+                                case GT, LT, GE, LE, EQ, NOT_EQ -> insType = new IrType(IrType.Genre.I1);
+                                default -> insType = lOperand.type;
+                            }
+                            var ins = new IrInstruction(IrInstruction.Genre.ARITH, insType);
+                            ins.arithOperandLeft = lOperand;
+                            ins.arithOperandRight = rOperand;
+                            switch (astNode.operator) {
+                                case ADD, SUB, MUL, DIV, MOD, SHIFT_L, SHIFT_R, GT, LT, GE, LE,
+                                        EQ -> ins.opGenre = IrInstruction.operatorGenre.valueOf(
+                                        astNode.operator.toString());   // 同名可直转
+                                case NOT_EQ -> ins.opGenre = IrInstruction.operatorGenre.NEQ;
+                                case BIT_AND -> ins.opGenre = IrInstruction.operatorGenre.AND;
+                                case BIT_OR -> ins.opGenre = IrInstruction.operatorGenre.OR;
+                                case CARET -> ins.opGenre = IrInstruction.operatorGenre.XOR;
+                                default -> throwUnexpectedError();
+                            }
+                            currentBlock.instructions.add(ins);
+                            return ins.insId;
+                        } else {
+                            // * string built-in function
+                            IrType callType = (astNode.operator == NodeExpression.OpEnum.ADD)
+                                    ? (new IrType(IrType.Genre.I8).getPointer())
+                                    : (new IrType(IrType.Genre.I8));
+                            var callIns = new IrInstruction(IrInstruction.Genre.CALL, callType);
+                            switch (astNode.operator) {
+                                case ADD -> callIns.callName = internalFuncName.get("_string_add");
+                                case EQ -> callIns.callName = internalFuncName.get("_string_equal");
+                                case NOT_EQ -> callIns.callName = internalFuncName.get("_string_not_equal");
+                                case LT -> callIns.callName = internalFuncName.get("_string_less");
+                                case GT -> callIns.callName = internalFuncName.get("_string_greater");
+                                case LE -> callIns.callName = internalFuncName.get("_string_less_or_equal");
+                                case GE -> callIns.callName = internalFuncName.get("_string_greater_or_equal");
+                            }
+                            callIns.callArguments = new LinkedList<>();
+                            callIns.callArguments.add(lOperand);
+                            callIns.callArguments.add(rOperand);
+                            currentBlock.instructions.add(callIns);
+                            if (astNode.operator == NodeExpression.OpEnum.ADD)
+                                return callIns.insId;   // i8*
+                            var cmpIns = new IrInstruction(
+                                    IrInstruction.Genre.ARITH,
+                                    new IrType(IrType.Genre.I1));
+                            cmpIns.opGenre = IrInstruction.operatorGenre.NEQ;
+                            cmpIns.arithOperandLeft = callIns.insId;
+                            cmpIns.arithOperandRight = createI8Constant(0);
+                            currentBlock.instructions.add(cmpIns);
+                            return cmpIns.insId;
                         }
-                        var ins = new IrInstruction(IrInstruction.Genre.ARITH, insType);
-                        ins.arithOperandLeft = lOperand;
-                        ins.arithOperandRight = rOperand;
-                        switch (astNode.operator) {
-                            case ADD, SUB, MUL, DIV, MOD, SHIFT_L, SHIFT_R, GT, LT, GE, LE,
-                                    EQ -> ins.opGenre = IrInstruction.operatorGenre.valueOf(
-                                    astNode.operator.toString());   // 同名可直转
-                            case NOT_EQ -> ins.opGenre = IrInstruction.operatorGenre.NEQ;
-                            case BIT_AND -> ins.opGenre = IrInstruction.operatorGenre.AND;
-                            case BIT_OR -> ins.opGenre = IrInstruction.operatorGenre.OR;
-                            case CARET -> ins.opGenre = IrInstruction.operatorGenre.XOR;
-                            default -> throwUnexpectedError();
-                        }
-                        currentBlock.instructions.add(ins);
-                        return ins.insId;
                     }
                 }
             }

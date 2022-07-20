@@ -10,7 +10,7 @@ compile_cmd = "bash run/build.bash"
 excluded_test_cases = [] # ["foo.mx"]
 builtin_path = "./built_in/built_in.ll"
 bin_path = "./testbin/"
-halt_on_3_fails = True
+fail_num_limit = 500
 calculate_score = False
 # When test_codegen && use_llvm is true, the output should be a .ll file, and we will use llc to
 # compile it into asm. You can test the correctness of your IR-gen with this.
@@ -33,7 +33,7 @@ def collect_test_cases():
         for f in os.listdir(test_cases_dir):
             if os.path.splitext(f)[1] == '.mx':
                 test_cases.append(f)
-    print(len(test_cases))
+    print("Test cases number:" + color_green + str(len(test_cases)) + color_none)
     for s in excluded_test_cases:
         if s in test_cases:
             test_cases.remove(s)
@@ -62,7 +62,7 @@ def main():
 
     print('Project Directory:' + color_green)
     os.system('pwd')
-    input(color_none + 'Please ensure it is the project root directory.')
+    input(color_none + 'Ensure it is the project root directory and press enter to continue...')
     os.system('mkdir -p testbin')
 
     if os.system(compile_cmd):
@@ -73,11 +73,11 @@ def main():
     os.system('cp {} ./testbin/b.ll'.format(builtin_path))
     total = 0
     passed = 0
-    continue_fail = 0
+    fail_num = 0
     max_len = max(len(i) for i in test_cases)
     max_len += 5
     for t in test_cases:
-        if halt_on_3_fails and (continue_fail > 0):
+        if fail_num >= fail_num_limit:
             exit(1)
         total += 1
         src_text, input_text, output_text = parse_test_case(test_cases_dir + t)
@@ -92,26 +92,25 @@ def main():
         for i in range(len(t), max_len):
             print(end=' ')
         start = time.time()
-        if os.system('bash run/ir.bash < ./testbin/test.mx'):
+        if os.system('bash run/ir.bash < ./testbin/test.mx > /dev/null 2>&1'):
             print(color_red + "Compilation Failed" + color_none)
-            continue_fail += 1
+            fail_num += 1
             continue
         os.system('mv output.ll testbin/test.ll')
         print("(T=%.2fs)" % (time.time() - start), end=" ")
-        if os.system("clang ./testbin/test.ll ./testbin/b.ll -o ./testbin/a.out -Wno-override-module > /dev/null"):
+        if os.system("clang ./testbin/test.ll ./testbin/b.ll -o ./testbin/a.out -Wno-override-module > /dev/null 2>&1"):
             print(color_red + "Link Error" + color_none)
-            continue_fail += 1
+            fail_num += 1
             continue
         if os.system("./testbin/a.out < ./testbin/test.in > ./testbin/test.out"):
             print(color_red + "Runtime Error" + color_none)
-            continue_fail += 1
+            fail_num += 1
             continue
         if os.system('diff -B -b ./testbin/test.out ./testbin/test.ans > ./testbin/diff.out'):
             print(color_red + "Wrong Answer" + color_none)
-            continue_fail += 1
+            fail_num += 1
             continue
         passed += 1
-        continue_fail = 0
         print(color_green + "Accepted" + color_none)
 
     print("total {}, passed {}, ratio {}".format(total, passed, passed / total))

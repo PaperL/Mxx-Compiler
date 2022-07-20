@@ -143,6 +143,34 @@
                 - Branch
                 - Call
 
+- Built-in 函数
+
+    - | **Internal Name**        | **LLVM IR Declare**               |
+        | ------------------------ | --------------------------------- |
+        | _init                    | void @__INIT()                    |
+        | _new                     | i8*  @malloc(i32)                 |
+        | _new_array               | i8*  @__NEW_ARRAY(i32, i32, i32*) |
+        | print                    | void @__PRINT(i8*)                |
+        | println                  | void @__PRINTLN(i8*)              |
+        | printInt                 | void @__PRINT_INT(i32)            |
+        | printlnInt               | void @__PRINTLN_INT(i32)          |
+        | getString                | i8*  @__GET_STRING()              |
+        | getInt                   | i32  @__GET_INT()                 |
+        | toString                 | i8*  @__TO_STRING(i32)            |
+        | _string_add              | __STRING_ADD                      |
+        | _string_equal            | __STRING_EQUAL                    |
+        | _string_not_equal        | __STRING_NOT_EQUAL                |
+        | _string_less             | __STRING_LESS                     |
+        | _string_greater          | __STRING_GREATER                  |
+        | _string_less_or_equal    | __STRING_LESS_OR_EQUAL            |
+        | _string_greater_or_equal | __STRING_GREATER_OR_EQUAL         |
+        | substring                | __STRING_SUBSTRING                |
+        | parseInt                 | __STRING_PARSE_INT                |
+        | ord                      | __STRING_ORD                      |
+
+        
+
+
 ### 其他说明
 
 - 实现 llvm
