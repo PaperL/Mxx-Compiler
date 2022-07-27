@@ -7,6 +7,7 @@
 
 // * BASIC
 char *__NEW_ARRAY(int size, int dimension, int *arraySize) {
+    if (*arraySize == 0) return NULL;
     void *ptr;
     // Dimension mustn't be 0
     if (dimension == 1) {
@@ -45,10 +46,9 @@ int __GET_INT() {
 }
 
 char *__TO_STRING(int val) {
-    char *str = (char *)malloc(13 + INT_SIZE) + INT_SIZE;
+    char *str = (char *)malloc(256 + INT_SIZE) + INT_SIZE;
     // -2147483648
-    *(int *)(str - INT_SIZE) = strlen(str);
-    sprintf(str, "%d", val);
+    *(int *)(str - INT_SIZE) = sprintf(str, "%d", val);
     return str;
 }
 

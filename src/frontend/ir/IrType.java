@@ -2,6 +2,7 @@ package frontend.ir;
 
 import frontend.ast.node.NodeType;
 import frontend.ir.node.IrClass;
+import utility.CmdArgument;
 import utility.error.InternalError;
 
 import java.util.Objects;
@@ -91,15 +92,16 @@ public class IrType implements Cloneable {
     }
 
     public int sizeof() {
+        var ptrsize = 4;
+        if (IrBuilder.cmdArgs.contains(CmdArgument.ArgumentType.IR))
+            ptrsize = 8;
         int size = 0;
-        if (genre == Genre.COMPOSITE) {
-            if (dimension != 1) size = 4;
-            else {
-                for (var field : clas.fields.values())
-                    size += field.b.sizeof();
-            }
-        } else if (dimension != 0) size = 4;
-        else {
+        if (dimension != 0) size = ptrsize;
+        else if (genre == Genre.COMPOSITE) {
+            // dimension == 0
+            for (var field : clas.fields.values())
+                size += field.b.sizeof();
+        } else {
             switch (genre) {
                 case I1 -> size = 1;
                 case I8 -> size = 1;

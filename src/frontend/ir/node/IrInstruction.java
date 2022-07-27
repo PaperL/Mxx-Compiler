@@ -100,7 +100,7 @@ public class IrInstruction extends IrNode {
             case COMMENT -> {
                 var strBuilder = new StringBuilder(commentInfo);
                 int pos = 0;
-                while (pos < strBuilder.length() - 1) {
+                while (pos == 0 || pos < strBuilder.length() - 1) {
                     strBuilder.insert(pos, "; ");
                     pos = strBuilder.indexOf("\n", pos);
                     if (pos++ == -1) break;
@@ -146,6 +146,7 @@ public class IrInstruction extends IrNode {
             }
             case STORE -> {
                 // store i32 %1, i32* %2
+                // ! todo
                 return String.format("store %s %s, %s %s",
                         insType,
                         storeData,

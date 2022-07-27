@@ -1,6 +1,8 @@
 package frontend.ir.node;
 
+import frontend.ir.IrBuilder;
 import frontend.ir.IrId;
+import utility.CmdArgument;
 
 import java.util.LinkedList;
 
@@ -30,6 +32,8 @@ public class IrBlock extends IrNode {
         for (var ins : instructions) {
             if (ins.genre != IrInstruction.Genre.COMMENT) tot.append("  ");
             tot.append(ins).append("\n");
+            if (IrBuilder.cmdArgs.contains(CmdArgument.ArgumentType.DEBUG))
+                System.out.println(ins);
         }
         tot.append("  ").append(jumpInstruction).append("\n");
         return tot.toString();

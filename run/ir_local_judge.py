@@ -6,11 +6,12 @@ import os
 import time
 
 test_cases_dir = 'run/testcase/codegen/'
-compile_cmd = "bash run/build.bash"
 excluded_test_cases = [] # ["foo.mx"]
-builtin_path = "./built_in/built_in.ll"
+builtin_path = "./built_in/built_in_x86_64.ll"
 bin_path = "./testbin/"
-fail_num_limit = 500
+fail_num_limit = -1
+errInfo = True # Any runtime CLI output
+outputToScreen = False # This lead to all testpoints being 'Wrong Answer' because ouput is redirected to stdout
 calculate_score = False
 # When test_codegen && use_llvm is true, the output should be a .ll file, and we will use llc to
 # compile it into asm. You can test the correctness of your IR-gen with this.
@@ -27,7 +28,8 @@ def collect_test_cases():
     test_cases = []
     if len(sys.argv) > 1:
         for f in os.listdir(test_cases_dir):
-            if os.path.splitext(f)[1] == '.mx' and f.find(sys.argv[1]) != -1:
+            i = f.find(sys.argv[1])
+            if os.path.splitext(f)[1] == '.mx' and i != -1 and f[i+len(sys.argv[1])]=='.':
                 test_cases.append(f)
     else:
         for f in os.listdir(test_cases_dir):
@@ -55,7 +57,13 @@ def parse_test_case(test_case_path):
     output_end_idx = lines.index('=== end ===', output_start_idx)
     output_text = '\n'.join(lines[output_start_idx:output_end_idx])
 
-    return src_text, input_text, output_text
+    exit_code = 0
+    for line in lines:
+        p = line.find('ExitCode: ')
+        if p != -1:
+            exit_code = int(line[p+10:])
+
+    return src_text, input_text, output_text, exit_code
 
 
 def main():
@@ -65,9 +73,7 @@ def main():
     input(color_none + 'Ensure it is the project root directory and press enter to continue...')
     os.system('mkdir -p testbin')
 
-    if os.system(compile_cmd):
-        print(color_red + "Fail when building your compiler...")
-        return
+    print('Collecting Test Cases...')
     test_cases = collect_test_cases()
     #     os.system('clang -S -emit-llvm builtin/builtin.c -o builtin/builtin.ll')
     os.system('cp {} ./testbin/b.ll'.format(builtin_path))
@@ -77,10 +83,10 @@ def main():
     max_len = max(len(i) for i in test_cases)
     max_len += 5
     for t in test_cases:
-        if fail_num >= fail_num_limit:
+        if fail_num_limit != -1 and fail_num >= fail_num_limit:
             exit(1)
         total += 1
-        src_text, input_text, output_text = parse_test_case(test_cases_dir + t)
+        src_text, input_text, output_text, exit_code = parse_test_case(test_cases_dir + t)
         with open('./testbin/test.mx', 'w') as f:
             f.write(src_text)
         with open('./testbin/test.in', 'w') as f:
@@ -92,17 +98,19 @@ def main():
         for i in range(len(t), max_len):
             print(end=' ')
         start = time.time()
-        if os.system('bash run/ir.bash < ./testbin/test.mx > /dev/null 2>&1'):
+        if os.system('bash run/ir.bash < ./testbin/test.mx' + ('' if errInfo else ' > /dev/null 2>&1')):
             print(color_red + "Compilation Failed" + color_none)
             fail_num += 1
             continue
         os.system('mv output.ll testbin/test.ll')
-        print("(T=%.2fs)" % (time.time() - start), end=" ")
-        if os.system("clang ./testbin/test.ll ./testbin/b.ll -o ./testbin/a.out -Wno-override-module > /dev/null 2>&1"):
+        print('(T=%.2fs)' % (time.time() - start), end=" ")
+        if os.system('clang ./testbin/test.ll ./testbin/b.ll -o ./testbin/a.out -Wno-override-module' + ('' if errInfo else ' > /dev/null 2>&1')):
             print(color_red + "Link Error" + color_none)
             fail_num += 1
             continue
-        if os.system("./testbin/a.out < ./testbin/test.in > ./testbin/test.out"):
+        ret = os.system('./testbin/a.out < ./testbin/test.in' + ('' if outputToScreen else ' > ./testbin/test.out')) >> 8
+        if ret != exit_code:
+            # print('ret: ' + str(ret))
             print(color_red + "Runtime Error" + color_none)
             fail_num += 1
             continue

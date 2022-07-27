@@ -10,7 +10,8 @@ public class AstType {
     public int dimension = 0;
 
     public AstType(Genre genre_, boolean isVariable_) {
-        assert genre_ != Genre.CLASS_NAME;
+        // SemanticChecker::checkAtom()::IDENTIFIER uses genre == CLASS_NAME
+        // assert genre_ != Genre.CLASS_NAME;
         genre = genre_;
         isVariable = isVariable_;
     }

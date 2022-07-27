@@ -1,11 +1,12 @@
 build:
 	bash run/build.bash
 
-test_ir:
+test_ir: build
 	python3 run/ir_local_judge.py $(TESTCASE)
 
 clean:
 	rm -r bin
+	rm -r testbin
 
 builtin:
 	clang -emit-llvm -O3 -S built_in/built_in.c -o built_in/built_in.ll -I /usr/include --target=riscv32-unknown-elf
