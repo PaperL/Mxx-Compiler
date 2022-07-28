@@ -2,16 +2,13 @@ package backend.asm;
 
 import backend.asm.node.AsmTop;
 import frontend.ir.node.*;
-import utility.CmdArgument;
 
 public class AsmBuilder {
     // * Builder's Member Variables
     public static final AsmTop asmRoot = new AsmTop();
-    // region BASIC
-    public static CmdArgument cmdArgs = null;
 
-    public AsmBuilder(CmdArgument cmdArgs_) {
-        cmdArgs = cmdArgs_;
+    // region BASIC
+    public AsmBuilder() {
     }
 
     public String print() {

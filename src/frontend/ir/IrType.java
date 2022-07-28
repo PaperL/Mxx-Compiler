@@ -3,6 +3,7 @@ package frontend.ir;
 import frontend.ast.node.NodeType;
 import frontend.ir.node.IrClass;
 import utility.CmdArgument;
+import utility.Constant;
 import utility.error.InternalError;
 
 import java.util.Objects;
@@ -63,18 +64,18 @@ public class IrType implements Cloneable {
      *
      * @return Pointer type clone
      */
-    public IrType getPointer() {
+    public IrType getPtr() {
         var ret = this.clone();
         ret.dimension++;
         return ret;
     }
 
     /**
-     * Get clone of an IrType object, and turn it to not pointer type.
+     * Get clone of an IrType object, and dereference its type once.
      *
-     * @return Not pointer type clone
+     * @return Dereference type clone
      */
-    public IrType getNotPointer() {
+    public IrType getDeref() {
         var ret = this.clone();
         if (dimension == 0) throw new InternalError(
                 "IR",
@@ -93,7 +94,7 @@ public class IrType implements Cloneable {
 
     public int sizeof() {
         var ptrsize = 4;
-        if (IrBuilder.cmdArgs.contains(CmdArgument.ArgumentType.IR))
+        if (Constant.cmdArgs.contains(CmdArgument.ArgumentType.IR))
             ptrsize = 8;
         int size = 0;
         if (dimension != 0) size = ptrsize;

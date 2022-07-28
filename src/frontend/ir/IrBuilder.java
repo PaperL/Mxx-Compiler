@@ -1,10 +1,10 @@
 package frontend.ir;
 
-import frontend.ast.AstBuilder;
 import frontend.ast.node.*;
 import frontend.ir.node.*;
 import org.antlr.v4.runtime.misc.Pair;
 import utility.CmdArgument;
+import utility.Constant;
 import utility.error.InternalError;
 import utility.error.SemanticError;
 
@@ -16,33 +16,6 @@ import java.util.*;
 public class IrBuilder {
     public static final IrTop irRoot = new IrTop();
     // region BASIC
-    public static CmdArgument cmdArgs = null;
-    // Internal naming prefix
-    public final String GLOBAL_VARIABLE_PREFIX = "__VAR__";
-    public final String CONSTANT_STRING_PREFIX = "__CONSTANT_STR__";
-    public final String FUNCTION_PREFIX = "__FUNC__";
-    public final String CLASS_CONSTRUCTOR_PREFIX = "__CONSTRUCTOR__";
-    public final String CLASS_PREFIX = "__CLAS__", METHOD_PREFIX = "__MTHD__";
-    //    public final String INITIAL_FUNCTION = "__INIT";
-//    // Built-in basic functions
-//    public final String NEW_FUNCTION = "__NEW_ON_HEAP";
-//    public final String NEW_ARRAY_FUNCTION = "__NEW_ARRAY";
-//    // Built-in system functions
-//    public final String PRINT_FUNCTION = "__PRINT";
-//    public final String PRINTLN_FUNCTION = "__PRINTLN";
-//    public final String PRINT_INT_FUNCTION = "__PRINT_INT";
-//    public final String PRINTLN_INT_FUNCTION = "__PRINTLN_INT";
-//    public final String GET_STRING_FUNCTION = "__GET_STRING";
-//    public final String GET_INT_FUNCTION = "__GET_INT";
-//    public final String TO_STRING_FUNCTION = "__TO_STRING";
-//    // Bulit-in string functions
-//    public final String STRING_ADD_FUNCTION = "__STRING_ADD";
-//    public final String STRING_EQUAL_FUNCTION = "__STRING_EQUAL";
-//    public final String STRING_NOT_EQUAL_FUNCTION = "__STRING_NOT_EQUAL";
-//    public final String STRING_LESS_FUNCTION = "__STRING_LESS";
-//    public final String STRING_GREATER_FUNCTION = "__STRING_GREATER";
-//    public final String STRING_LESS_OR_EQUAL_FUNCTION = "__STRING_LESS_OR_EQUAL";
-//    public final String STRING_GREATER_OR_EQUAL_FUNCTION = "__STRING_GREATER_OR_EQUAL";
     // Internal Functions
     public final Map<String, String> internalFuncName = Map.ofEntries(
             // Built-in basic functions
@@ -68,8 +41,8 @@ public class IrBuilder {
             Map.entry("substring", "__STRING_SUBSTRING"),
             Map.entry("parseInt", "__STRING_PARSE_INT"),
             Map.entry("ord", "__STRING_ORD")
-
     );
+
     // scopeStack 中变量名无 GLOBAL_VARIABLE_PREFIX 前缀
     // 但对应的 IrId 名称含有前缀
     public final LinkedList<HashMap<String, IrId>> scopeStack = new LinkedList<>();
@@ -82,8 +55,7 @@ public class IrBuilder {
     // 常量字符串计数器
     public int constantStringCnt = 0;
 
-    public IrBuilder(CmdArgument cmdArgs_) {
-        cmdArgs = cmdArgs_;
+    public IrBuilder() {
         scopeStack.push(new HashMap<>());   // Global scope
         init();
     }
@@ -234,12 +206,12 @@ public class IrBuilder {
     }
 
     public void buildComment(String commentInfo) {
-        if (cmdArgs.contains(CmdArgument.ArgumentType.IR_SOURCE_CODE)) {
+        if (Constant.cmdArgs.contains(CmdArgument.ArgumentType.IR_SOURCE_CODE)) {
             var ins = new IrInstruction(IrInstruction.Genre.COMMENT);
             ins.commentInfo = commentInfo;
             currentBlock.instructions.add(ins);
         }
-        if (cmdArgs.contains(CmdArgument.ArgumentType.DEBUG))
+        if (Constant.cmdArgs.contains(CmdArgument.ArgumentType.DEBUG))
             System.out.println("# " + commentInfo);
     }
 
@@ -252,9 +224,9 @@ public class IrBuilder {
         var str = astNode.position.rawText;
         var end = str.indexOf('\n');
         ins.commentInfo = (end == -1) ? str : str.substring(0, str.indexOf('\n'));
-        if (cmdArgs.contains(CmdArgument.ArgumentType.IR_SOURCE_CODE))
+        if (Constant.cmdArgs.contains(CmdArgument.ArgumentType.IR_SOURCE_CODE))
             currentBlock.instructions.add(ins);
-        if (cmdArgs.contains(CmdArgument.ArgumentType.DEBUG))
+        if (Constant.cmdArgs.contains(CmdArgument.ArgumentType.DEBUG))
             System.out.println("# " + ins.commentInfo);
     }
 
@@ -263,7 +235,7 @@ public class IrBuilder {
      */
     public IrId buildGetFromMem(IrId pointer) {
         var ins = new IrInstruction(IrInstruction.Genre.LOAD,
-                pointer.type.getNotPointer());
+                pointer.type.getDeref());
         ins.loadAddress = pointer;
         currentBlock.instructions.add(ins);
         return ins.insId;
@@ -381,7 +353,7 @@ public class IrBuilder {
 //            IntStream.range(0, fieldDefine.variableTerms.size())
 //                    .forEach(i -> /* sth */);
         }
-        if (cmdArgs.contains(CmdArgument.ArgumentType.DEBUG)) {
+        if (Constant.cmdArgs.contains(CmdArgument.ArgumentType.DEBUG)) {
             // ? 这里省略 String.format 会报错
             System.out.printf("\nClass '%s' field:\n%s\n%n",
                     clas.name, clas.fields);
@@ -389,7 +361,7 @@ public class IrBuilder {
 
         clas.constructor = new IrFunction();
         clas.constructor.returnType = new IrType(IrType.Genre.VOID);
-        clas.constructor.name = CLASS_CONSTRUCTOR_PREFIX + clas.name;
+        clas.constructor.name = Constant.CLASS_CONSTRUCTOR_PREFIX + clas.name;
         clas.constructor.clas = clas;
         NodeFunctionDefine constructor = null;
         for (var methodDefine : astNode.methodDefines) {
@@ -418,11 +390,11 @@ public class IrBuilder {
         if (astNode.builtIn)
             func.name = internalFuncName.get(astNode.name);
         else if (isMethod)
-            func.name = CLASS_PREFIX + clas.name + METHOD_PREFIX
+            func.name = Constant.CLASS_PREFIX + clas.name + Constant.METHOD_PREFIX
                     + astNode.name;
         else if (Objects.equals(astNode.name, "main"))
             func.name = "main";
-        else func.name = FUNCTION_PREFIX + astNode.name;
+        else func.name = Constant.FUNCTION_PREFIX + astNode.name;
 
         if (isMethod) {
             func.clas = clas;
@@ -468,7 +440,7 @@ public class IrBuilder {
         currentBlock = firstBlock;
 
         // Declare return variable
-        if (cmdArgs.contains(CmdArgument.ArgumentType.DEBUG)) {
+        if (Constant.cmdArgs.contains(CmdArgument.ArgumentType.DEBUG)) {
             var str = new StringBuilder();
             str.append(String.format("\nFunction '%s %s(...)', arguments:\n",
                     currentFunction.returnType, currentFunction.name));
@@ -599,7 +571,8 @@ public class IrBuilder {
             // currentFunction is set to INITIAL_FUNCTION at visitVariableDefine()
             ins = new IrInstruction(
                     IrInstruction.Genre.GLOBAL_VARIABLE,
-                    new IrId(type.getPointer(), GLOBAL_VARIABLE_PREFIX + astTerm.name));
+                    new IrId(type.getPtr(),
+                            Constant.GLOBAL_VARIABLE_PREFIX + astTerm.name));
             irRoot.variableDefines.add(ins);
             // 将新定义的全局变量 (ins.insId) 放至作用域栈底 (全局变量区域)
             scopeStack.getLast().put(astTerm.name, ins.insId);
@@ -613,7 +586,7 @@ public class IrBuilder {
         if (initExpr != null) {
             var initVal = buildExpression(initExpr, false);
             if (initVal.genre == IrId.Genre.NULL)
-                initVal.type = ins.insId.type.getNotPointer();  // Same as buildExpression::ASSIGN
+                initVal.type = ins.insId.type.getDeref();  // Same as buildExpression::ASSIGN
             buildAssignToMem(initVal, ins.insId);
         }
 //        else if (type.genre == IrType.Genre.COMPOSITE) {  // Object
@@ -724,7 +697,6 @@ public class IrBuilder {
                 currentBlock = nextBlock;
                 nextBlock.jumpInstruction = originalJumpIns;
                 buildComment("end for");
-                // todo t17
             }
             case WHILE -> {
                 var originalJumpIns = currentBlock.jumpInstruction;
@@ -827,7 +799,7 @@ public class IrBuilder {
                                 // Get pointer of field by its index
                                 ins.eleIndexes.add(createI32Constant(entry.a));
                                 // Set instruction type
-                                ins.insId = new IrId(entry.b.getPointer());
+                                ins.insId = new IrId(entry.b.getPtr());
                                 currentBlock.instructions.add(ins);
                                 atomId = ins.insId;
                             }
@@ -850,7 +822,7 @@ public class IrBuilder {
                                 (atomNode.booleanValue) ? 1 : 0);   // Trans Boolean to I1
                     }
                     case STRING_CONSTANT -> {
-                        var strName = CONSTANT_STRING_PREFIX + constantStringCnt++;
+                        var strName = Constant.CONSTANT_STRING_PREFIX + constantStringCnt++;
                         // * LLVM doesn't support '\n' and other common invisible character alias
                         // ' ' => ' '
                         var originalLen = atomNode.stringConstant.length();
@@ -867,7 +839,7 @@ public class IrBuilder {
                                 IrInstruction.Genre.GLOBAL_VARIABLE,
                                 new IrId((new IrType(IrType.Genre.I8,
                                         realLen + 1)    // end character '\0'
-                                        .getPointer()),
+                                        .getPtr()),
                                         strName));
                         globalIns.globalConstantString = str + "\\00";
                         irRoot.variableDefines.add(globalIns);
@@ -899,7 +871,7 @@ public class IrBuilder {
                 var fieldPair = objPtr.type.clas.fields
                         .get(astNode.memberName);
                 ins.eleIndexes.add(createI32Constant(fieldPair.a));
-                ins.insId = new IrId(fieldPair.b.getPointer());
+                ins.insId = new IrId(fieldPair.b.getPtr());
 
                 return isLeftValue ? ins.insId : buildGetFromMem(ins.insId);
             }
@@ -937,7 +909,7 @@ public class IrBuilder {
                                 // * INLINE
                                 // * Array/String Size/Length
                                 var castIns = new IrInstruction(IrInstruction.Genre.BITCAST,
-                                        (new IrType(IrType.Genre.I32)).getPointer());
+                                        (new IrType(IrType.Genre.I32)).getPtr());
                                 castIns.castPtr = objPtr;
                                 currentBlock.instructions.add(castIns);
                                 var getPtrIns = new IrInstruction(IrInstruction.Genre.GET_ELEMENT_PTR);
@@ -949,7 +921,7 @@ public class IrBuilder {
                                 return buildGetFromMem(getPtrIns.insId);
                             }
                         } else  // * String built-in method
-                            func = irRoot.classes.get(AstBuilder.builtInStringClassName)
+                            func = irRoot.classes.get(Constant.builtInStringClassName)
                                     .methods.get(funcName);
                         //irRoot.functions.get(internalFuncName.get(funcName));
                     } else func = objPtr.type.clas.methods.get(funcName);
@@ -979,7 +951,7 @@ public class IrBuilder {
                 var rValue = buildExpression(astNode.rValue, false);
                 var lValuePointer = buildExpression(astNode.lValue, true);
                 if (rValue.genre == IrId.Genre.NULL)
-                    rValue.type = lValuePointer.type.getNotPointer();   // Same as initial value in buildVariableTerm()
+                    rValue.type = lValuePointer.type.getDeref();   // Same as initial value in buildVariableTerm()
                 buildAssignToMem(rValue, lValuePointer);
                 return lValuePointer;
             }
@@ -1005,7 +977,8 @@ public class IrBuilder {
                         var mulIns = new IrInstruction(
                                 IrInstruction.Genre.ARITH, i32Type);
                         mulIns.opGenre = IrInstruction.operatorGenre.MUL;
-                        mulIns.arithOperandLeft = createI32Constant(newType.sizeof());
+                        mulIns.arithOperandLeft = createI32Constant(
+                                newType.getDeref().sizeof());
                         mulIns.arithOperandRight = arraySize;
                         currentBlock.instructions.add(mulIns);
                         var addIns = new IrInstruction(
@@ -1023,7 +996,7 @@ public class IrBuilder {
                         currentBlock.instructions.add(callIns);
                         // Cast i8* to i32* type and store size of array
                         var castIns1 = new IrInstruction(
-                                IrInstruction.Genre.BITCAST, i32Type.getPointer());
+                                IrInstruction.Genre.BITCAST, i32Type.getPtr());
                         castIns1.castPtr = callIns.insId;
                         currentBlock.instructions.add(castIns1);
                         var storeIns = new IrInstruction(
@@ -1086,6 +1059,7 @@ public class IrBuilder {
                                     .brackets.get(i).expression;
                             if (indexExprNode == null) {
                                 storeIns.storeData = createI32Constant(0);
+                                currentBlock.instructions.add(storeIns);
                                 break;
                             } else storeIns.storeData = buildExpression(
                                     indexExprNode, false);
@@ -1113,7 +1087,7 @@ public class IrBuilder {
                     callIns.callArguments = new LinkedList<>();
                     callIns.callArguments.add(
                             createI32Constant(
-                                    newType.getNotPointer().sizeof()));
+                                    newType.getDeref().sizeof()));
                     currentBlock.instructions.add(callIns);
 
                     var castIns = new IrInstruction(
@@ -1235,24 +1209,25 @@ public class IrBuilder {
 
                         for (int i = 0, len = exprs.size(); i < len; i++) {
                             if (i == 0) {   // First expression
-                                phiIns.phiArgs.add(new Pair<>(
-                                        new IrId(boolType, (isAND ? 0 : 1)),
-                                        currentBlock.label));
                                 buildBranch(
                                         buildExpression(exprs.get(i), false),
                                         isAND ? nextExprBlock : nextBlock,
                                         isAND ? nextBlock : nextExprBlock);
+                                // If expression is another long boolean expressions, then the currentBlock will change.
+                                phiIns.phiArgs.add(new Pair<>(
+                                        new IrId(boolType, (isAND ? 0 : 1)),
+                                        currentBlock.label));
                             } else if (i < len - 1) {
                                 currentFunction.blocks.add(nextExprBlock);
                                 currentBlock = nextExprBlock;
                                 nextExprBlock = new IrBlock();
-                                phiIns.phiArgs.add(new Pair<>(
-                                        new IrId(boolType, (isAND ? 0 : 1)),
-                                        currentBlock.label));
                                 buildBranch(
                                         buildExpression(exprs.get(i), false),
                                         isAND ? nextExprBlock : nextBlock,
                                         isAND ? nextBlock : nextExprBlock);
+                                phiIns.phiArgs.add(new Pair<>(
+                                        new IrId(boolType, (isAND ? 0 : 1)),
+                                        currentBlock.label));
                             } else {    // Last expression
                                 currentFunction.blocks.add(nextExprBlock);
                                 currentBlock = nextExprBlock;
@@ -1318,7 +1293,7 @@ public class IrBuilder {
                         } else {
                             // * string built-in function
                             IrType callType = (astNode.operator == NodeExpression.OpEnum.ADD)
-                                    ? (new IrType(IrType.Genre.I8).getPointer())
+                                    ? (new IrType(IrType.Genre.I8).getPtr())
                                     : (new IrType(IrType.Genre.I8));
                             var callIns = new IrInstruction(IrInstruction.Genre.CALL, callType);
                             switch (astNode.operator) {

@@ -4,13 +4,10 @@ import frontend.ast.node.*;
 import frontend.parser.MxxParser;
 import frontend.parser.MxxParserBaseVisitor;
 import org.antlr.v4.runtime.ParserRuleContext;
+import utility.Constant;
 import utility.error.SemanticError;
 
 public class AstBuilder extends MxxParserBaseVisitor<AstNode> {
-
-    public static final String builtInStringClassName = "__STRING__";
-    public static final String builtInArrayClassName = "__ARRAY__";
-
     // region tools
     public String checkIdentifier(String text, ParserRuleContext ctx) {
         if (text.charAt(0) == '_')
@@ -536,7 +533,7 @@ public class AstBuilder extends MxxParserBaseVisitor<AstNode> {
         // region Built-in method
         var stringClass = new NodeClassDefine(null);
         stringClass.builtIn = true;
-        stringClass.name = builtInStringClassName;
+        stringClass.name = Constant.builtInStringClassName;
         node.programSections.add(generateProgramSection(stringClass));
         // int length();
         stringClass.methodDefines.add(createBuiltInFunction(
@@ -565,7 +562,7 @@ public class AstBuilder extends MxxParserBaseVisitor<AstNode> {
 
         var arrayClass = new NodeClassDefine(null);
         arrayClass.builtIn = true;
-        arrayClass.name = builtInArrayClassName;
+        arrayClass.name = Constant.builtInArrayClassName;
         node.programSections.add(generateProgramSection(arrayClass));
         // int size();
         arrayClass.methodDefines.add(createBuiltInFunction(

@@ -14,6 +14,7 @@ import frontend.parser.MxxParser;
 import org.antlr.v4.runtime.CharStreams;
 import org.antlr.v4.runtime.CommonTokenStream;
 import utility.CmdArgument;
+import utility.Constant;
 import utility.error.Error;
 import utility.error.InternalError;
 
@@ -24,6 +25,7 @@ import java.util.Scanner;
 public class Main {
     public static void main(String[] args) throws Exception {
         var cmdArgs = new CmdArgument(args);
+        Constant.cmdArgs = cmdArgs;
         InputStream inputStream;
         PrintStream outputStream = null;
         if (cmdArgs.contains(CmdArgument.ArgumentType.LOCAL)) {
@@ -80,7 +82,7 @@ public class Main {
                 throw new InternalError("Finished", "Semantic Check");
 
             // * Generate LLVM IR from AST
-            var irBuilder = new IrBuilder(cmdArgs);
+            var irBuilder = new IrBuilder();
             irBuilder.buildRoot(astRoot);
             outputStream.println("\033[36m🔨 IR generation finished.\033[0m");
             outputStream.println("\033[33m🎗️ Frontend worked successfully.\033[0m");
@@ -92,16 +94,16 @@ public class Main {
 
             // ! BACKEND
             // * Optimize IR
-            var irOptimizer = new IrOptimizer(cmdArgs);
+            var irOptimizer = new IrOptimizer();
             irOptimizer.work(irResult);
 
             // * Generate Assembly from IR
-            var asmBuilder = new AsmBuilder(cmdArgs);
+            var asmBuilder = new AsmBuilder();
             asmBuilder.buildRoot(irResult);
             var asmResult = AsmBuilder.asmRoot;
 
             // * Optimize Assembly
-            var asmOptimizer = new AsmOptimizer(cmdArgs);
+            var asmOptimizer = new AsmOptimizer();
             asmOptimizer.work(asmResult);
 
             // Finish Compiling

@@ -1,6 +1,6 @@
 package frontend.ir.node;
 
-import frontend.ir.IrBuilder;
+import utility.Constant;
 
 import java.util.LinkedHashMap;
 import java.util.LinkedList;
@@ -27,7 +27,7 @@ public class IrTop extends IrNode {
         var tot = new StringBuilder();
         // * toString() 可以省略
         tot.append("; LLVM IR generated from programing language Mx*\n" +
-                "; Compile Option: " + IrBuilder.cmdArgs + '\n' +
+                "; Compile Option: " + Constant.cmdArgs + '\n' +
                 "; === Declare ===\n\n");
         for (var declare : declares) tot.append(declare).append('\n');
 

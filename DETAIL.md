@@ -220,10 +220,6 @@
 
 ## TODO
 
-- 完善内建函数
-  - 完成 built_in.c
-  - 把新函数加入 internalFuncName
-
 - 实现 Assembly 部分
 - IR 优化
 - Assembly 优化
@@ -239,4 +235,5 @@
     - 手动编写 `built-in.c`  开 `-O3` 编译为 `.ll` 和 `.s` 文件
     - `.ll` 文件和 `output.ll` 可使用 `llc` 指令一同编译为可执行文件
         - `clang output.ll built_in/built_in.ll`
+        - **使用 Clang 对拍程序生成的 LLVM IR 时，必须为 64 位指针**（因为生成出的可执行文件 target 为当前系统）
     - 提交评测时 `.s` 文件会被 OJ 自动并入 `output.s` 一块评测

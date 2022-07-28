@@ -4,6 +4,7 @@ import frontend.ast.node.*;
 import frontend.ast.scope.BroadScope;
 import frontend.ast.scope.FunctionScope;
 import frontend.ast.scope.VariableScope;
+import utility.Constant;
 import utility.error.SemanticError;
 
 import java.util.ArrayList;
@@ -12,9 +13,6 @@ import java.util.Objects;
 
 
 public class SemanticChecker {
-    // todo 将该常量放入 utility
-    public static final String builtInStringClassName = AstBuilder.builtInStringClassName;
-    public static final String builtInArrayClassName = AstBuilder.builtInArrayClassName;
     public final BroadScope globalScope;
     public final LinkedList<ScopeGenre> scopeGenreStack;
     // Class has "this", function has "return"
@@ -434,8 +432,9 @@ public class SemanticChecker {
                     var objectType = checkExpression(node.functionExpr.objectExpr);
                     if (objectType.dimension != 0) {
                         // 此处直接修改 objectType.className 值会导致修改 scope 中对应值 Q^Q
-                        objectType = new AstType(builtInArrayClassName);
-                    } else if (objectType.genre == AstType.Genre.STRING) objectType.className = builtInStringClassName;
+                        objectType = new AstType(Constant.builtInArrayClassName);
+                    } else if (objectType.genre == AstType.Genre.STRING)
+                        objectType.className = Constant.builtInStringClassName;
                     var classScope = globalScope.getClass(objectType.className, node.position);
                     functionScope = classScope.getMethod(functionName, node.position, true);
                 } else if (node.functionExpr.genre == NodeExpression.Genre.ATOM) {

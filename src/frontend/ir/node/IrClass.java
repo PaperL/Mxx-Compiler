@@ -32,7 +32,7 @@ public class IrClass extends IrNode {
         if (!fields.isEmpty()) fieldsStr.delete(   // 删除末尾 ", "
                 fieldsStr.length() - 2, fieldsStr.length());
         tot.append(String.format("%s = type { %s }\n",
-                new IrType(this).getNotPointer(),
+                new IrType(this).getDeref(),
                 fieldsStr));
         // Constructor
         tot.append('\n').append(constructor);

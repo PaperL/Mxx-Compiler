@@ -65,7 +65,7 @@ public class IrInstruction extends IrNode {
         switch (genre) {
             case LOAD, STORE, CALL, RETURN,
                     ARITH, PHI, BITCAST -> insId = new IrId(insType);
-            case ALLOCA -> insId = new IrId(insType.getPointer());
+            case ALLOCA -> insId = new IrId(insType.getPtr());
             // GLOBAL_VARIABLE should use IrInstruction(Genre, IrId)
             default -> IrBuilder.throwUnexpectedError();
         }
@@ -116,14 +116,14 @@ public class IrInstruction extends IrNode {
                     return String.format("%s = private unnamed_addr constant %s "
                                     + "c\"%s\", align 1 ",
                             insId,
-                            insType.getNotPointer(),
+                            insType.getDeref(),
                             globalConstantString);
                 } else {
                     // @a = global i32 0
                     return String.format("%s = global %s %s",
                             insId,
-                            insType.getNotPointer(),
-                            insType.getNotPointer().toZeroInitString());
+                            insType.getDeref(),
+                            insType.getDeref().toZeroInitString());
                 }
             }
             case ALLOCA -> {
@@ -133,7 +133,7 @@ public class IrInstruction extends IrNode {
                         ? "" : (", i32 " + allocaQuantity);
                 return String.format("%s = alloca %s%s",
                         insId,
-                        insType.getNotPointer(),
+                        insType.getDeref(),
                         quantityStr);
             }
             case LOAD -> {
@@ -141,16 +141,15 @@ public class IrInstruction extends IrNode {
                 return String.format("%s = load %s, %s %s",
                         insId,
                         insType,
-                        insType.getPointer(),
+                        insType.getPtr(),
                         loadAddress);
             }
             case STORE -> {
                 // store i32 %1, i32* %2
-                // ! todo
                 return String.format("store %s %s, %s %s",
                         insType,
                         storeData,
-                        insType.getPointer(),
+                        insType.getPtr(),
                         storeAddress);
             }
             case BRANCH -> {
@@ -234,7 +233,7 @@ public class IrInstruction extends IrNode {
                 argBuilder.delete(argBuilder.length() - 2, argBuilder.length());
                 return String.format("%s = getelementptr %s, %s %s, %s",
                         insId,
-                        objectPtr.type.getNotPointer(),
+                        objectPtr.type.getDeref(),
                         objectPtr.type,
                         objectPtr,
                         argBuilder);

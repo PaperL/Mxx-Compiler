@@ -10,7 +10,7 @@ excluded_test_cases = [] # ["foo.mx"]
 builtin_path = "./built_in/built_in_x86_64.ll"
 bin_path = "./testbin/"
 fail_num_limit = -1
-errInfo = True # Any runtime CLI output
+errInfo = False # Any runtime CLI output
 outputToScreen = False # This lead to all testpoints being 'Wrong Answer' because ouput is redirected to stdout
 calculate_score = False
 # When test_codegen && use_llvm is true, the output should be a .ll file, and we will use llc to

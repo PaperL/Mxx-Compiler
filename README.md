@@ -13,7 +13,7 @@
 - 一个用 Java 编写的 Mx* 语言编译器, 功能为将字符串格式的源代码文件编译为汇编代码
 - 本项目为 ACM 班 20 级大二大作业, 题面见: [Compiler-2022](https://github.com/ACMClassCourses/Compiler-Design-Implementation)
 - 目前进度: `Assembly`
-- 代码量: `3526 lines`（不计空行与注释）
+- 代码量: `3523 lines`（不计空行与注释）
 
 
 
@@ -30,7 +30,7 @@
   - 支持逗号分割的列表末可有逗号 (例如: `fun(1, 2, 3,);`)
   - 支持含有前缀 `++` / `--` 的表达式作为左值
   - 🍸 支持含参构造函数
-  - 🍸 除 `\n`, `\t` 外支持 `\"`
+  - 除 `\n`, `\t` 外支持 `\"`
   
 - 下表为程序运行附加参数, 运行脚本见 [DETAIL.md](https://github.com/PaperL/Mxx-Compiler/blob/main/DETAIL.md) 说明
 
@@ -51,35 +51,38 @@
 > 斜体为包名，加粗类名表示后续类与该类有实现或继承关系
 
 - Main
+
 - *frontend*
     - *parser (由第三方库 Antlr4 生成)*
         - MxxLexer
         - MxxParser
         - **MxxParserListener**, MxxParserBaseListener
         - **MxxParserVisitor**, MxxParserBaseVisitor
-        
     - *ast*
-    - *node*
-            - **AstNode**, NodeRoot, NodeProgramSection, NodeClassDefine, NodeFunctionDefine, NodeVariableDefine, NodeType, NodeArgumentList, NodeSuite, NodeVariableTerm, NodeExpression, NodeBracket, NodeStatement, NodeExpressionList, NodeAtom
-    
+        - *node*
+                - **AstNode**, NodeRoot, NodeProgramSection, NodeClassDefine, NodeFunctionDefine, NodeVariableDefine, NodeType, NodeArgumentList, NodeSuite, NodeVariableTerm, NodeExpression, NodeBracket, NodeStatement, NodeExpressionList, NodeAtom
         - *scope*
-        - **VariableScope**, BroadScope, ClassScope, FunctionScope
-    
+            - **VariableScope**, BroadScope, ClassScope, FunctionScope
         - AstPosition, AstType
-    - AstBuilder, ForwardCollector, SemanticChecker
+        - AstBuilder, ForwardCollector, SemanticChecker
     
     - *ir*
-    - *node*
+        - *node*
             - **IrNode**, IrTop, IrClass, IrFunction, IrBlock, IrInsturction
-    - IrType, IrId
-        - IrBuilder, IrOptimizer
+        - IrType, IrId
+        - IrBuilder
+
 - *backend*
     - *asm*
         - *node*
             - **AsmNode**, AsmTop, AsmFunction, AsmBlock, AsmInstruction
         - AsmId, AsmStackFrame
-        - AsmBuilder, AsmOptimizer
+        - AsmBuilder
+    - *optimization*
+        - IrOptimizer, AsmOptimiz
+    
 - *utility*
     - *error*
         - **Error**, SyntaxError, SemanticError, InternalError
+    - Constant
     - CmdArgument
