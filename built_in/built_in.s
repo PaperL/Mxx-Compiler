@@ -14,48 +14,52 @@ __NEW_ARRAY:                            # @__NEW_ARRAY
 	sw	s4, 8(sp)
 	sw	s5, 4(sp)
 	sw	s6, 0(sp)
-	addi	a3, zero, 1
-	mv	s5, a2
-	mv	s4, a0
-	bne	a1, a3, .LBB0_2
+	lw	s0, 0(a2)
+	beqz	s0, .LBB0_3
 # %bb.1:
-	lw	s0, 0(s5)
+	mv	s3, a1
+	mv	s4, a0
+	addi	a0, zero, 1
+	bne	a1, a0, .LBB0_4
+# %bb.2:
 	mul	a0, s0, s4
 	addi	a0, a0, 4
 	call	malloc
 	addi	s2, a0, 4
 	sw	s0, 0(a0)
-	j	.LBB0_6
-.LBB0_2:
-	mv	s3, a1
+	j	.LBB0_8
+.LBB0_3:
+	mv	s2, zero
+	j	.LBB0_8
+.LBB0_4:
 	addi	a0, zero, 2
                                         # implicit-def: $x18
-	blt	a1, a0, .LBB0_6
-# %bb.3:
-	lw	s0, 0(s5)
+	blt	s3, a0, .LBB0_8
+# %bb.5:
+	mv	s5, a2
 	slli	a0, s0, 2
 	addi	a0, a0, 4
 	call	malloc
 	addi	s2, a0, 4
 	addi	a1, zero, 1
 	sw	s0, 0(a0)
-	blt	s0, a1, .LBB0_6
-# %bb.4:
-	mv	s0, zero
+	blt	s0, a1, .LBB0_8
+# %bb.6:
+	mv	s1, zero
 	addi	s3, s3, -1
 	addi	s6, s5, 4
-	mv	s1, s2
-.LBB0_5:                                # =>This Inner Loop Header: Depth=1
+	mv	s0, s2
+.LBB0_7:                                # =>This Inner Loop Header: Depth=1
 	mv	a0, s4
 	mv	a1, s3
 	mv	a2, s6
 	call	__NEW_ARRAY
-	sw	a0, 0(s1)
+	sw	a0, 0(s0)
 	lw	a0, 0(s5)
-	addi	s0, s0, 1
-	addi	s1, s1, 4
-	blt	s0, a0, .LBB0_5
-.LBB0_6:
+	addi	s1, s1, 1
+	addi	s0, s0, 4
+	blt	s1, a0, .LBB0_7
+.LBB0_8:
 	mv	a0, s2
 	lw	s6, 0(sp)
 	lw	s5, 4(sp)
@@ -179,18 +183,16 @@ __TO_STRING:                            # @__TO_STRING
 	sw	s1, 4(sp)
 	sw	s2, 0(sp)
 	mv	s2, a0
-	addi	a0, zero, 17
+	addi	a0, zero, 260
 	call	malloc
 	mv	s1, a0
 	addi	s0, a0, 4
-	mv	a0, s0
-	call	strlen
-	sw	a0, 0(s1)
 	lui	a0, %hi(.L.str.2)
 	addi	a1, a0, %lo(.L.str.2)
 	mv	a0, s0
 	mv	a2, s2
 	call	sprintf
+	sw	a0, 0(s1)
 	mv	a0, s0
 	lw	s2, 0(sp)
 	lw	s1, 4(sp)

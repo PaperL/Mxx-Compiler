@@ -29,9 +29,9 @@ public class Main {
         InputStream inputStream;
         PrintStream outputStream = null;
         if (cmdArgs.contains(CmdArgument.ArgumentType.LOCAL)) {
-            System.out.println("Please input testcase name:");
+            System.out.println("Please input testcase name (testbin/*.mx):");
             inputStream = new FileInputStream(
-                    "test/" + (new Scanner(System.in)).nextLine() + ".mx");
+                    "testbin/" + (new Scanner(System.in)).nextLine() + ".mx");
             outputStream = System.out;
         } else {
             inputStream = System.in;

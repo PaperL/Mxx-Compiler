@@ -29,16 +29,35 @@
 ## 运行方式
 
 - 参考 `run` 文件夹下脚本
-- 测试数据来自 [Compiler-2021-testcases](https://github.com/ZYHowell/Compiler-2021-testcases/tree/main), 相对位置说明示例：`codegen2` 文件夹应位于 `run/testcase/codegen2` 路径
+- 直接运行
+  - 如果开启 `--local` 运行参数，则会提示输入测试文件名 `name`，以 `testbin/name.mx` 作为输入。否则从 stdin 读入输入，即请用重定向确定输入文件
+  - 输出始终为项目根目录下 `output.*` 文件
+  - 以下为程序运行附加参数
+  
+    - | 参数名称               | 参数功能                           |
+      | ---------------------- | ---------------------------------- |
+      | **--local**            | 输出易读的编译器运行信息           |
+      | **--semantic**         | 仅执行语法及语义检查               |
+      | **--ir**               | 仅生成 LLVM IR                     |
+      | **--ir-comment**       | 输出 IR 指令时添加相应源代码等注释 |
+      | **--asm-comment**      | 输出汇编程序时添加注释             |
+      | **--stack-size <arg>** | 设置栈大小 (单位 Byte)             |
+      | **-O**                 | 开启所有优化                       |
+      | **--debug**            | 编译器运行过程中输出调试信息       |
+  
+- 本地自动评测
+  - 测试数据来自 [Compiler-2021-testcases](https://github.com/ZYHowell/Compiler-2021-testcases/tree/main), 相对位置说明示例：`codegen` 文件夹应位于 `run/testcase/codegen` 路径
+
 - 指令可在项目根目录下使用 `make` 执行
   - 详见 `makefile`
 
 ## 代码风格
 
 - 遵循 Java 命名规范
-- 关于多态
+- 使用 JetBrain Idea 自动格式化 / 清理代码
+- 本项目在 AST / IR / Assembly 的数据结构上都尽可能减少多态而使用枚举实现
     - 减少多态使用，可以减少文件数量以使得源代码文件结构更为简洁
-    - 多态类代码量较少，可直接使用枚举实现多态，例如 `frontend.ast.node.NodeExpression`
+    - 多态类代码量较少，可直接使用枚举实现多态，参考 `frontend.ast.node.NodeExpression`
 
 ## 题面笔记
 

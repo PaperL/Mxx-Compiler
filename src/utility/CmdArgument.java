@@ -32,11 +32,11 @@ public class CmdArgument {
             case IR -> {
                 return "--ir";
             }
-            case IR_SOURCE_CODE -> {
-                return "--ir-source-code";
+            case IR_COMMENT -> {
+                return "--ir-comment";
             }
-            case ASSEMBLY_COMMENT -> {
-                return "--assembly-comment";
+            case ASM_COMMENT -> {
+                return "--asm-comment";
             }
             case STACK_SIZE -> {
                 return "--stack-size";
@@ -56,8 +56,8 @@ public class CmdArgument {
     public enum ArgumentType {
         DEBUG, LOCAL,
         SEMANTIC,
-        IR, IR_SOURCE_CODE,
-        ASSEMBLY_COMMENT,
+        IR, IR_COMMENT,
+        ASM_COMMENT,
         STACK_SIZE,
         OPTIMIZATION,
     }

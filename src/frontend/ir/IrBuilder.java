@@ -206,7 +206,7 @@ public class IrBuilder {
     }
 
     public void buildComment(String commentInfo) {
-        if (Constant.cmdArgs.contains(CmdArgument.ArgumentType.IR_SOURCE_CODE)) {
+        if (Constant.cmdArgs.contains(CmdArgument.ArgumentType.IR_COMMENT)) {
             var ins = new IrInstruction(IrInstruction.Genre.COMMENT);
             ins.commentInfo = commentInfo;
             currentBlock.instructions.add(ins);
@@ -224,7 +224,7 @@ public class IrBuilder {
         var str = astNode.position.rawText;
         var end = str.indexOf('\n');
         ins.commentInfo = (end == -1) ? str : str.substring(0, str.indexOf('\n'));
-        if (Constant.cmdArgs.contains(CmdArgument.ArgumentType.IR_SOURCE_CODE))
+        if (Constant.cmdArgs.contains(CmdArgument.ArgumentType.IR_COMMENT))
             currentBlock.instructions.add(ins);
         if (Constant.cmdArgs.contains(CmdArgument.ArgumentType.DEBUG))
             System.out.println("# " + ins.commentInfo);
