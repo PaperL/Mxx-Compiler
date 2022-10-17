@@ -3,13 +3,17 @@ package backend.optimization;
 import backend.asm.node.AsmTop;
 
 public class AsmOptimizer {
-    // region BASIC
+// region BASIC
 
-    public AsmOptimizer() {
+    public AsmTop asmRoot;
+
+    public AsmOptimizer(AsmTop asmRoot_) {
+        asmRoot = asmRoot_;
     }
-    // endregion
 
-    public void work(AsmTop asmNode) {
+// endregion
+
+    public void work() {
 
     }
 }

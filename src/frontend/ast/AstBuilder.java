@@ -8,8 +8,19 @@ import utility.Constant;
 import utility.error.SemanticError;
 
 public class AstBuilder extends MxxParserBaseVisitor<AstNode> {
+    public NodeRoot astRoot = null;
+    final MxxParser.ProgramContext parseTreeRoot;
+
+    public AstBuilder(MxxParser.ProgramContext parseTreeRoot_) {
+        parseTreeRoot = parseTreeRoot_;
+    }
+
+    public void build() {
+        astRoot = (NodeRoot) visit(parseTreeRoot);
+    }
+
     // region tools
-    public String checkIdentifier(String text, ParserRuleContext ctx) {
+    String checkIdentifier(String text, ParserRuleContext ctx) {
         if (text.charAt(0) == '_')
             throw new SemanticError("Get identifier begins with '_'", new AstPosition(ctx));
         return text;
@@ -438,14 +449,14 @@ public class AstBuilder extends MxxParserBaseVisitor<AstNode> {
 
     // region built-in
 
-    public NodeProgramSection generateProgramSection(NodeFunctionDefine node) {
+    NodeProgramSection generateProgramSection(NodeFunctionDefine node) {
         var section = new NodeProgramSection(null);
         section.genre = NodeProgramSection.Genre.FUNCTION_DEFINE;
         section.functionDefine = node;
         return section;
     }
 
-    public NodeProgramSection generateProgramSection(NodeClassDefine node) {
+    NodeProgramSection generateProgramSection(NodeClassDefine node) {
         var section = new NodeProgramSection(null);
         section.genre = NodeProgramSection.Genre.CLASS_DEFINE;
         section.classDefineNode = node;
@@ -453,77 +464,77 @@ public class AstBuilder extends MxxParserBaseVisitor<AstNode> {
     }
 
     // * Built-in
-    public void generateBuiltIn(NodeRoot node) {
+    public void generateBuiltIn() {
         var typeVoid = new AstType(AstType.Genre.VOID, false);
         var typeString = new AstType(AstType.Genre.STRING, false);
         var typeInt = new AstType(AstType.Genre.INTEGER, false);
         var typeBool = new AstType(AstType.Genre.BOOLEAN, false);
         // region Built-in function
         // void print(string str);
-        node.programSections.add(generateProgramSection(createBuiltInFunction(
+        astRoot.programSections.add(generateProgramSection(createBuiltInFunction(
                 typeVoid, "print",
                 typeString, "str"
         )));
         // void println(string str);
-        node.programSections.add(generateProgramSection(createBuiltInFunction(
+        astRoot.programSections.add(generateProgramSection(createBuiltInFunction(
                 typeVoid, "println",
                 typeString, "str"
         )));
         // void printInt(int n);
-        node.programSections.add(generateProgramSection(createBuiltInFunction(
+        astRoot.programSections.add(generateProgramSection(createBuiltInFunction(
                 typeVoid, "printInt",
                 typeInt, "n"
         )));
         // void printlnInt(int n);
-        node.programSections.add(generateProgramSection(createBuiltInFunction(
+        astRoot.programSections.add(generateProgramSection(createBuiltInFunction(
                 typeVoid, "printlnInt",
                 typeInt, "n"
         )));
         // string getString();
-        node.programSections.add(generateProgramSection(createBuiltInFunction(
+        astRoot.programSections.add(generateProgramSection(createBuiltInFunction(
                 typeString, "getString"
         )));
         // int getInt();
-        node.programSections.add(generateProgramSection(createBuiltInFunction(
+        astRoot.programSections.add(generateProgramSection(createBuiltInFunction(
                 typeInt, "getInt"
         )));
         // string toString(int i);
-        node.programSections.add(generateProgramSection(createBuiltInFunction(
+        astRoot.programSections.add(generateProgramSection(createBuiltInFunction(
                 typeString, "toString",
                 typeInt, "i"
         )));
         // * Built-in string arithmetic function
-        node.programSections.add(generateProgramSection(createBuiltInFunction(
+        astRoot.programSections.add(generateProgramSection(createBuiltInFunction(
                 typeString, "_string_add",
                 typeString, "lhs",
                 typeString, "rhs"
         )));
-        node.programSections.add(generateProgramSection(createBuiltInFunction(
+        astRoot.programSections.add(generateProgramSection(createBuiltInFunction(
                 typeBool, "_string_equal",
                 typeString, "lhs",
                 typeString, "rhs"
         )));
-        node.programSections.add(generateProgramSection(createBuiltInFunction(
+        astRoot.programSections.add(generateProgramSection(createBuiltInFunction(
                 typeBool, "_string_not_equal",
                 typeString, "lhs",
                 typeString, "rhs"
         )));
-        node.programSections.add(generateProgramSection(createBuiltInFunction(
+        astRoot.programSections.add(generateProgramSection(createBuiltInFunction(
                 typeBool, "_string_less",
                 typeString, "lhs",
                 typeString, "rhs"
         )));
-        node.programSections.add(generateProgramSection(createBuiltInFunction(
+        astRoot.programSections.add(generateProgramSection(createBuiltInFunction(
                 typeBool, "_string_greater",
                 typeString, "lhs",
                 typeString, "rhs"
         )));
-        node.programSections.add(generateProgramSection(createBuiltInFunction(
+        astRoot.programSections.add(generateProgramSection(createBuiltInFunction(
                 typeBool, "_string_less_or_equal",
                 typeString, "lhs",
                 typeString, "rhs"
         )));
-        node.programSections.add(generateProgramSection(createBuiltInFunction(
+        astRoot.programSections.add(generateProgramSection(createBuiltInFunction(
                 typeBool, "_string_greater_or_equal",
                 typeString, "lhs",
                 typeString, "rhs"
@@ -534,7 +545,7 @@ public class AstBuilder extends MxxParserBaseVisitor<AstNode> {
         var stringClass = new NodeClassDefine(null);
         stringClass.builtIn = true;
         stringClass.name = Constant.builtInStringClassName;
-        node.programSections.add(generateProgramSection(stringClass));
+        astRoot.programSections.add(generateProgramSection(stringClass));
         // int length();
         stringClass.methodDefines.add(createBuiltInFunction(
                 typeInt,
@@ -563,7 +574,7 @@ public class AstBuilder extends MxxParserBaseVisitor<AstNode> {
         var arrayClass = new NodeClassDefine(null);
         arrayClass.builtIn = true;
         arrayClass.name = Constant.builtInArrayClassName;
-        node.programSections.add(generateProgramSection(arrayClass));
+        astRoot.programSections.add(generateProgramSection(arrayClass));
         // int size();
         arrayClass.methodDefines.add(createBuiltInFunction(
                 typeInt,
@@ -573,7 +584,7 @@ public class AstBuilder extends MxxParserBaseVisitor<AstNode> {
     }
 
     // Built-in function without argument
-    public NodeFunctionDefine createBuiltInFunction(
+    NodeFunctionDefine createBuiltInFunction(
             AstType returnType, String name
     ) {
         var node = new NodeFunctionDefine(null);
@@ -587,7 +598,7 @@ public class AstBuilder extends MxxParserBaseVisitor<AstNode> {
     }
 
     // Built-in function with one argument
-    public NodeFunctionDefine createBuiltInFunction(
+    NodeFunctionDefine createBuiltInFunction(
             AstType returnType, String name,
             AstType argumentType,      // Built-in functions have no more
             String argumentName     // than one argument.
@@ -601,7 +612,7 @@ public class AstBuilder extends MxxParserBaseVisitor<AstNode> {
     }
 
     // Built-in function with two arguments
-    public NodeFunctionDefine createBuiltInFunction(
+    NodeFunctionDefine createBuiltInFunction(
             AstType returnType, String name,
             AstType argumentType1, String argumentName1,
             AstType argumentType2, String argumentName2

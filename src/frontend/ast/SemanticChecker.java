@@ -13,41 +13,45 @@ import java.util.Objects;
 
 
 public class SemanticChecker {
-    public final BroadScope globalScope;
-    public final LinkedList<ScopeGenre> scopeGenreStack;
+    final NodeRoot astRoot;
+    final BroadScope globalScope;
+    final LinkedList<ScopeGenre> scopeGenreStack = new LinkedList<>();
     // Class has "this", function has "return"
     // and loop has "continue" and "break".
-    public String currentClassName = null;
-    public LinkedList<VariableScope> scopeStack;
+    String currentClassName = null;
+    final LinkedList<VariableScope> scopeStack = new LinkedList<>();
 
-    public SemanticChecker(BroadScope globalScope_) {
+    public SemanticChecker(NodeRoot astRoot_, BroadScope globalScope_) {
+        astRoot = astRoot_;
         globalScope = globalScope_;
-        scopeStack = new LinkedList<>();
         scopeStack.push(globalScope_);
-        scopeGenreStack = new LinkedList<>();
+    }
+
+    public void work() {
+        checkRoot(astRoot);
     }
 
     // region Tools
     // Jump check
-    public boolean in_loop() {
+    boolean in_loop() {
         for (var genre : scopeGenreStack)
             if (genre == ScopeGenre.LOOP) return true;
         return false;
     }
 
-    public boolean in_function() {
+    boolean in_function() {
         for (var genre : scopeGenreStack)
             if (genre == ScopeGenre.FUNCTION) return true;
         return false;
     }
 
-    public boolean in_class() {
+    boolean in_class() {
         for (var genre : scopeGenreStack)
             if (genre == ScopeGenre.CLASS) return true;
         return false;
     }
 
-    public void checkRoot(NodeRoot node) {
+    void checkRoot(NodeRoot node) {
         for (var section : node.programSections) checkProgramSection(section);
         // Ensure that main function exists
         if (!globalScope.functions.containsKey("main"))
@@ -57,7 +61,7 @@ public class SemanticChecker {
 
     // region Check_Node
 
-    public void checkProgramSection(NodeProgramSection node) {
+    void checkProgramSection(NodeProgramSection node) {
         switch (node.genre) {
             case CLASS_DEFINE -> checkClassDefine(node.classDefineNode);
             case FUNCTION_DEFINE -> checkFunctionDefine(node.functionDefine);
@@ -65,7 +69,7 @@ public class SemanticChecker {
         }
     }
 
-    public void checkClassDefine(NodeClassDefine node) {
+    void checkClassDefine(NodeClassDefine node) {
         // Class member and function definition has been
         // collected because of forward reference,
         // so just need to visit function body.
@@ -89,7 +93,7 @@ public class SemanticChecker {
         currentClassName = null;
     }
 
-    public void checkFunctionDefine(NodeFunctionDefine node) {
+    void checkFunctionDefine(NodeFunctionDefine node) {
         if (node.builtIn) return;   // Just skip built-in functions
         // Same as comment of NodeClassDefine
         var currentScope = new VariableScope(globalScope);
@@ -149,7 +153,7 @@ public class SemanticChecker {
     }
 
     // Only for lambda
-    public ArrayList<AstType> checkArgumentList(NodeArgumentList node) {
+    ArrayList<AstType> checkArgumentList(NodeArgumentList node) {
         var currentScope = new VariableScope(globalScope);
         var returnTypes = new ArrayList<AstType>();
         if (node != null) {
@@ -157,7 +161,7 @@ public class SemanticChecker {
             for (int i = 0; i < len; i++) {
                 currentScope.defineVariable(
                         node.identifiers.get(i),
-                        checkType(node.types.get(i), true, false),
+                        checkType(node.types.get(i), true),
                         node.position
                 );
                 returnTypes.add(node.types.get(i).type);
@@ -167,8 +171,8 @@ public class SemanticChecker {
         return returnTypes;
     }
 
-    public void checkVariableDefine(NodeVariableDefine node) {
-        final var type = checkType(node.type, false, false);
+    void checkVariableDefine(NodeVariableDefine node) {
+        final var type = checkType(node.type, false);
         final var position = node.position;
         var termList = node.variableTerms;
         for (var term : termList) {
@@ -178,7 +182,7 @@ public class SemanticChecker {
         }
     }
 
-    public String checkVariableTerm(NodeVariableTerm node, AstType type) {
+    String checkVariableTerm(NodeVariableTerm node, AstType type) {
         if (node.initialExpression != null) {
             var exprType = checkExpression(node.initialExpression);
             if (!((((type.genre == AstType.Genre.CLASS_NAME) || (type.dimension != 0))
@@ -198,7 +202,7 @@ public class SemanticChecker {
     // "void" type illegal.
     // * "null" is always an illegal definition type.
     // "atomExpr" handles "null" without calling "checkType()".
-    public AstType checkType(NodeType node, boolean noDimension, boolean allowVoid) {
+    AstType checkType(NodeType node, boolean noDimension) {
         if (node.type.dimension != 0) {
             if (noDimension) {  // "argumentList", "variableDefine" and ("functionDefine")
                 for (var bracket : node.brackets) {
@@ -228,7 +232,7 @@ public class SemanticChecker {
                 }
             }
         }
-        if (node.type.genre == AstType.Genre.VOID && !allowVoid)
+        if (node.type.genre == AstType.Genre.VOID)
             throw new SemanticError(
                     "Cannot use void type here"
                     , node.position
@@ -238,7 +242,7 @@ public class SemanticChecker {
     }
 
     // Returns whether the bracket contains argument
-    public boolean checkBracket(NodeBracket node) {
+    boolean checkBracket(NodeBracket node) {
         if (node.expression != null) {
             var type = checkExpression(node.expression);
             if (type.genre != AstType.Genre.INTEGER || type.dimension != 0)
@@ -251,7 +255,7 @@ public class SemanticChecker {
         return false;
     }
 
-    public AstType checkSuite(NodeSuite node) {
+    AstType checkSuite(NodeSuite node) {
         scopeStack.push(new VariableScope(globalScope));
         var statementList = node.statements;
         AstType returnType = null;
@@ -272,7 +276,7 @@ public class SemanticChecker {
     }
 
     // Returns 'Type' for return expression or 'null' for the other situations.
-    public AstType checkStatement(NodeStatement node) {
+    AstType checkStatement(NodeStatement node) {
         switch (node.genre) {
             case SUITE -> {
                 return checkSuite(node.suite);
@@ -369,7 +373,7 @@ public class SemanticChecker {
         return null;
     }
 
-    public AstType checkExpression(NodeExpression node) {
+    AstType checkExpression(NodeExpression node) {
         // NodeExpression 子节点中仅有 newExpr 和 lambdaExpr 可能产生 void 类型返回值
         // expression 必为实际值
         switch (node.genre) {
@@ -502,7 +506,6 @@ public class SemanticChecker {
             case NEW -> {
                 return checkType(
                         node.type,
-                        false,
                         false
                 );
             }
@@ -671,7 +674,7 @@ public class SemanticChecker {
         );
     }
 
-    public ArrayList<AstType> checkExpressionList(NodeExpressionList node) {
+    ArrayList<AstType> checkExpressionList(NodeExpressionList node) {
         var returnTypes = new ArrayList<AstType>();
         if (node != null) {
             for (var expression : node.expressions)
@@ -680,7 +683,7 @@ public class SemanticChecker {
         return returnTypes;
     }
 
-    public AstType checkAtom(NodeAtom node) {
+    AstType checkAtom(NodeAtom node) {
         // "null" 不能参与运算(除 "==" & "!="), 能作为右值进行赋值(除字符串)
         switch (node.genre) {
             case THIS -> {
@@ -725,7 +728,7 @@ public class SemanticChecker {
         }
     }
 
-    public enum ScopeGenre {CLASS, FUNCTION, LOOP}
+    enum ScopeGenre {CLASS, FUNCTION, LOOP}
 
     // endregion
 }

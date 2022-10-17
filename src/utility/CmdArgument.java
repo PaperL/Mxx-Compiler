@@ -57,7 +57,7 @@ public class CmdArgument {
         DEBUG, LOCAL,
         SEMANTIC,
         IR, IR_COMMENT,
-        ASM_COMMENT,
+        ASM, ASM_COMMENT,
         STACK_SIZE,
         OPTIMIZATION,
     }

@@ -2,24 +2,21 @@
 
 import backend.asm.AsmBuilder;
 import backend.optimization.AsmOptimizer;
-import backend.optimization.IrOptimizer;
 import frontend.ast.AstBuilder;
 import frontend.ast.ForwardCollector;
 import frontend.ast.SemanticChecker;
-import frontend.ast.node.NodeRoot;
 import frontend.ir.IrBuilder;
 import frontend.parser.Antlr4ErrorListener;
 import frontend.parser.MxxLexer;
 import frontend.parser.MxxParser;
+import middle_end.IrOptimizer;
 import org.antlr.v4.runtime.CharStreams;
 import org.antlr.v4.runtime.CommonTokenStream;
 import utility.CmdArgument;
 import utility.Constant;
-import utility.error.Error;
-import utility.error.InternalError;
+import utility.error.StopException;
 
 import java.io.*;
-import java.util.Objects;
 import java.util.Scanner;
 
 public class Main {
@@ -29,11 +26,12 @@ public class Main {
         InputStream inputStream;
         PrintStream outputStream = null;
         if (cmdArgs.contains(CmdArgument.ArgumentType.LOCAL)) {
-            System.out.println("Please input testcase name (testbin/*.mx):");
-            inputStream = new FileInputStream(
-                    "testbin/" + (new Scanner(System.in)).nextLine() + ".mx");
+            System.out.println("Please input testcase name (testspace/*.mx):");
+            Constant.SOURCE_FILENAME = "testspace/" + (new Scanner(System.in)).nextLine() + ".mx";
+            inputStream = new FileInputStream(Constant.SOURCE_FILENAME);
             outputStream = System.out;
         } else {
+            Constant.SOURCE_FILENAME = "stdin";
             inputStream = System.in;
             outputStream = new PrintStream(new OutputStream() {
                 @Override
@@ -46,6 +44,13 @@ public class Main {
 //        if (!rstFile.exists()) rstFile.createNewFile();
         var rstOut = new FileWriter(rstFile);   // FileWriter 会自动创建文件
 
+        var targetTask = CmdArgument.ArgumentType.ASM;
+        if (cmdArgs.contains(CmdArgument.ArgumentType.SEMANTIC))
+            targetTask = CmdArgument.ArgumentType.SEMANTIC;
+        else if (cmdArgs.contains(CmdArgument.ArgumentType.IR)) {
+            targetTask = CmdArgument.ArgumentType.IR;
+            Constant.POINTER_SIZE = 8; // Clang cannot run 32-bit LLVM IR
+        }
         var allStageFinished = false;
         try {
             // ! FRONTEND
@@ -62,60 +67,62 @@ public class Main {
             var parseTreeRoot = parser.program();
             outputStream.println("\033[36m🔨 Lexer and frontend.parser finished.\033[0m");
 
-            NodeRoot astRoot;
-            var astBuilder = new AstBuilder();
-            astRoot = (NodeRoot) astBuilder.visit(parseTreeRoot);
-            astBuilder.generateBuiltIn(astRoot);
+
+            var astBuilder = new AstBuilder(parseTreeRoot);
+            var astRoot = astBuilder.astRoot;
+            astBuilder.build();
+            astBuilder.generateBuiltIn();
             outputStream.println("\033[36m🔨 Building AST finished.\033[0m");
             // AST 树构建完成后, package frontend.parser 不再被使用
 
             // * Semantic Check on AST
-            var forwardCollector = new ForwardCollector();
-            forwardCollector.collectRoot(astRoot);
+            var forwardCollector = new ForwardCollector(astRoot);
+            forwardCollector.work();
             outputStream.println("\033[36m🔨 Collecting forward reference symbol finished.\033[0m");
             // Class, class method and function name are collected
 
-            var semanticChecker = new SemanticChecker(forwardCollector.globalScope);
-            semanticChecker.checkRoot(astRoot);
+            var semanticChecker = new SemanticChecker(astRoot, forwardCollector.getScope());
+            semanticChecker.work();
             outputStream.println("\033[36m🔨 Semantic check finished.\033[0m");
-            if (cmdArgs.contains(CmdArgument.ArgumentType.SEMANTIC))
-                throw new InternalError("Finished", "Semantic Check");
+            if (targetTask == CmdArgument.ArgumentType.SEMANTIC)
+                throw new StopException("Semantic Check");
 
             // * Generate LLVM IR from AST
-            var irBuilder = new IrBuilder();
-            irBuilder.buildRoot(astRoot);
+            var irBuilder = new IrBuilder(astRoot);
+            var irRoot = irBuilder.irRoot;
+            irBuilder.build();
             outputStream.println("\033[36m🔨 IR generation finished.\033[0m");
             outputStream.println("\033[33m🎗️ Frontend worked successfully.\033[0m");
-            if (cmdArgs.contains(CmdArgument.ArgumentType.IR)) {
+            if (targetTask == CmdArgument.ArgumentType.IR) {
                 rstOut.write(irBuilder.print());
-                throw new InternalError("Finished", "Generate LLVM IR");
+                throw new StopException("Generate LLVM IR");
             }
-            var irResult = IrBuilder.irRoot;
+
+            // ! MIDDLE END
+            // * Optimize IR
+            var irOptimizer = new IrOptimizer(irRoot);
+            irOptimizer.work();
 
             // ! BACKEND
-            // * Optimize IR
-            var irOptimizer = new IrOptimizer();
-            irOptimizer.work(irResult);
-
             // * Generate Assembly from IR
-            var asmBuilder = new AsmBuilder();
-            asmBuilder.buildRoot(irResult);
-            var asmResult = AsmBuilder.asmRoot;
+            var asmBuilder = new AsmBuilder(irRoot);
+            var asmRoot = asmBuilder.asmRoot;
+            asmBuilder.build();
 
             // * Optimize Assembly
-            var asmOptimizer = new AsmOptimizer();
-            asmOptimizer.work(asmResult);
+            var asmOptimizer = new AsmOptimizer(asmRoot);
+            asmOptimizer.work();
 
             // Finish Compiling
             rstOut.write(asmBuilder.print());
             outputStream.println("\033[33m🎗️ Backend worked successfully.\033[0m");
             allStageFinished = true;
-        } catch (Error err) {
+        } catch (Throwable exception) {
 //            System.err.println(error);
-            if (Objects.equals(err.errorType, "Finished"))
-                outputStream.println("Compiler stops at stage \"" + err.message + "\".");
+            if (exception instanceof StopException)
+                outputStream.println("Compiler stops at stage \"" + exception.getMessage() + "\".");
             else {
-                err.printStackTrace();    // 输出异常位置
+                exception.printStackTrace();    // 输出异常位置
                 outputStream.println("\033[31m⚠️ Process terminated with error.\033[0m");
                 throw new RuntimeException("Compiling failed.");
             }

@@ -352,7 +352,7 @@ __STRING_SUBSTRING:                     # @__STRING_SUBSTRING
 	add	a1, s2, s3
 	mv	a0, s0
 	mv	a2, s1
-	call	strncpy
+	call	memcpy
 	add	a0, s0, s1
 	sb	zero, 0(a0)
 	mv	a0, s0

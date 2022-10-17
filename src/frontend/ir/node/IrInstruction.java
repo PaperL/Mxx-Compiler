@@ -30,7 +30,8 @@ public class IrInstruction extends IrNode {
     // Jump
     public IrId jumpLabel = null;
     // Call
-    public String callName = null;
+    public IrFunction callFunc = null;   // todo 维护 callFunc !!!!!!!!!!!!!!!!!!
+    public String callName = null;  // Built-in function has no IrFunction object
     public LinkedList<IrId> callArguments = null;
     // Return
     public IrId returnValue = null;
@@ -66,7 +67,6 @@ public class IrInstruction extends IrNode {
             case LOAD, STORE, CALL, RETURN,
                     ARITH, PHI, BITCAST -> insId = new IrId(insType);
             case ALLOCA -> insId = new IrId(insType.getPtr());
-            // GLOBAL_VARIABLE should use IrInstruction(Genre, IrId)
             default -> IrBuilder.throwUnexpectedError();
         }
     }
@@ -114,7 +114,7 @@ public class IrInstruction extends IrNode {
                 if (insType.arrayLength != -1) {
                     // @__CONSTANT_STR__1 = private unnamed_addr constant [5 x i8] c"abcd\00", align 1
                     return String.format("%s = private unnamed_addr constant %s "
-                                    + "c\"%s\", align 1 ",
+                                    + "c\"%s\"",
                             insId,
                             insType.getDeref(),
                             globalConstantString);

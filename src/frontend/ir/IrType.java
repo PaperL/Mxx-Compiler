@@ -2,14 +2,13 @@ package frontend.ir;
 
 import frontend.ast.node.NodeType;
 import frontend.ir.node.IrClass;
-import utility.CmdArgument;
+import frontend.ir.node.IrTop;
 import utility.Constant;
 import utility.error.InternalError;
 
 import java.util.Objects;
 
 public class IrType implements Cloneable {
-    public final String STRING_CLASS_NAME = "__STRING";
     public Genre genre = null;
     // I8 only used for string
     public int dimension = 0;   // 多级指针
@@ -34,10 +33,10 @@ public class IrType implements Cloneable {
     }
 
     /**
-     * * For class, type is class pointer
-     * * Object is just reference
+     * For class, type is class pointer.
+     * Object is just reference in Mx*.
      */
-    public IrType(NodeType astType) {
+    public IrType(NodeType astType, IrTop irRoot) {
         switch (astType.type.genre) {
             case BOOLEAN -> genre = Genre.I1;
             case INTEGER -> genre = Genre.I32;
@@ -47,8 +46,7 @@ public class IrType implements Cloneable {
             }
             case CLASS_NAME -> {
                 genre = Genre.COMPOSITE;
-                clas = IrBuilder.irRoot.classes
-                        .get(astType.type.className);
+                clas = irRoot.classes.get(astType.type.className);
                 dimension++;
             }
             case VOID -> genre = Genre.VOID;
@@ -93,11 +91,8 @@ public class IrType implements Cloneable {
     }
 
     public int sizeof() {
-        var ptrsize = 4;
-        if (Constant.cmdArgs.contains(CmdArgument.ArgumentType.IR))
-            ptrsize = 8;
         int size = 0;
-        if (dimension != 0) size = ptrsize;
+        if (dimension != 0) size = Constant.POINTER_SIZE;
         else if (genre == Genre.COMPOSITE) {
             // dimension == 0
             for (var field : clas.fields.values())
@@ -171,7 +166,7 @@ public class IrType implements Cloneable {
 
     @Override
     public int hashCode() {
-        return Objects.hash(STRING_CLASS_NAME, genre, dimension, clas);
+        return Objects.hash(genre, dimension, clas, arrayLength);
     }
 
     public enum Genre {

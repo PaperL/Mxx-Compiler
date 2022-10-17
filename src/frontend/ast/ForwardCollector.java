@@ -12,9 +12,22 @@ import utility.error.SemanticError;
  * Global variable cannot forward reference
  */
 public class ForwardCollector {
-    public BroadScope globalScope = new BroadScope();
+    final NodeRoot astRoot;
+    final BroadScope globalScope = new BroadScope();
 
-    public void collectRoot(NodeRoot node) {
+    public ForwardCollector(NodeRoot astRoot_) {
+        astRoot = astRoot_;
+    }
+
+    public void work() {
+        collectRoot(astRoot);
+    }
+
+    public BroadScope getScope() {
+        return globalScope;
+    }
+
+    void collectRoot(NodeRoot node) {
         // 以 BFS 序收集 identifier
         for (var section : node.programSections) {
             if (section.genre == NodeProgramSection.Genre.CLASS_DEFINE)
@@ -30,7 +43,7 @@ public class ForwardCollector {
         }
     }
 
-    public void collectClass(NodeClassDefine node) {
+    void collectClass(NodeClassDefine node) {
         var classScope = globalScope.getClass(node.name, node.position);
         for (var variableDefine : node.variableDefines) {
             // term's initial expression should be empty
@@ -53,7 +66,7 @@ public class ForwardCollector {
         }
     }
 
-    public void collectFunction(NodeFunctionDefine node) {
+    void collectFunction(NodeFunctionDefine node) {
         globalScope.defineFunction(node);
     }
 

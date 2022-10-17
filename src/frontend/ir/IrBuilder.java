@@ -14,10 +14,11 @@ import java.util.*;
  * Build sequential structure LLVM IR from AST
  */
 public class IrBuilder {
-    public static final IrTop irRoot = new IrTop();
+    final NodeRoot astRoot;
+    public final IrTop irRoot = new IrTop();
     // region BASIC
     // Internal Functions
-    public final Map<String, String> internalFuncName = Map.ofEntries(
+    final Map<String, String> internalFuncName = Map.ofEntries(
             // Built-in basic functions
             Map.entry("_init", "__INIT"),
             Map.entry("_new", "malloc"),
@@ -45,19 +46,24 @@ public class IrBuilder {
 
     // scopeStack 中变量名无 GLOBAL_VARIABLE_PREFIX 前缀
     // 但对应的 IrId 名称含有前缀
-    public final LinkedList<HashMap<String, IrId>> scopeStack = new LinkedList<>();
+    final LinkedList<HashMap<String, IrId>> scopeStack = new LinkedList<>();
     // For Continue and Break, is 'null' when out of loop
-    public final LinkedList<IrBlock> loopCondBlockStack = new LinkedList<>();
-    public final LinkedList<IrBlock> loopNextBlockStack = new LinkedList<>();
-    //    public IrClass currentClas = null; current Clas == currentFunction.clas;
-    public IrFunction currentFunction = null;
-    public IrBlock currentBlock = null;
+    final LinkedList<IrBlock> loopCondBlockStack = new LinkedList<>();
+    final LinkedList<IrBlock> loopNextBlockStack = new LinkedList<>();
+    //     IrClass currentClas = null; current Clas == currentFunction.clas;
+    IrFunction currentFunction = null;
+    IrBlock currentBlock = null;
     // 常量字符串计数器
-    public int constantStringCnt = 0;
+    int constantStringCnt = 0;
 
-    public IrBuilder() {
+    public IrBuilder(NodeRoot astRoot_) {
+        astRoot = astRoot_;
         scopeStack.push(new HashMap<>());   // Global scope
         init();
+    }
+
+    public void build() {
+        buildRoot(astRoot);
     }
 
     // region TOOL
@@ -75,8 +81,8 @@ public class IrBuilder {
         return irRoot.toString();
     }
 
-    public void setFunction(String callName, String insideName, IrType returnType,
-                            LinkedHashMap<String, IrFunction> funcMap) {
+    void setFunction(String callName, String insideName, IrType returnType,
+                     LinkedHashMap<String, IrFunction> funcMap) {
         var func = new IrFunction();
         func.name = insideName;
         func.returnType = returnType;
@@ -85,8 +91,8 @@ public class IrBuilder {
 
     // endregion
 
-    public void setFunction(String funcName, IrType returnType,
-                            LinkedHashMap<String, IrFunction> funcMap) {
+    void setFunction(String funcName, IrType returnType,
+                     LinkedHashMap<String, IrFunction> funcMap) {
         var func = new IrFunction();
         func.name = funcName;
         func.returnType = returnType;
@@ -94,9 +100,10 @@ public class IrBuilder {
     }
 
     // * Built-in
-    public void init() {
+    void init() {
         // Basic information
         buildDeclare(String.format("""
+                        source_filename = "%s"
                         target datalayout = "e-m:e-p:32:32-i64:64-n32-S128"
                         target triple = "riscv32"
                                         
@@ -122,6 +129,7 @@ public class IrBuilder {
                         declare i8*  @%s(i8*, i32, i32)
                         declare i32  @%s(i8*)
                         declare i32  @%s(i8*, i32)""",
+                Constant.SOURCE_FILENAME,
                 internalFuncName.get("_new"),
                 internalFuncName.get("_new_array"),
 
@@ -191,21 +199,21 @@ public class IrBuilder {
         irRoot.functions.put(initFunc.name, initFunc);
     }
 
-    public IrId createI8Constant(int k) {
+    IrId createI8Constant(int k) {
         return (new IrId(new IrType(IrType.Genre.I8), k));
     }
 
-    public IrId createI32Constant(int k) {
+    IrId createI32Constant(int k) {
         return (new IrId(new IrType(IrType.Genre.I32), k));
     }
 
-    public void buildDeclare(String declareInfo) {
+    void buildDeclare(String declareInfo) {
         var declare = new IrInstruction(IrInstruction.Genre.DECLARE);
         declare.declareInfo = declareInfo;
         irRoot.declares.add(declare);
     }
 
-    public void buildComment(String commentInfo) {
+    void buildComment(String commentInfo) {
         if (Constant.cmdArgs.contains(CmdArgument.ArgumentType.IR_COMMENT)) {
             var ins = new IrInstruction(IrInstruction.Genre.COMMENT);
             ins.commentInfo = commentInfo;
@@ -219,7 +227,7 @@ public class IrBuilder {
      * Generate comment of corresponding source code.
      * Just show the first line of multiline statement, e.g. IF, FOR.
      */
-    public void buildSourceCodeComment(AstNode astNode) {
+    void buildSourceCodeComment(AstNode astNode) {
         var ins = new IrInstruction(IrInstruction.Genre.COMMENT);
         var str = astNode.position.rawText;
         var end = str.indexOf('\n');
@@ -233,7 +241,7 @@ public class IrBuilder {
     /**
      * Get value in memory by pointer
      */
-    public IrId buildGetFromMem(IrId pointer) {
+    IrId buildGetFromMem(IrId pointer) {
         var ins = new IrInstruction(IrInstruction.Genre.LOAD,
                 pointer.type.getDeref());
         ins.loadAddress = pointer;
@@ -244,7 +252,7 @@ public class IrBuilder {
     /**
      * Assign right value in register to left value in mem
      */
-    public void buildAssignToMem(IrId value, IrId pointer) {
+    void buildAssignToMem(IrId value, IrId pointer) {
         var ins = new IrInstruction(IrInstruction.Genre.STORE, value.type);
         ins.storeData = value;
         ins.storeAddress = pointer;
@@ -255,7 +263,7 @@ public class IrBuilder {
      * @param type Type to alloca
      * @return Pointer IrId
      */
-    public IrId buildAlloca(IrType type) {
+    IrId buildAlloca(IrType type) {
         var ins = new IrInstruction(IrInstruction.Genre.ALLOCA, type);
         currentBlock.instructions.add(ins);
         return ins.insId;
@@ -288,7 +296,7 @@ public class IrBuilder {
      * Finish current block, build jump to another block
      * and set 'currentBlock' as target block
      */
-    public void buildJumpToBlock(IrBlock block, boolean setCurrentBlock) {
+    void buildJumpToBlock(IrBlock block, boolean setCurrentBlock) {
         var ins = new IrInstruction(IrInstruction.Genre.JUMP);
         ins.jumpLabel = block.label;
         currentBlock.jumpInstruction = ins;
@@ -299,7 +307,7 @@ public class IrBuilder {
      * Finish currentBlock, jump to one of two blocks depending on
      * condition result, and set 'currentBlock' as 'null'
      */
-    public void buildBranch(IrId condId, IrBlock trueBlock, IrBlock falseBlock) {
+    void buildBranch(IrId condId, IrBlock trueBlock, IrBlock falseBlock) {
         var ins = new IrInstruction(IrInstruction.Genre.BRANCH);
         ins.branchCondId = condId;
         ins.branchTrueLabel = trueBlock.label;
@@ -313,7 +321,7 @@ public class IrBuilder {
     // Build* functions add sth to IR
     // Visit* functions just traverse AST
 
-    public void buildRoot(NodeRoot astNode) {
+    void buildRoot(NodeRoot astNode) {
         // Depth-first traversal AST tree
         // 函数和类支持前向引用, 需要先收集符号
         // 而全局变量不支持前向引用
@@ -334,7 +342,7 @@ public class IrBuilder {
         }
     }
 
-    public void declareClass(NodeClassDefine astNode) {
+    void declareClass(NodeClassDefine astNode) {
         // DO NOT ignore built-in classes
         var clas = new IrClass();
         clas.builtIn = astNode.builtIn;
@@ -344,7 +352,7 @@ public class IrBuilder {
 
         var fieldCnt = 0;
         for (var fieldDefine : astNode.variableDefines) {
-            var type = new IrType(fieldDefine.type);
+            var type = new IrType(fieldDefine.type, irRoot);
             for (int i = 0, len = fieldDefine.variableTerms.size(); i < len; i++) {
                 clas.fields.put(
                         fieldDefine.variableTerms.get(i).name,
@@ -374,19 +382,20 @@ public class IrBuilder {
             var arguments = constructor.argumentList;
             if (arguments != null) {
                 for (var astType : arguments.types)
-                    clas.constructor.arguments.add(new IrId(new IrType(astType)));
+                    clas.constructor.arguments.add(
+                            new IrId(new IrType(astType, irRoot)));
             }
         }
     }
 
-    public void declareFunction(NodeFunctionDefine astNode, IrClass clas) {
+    void declareFunction(NodeFunctionDefine astNode, IrClass clas) {
         // DO NOT ignore built-in functions
 
         var isMethod = (clas != null);
         var func = new IrFunction();
 
         func.builtIn = astNode.builtIn;
-        func.returnType = new IrType(astNode.type);
+        func.returnType = new IrType(astNode.type, irRoot);
         if (astNode.builtIn)
             func.name = internalFuncName.get(astNode.name);
         else if (isMethod)
@@ -404,14 +413,15 @@ public class IrBuilder {
         var arguments = astNode.argumentList;
         if (arguments != null) {
             for (var astType : arguments.types)
-                func.arguments.add(new IrId(new IrType(astType)));
+                func.arguments.add(
+                        new IrId(new IrType(astType, irRoot)));
         }
 
         if (isMethod) clas.methods.put(astNode.name, func);
         else irRoot.functions.put(astNode.name, func);
     }
 
-    public void buildClass(NodeClassDefine astNode) {
+    void buildClass(NodeClassDefine astNode) {
         if (astNode.builtIn) return;  // Just ignore built-in classes
 
         var clas = irRoot.classes.get(astNode.name);
@@ -428,7 +438,7 @@ public class IrBuilder {
         }
     }
 
-    public void buildFunction(NodeFunctionDefine astNode, IrClass clas) {
+    void buildFunction(NodeFunctionDefine astNode, IrClass clas) {
         if (astNode.builtIn) return; // Just skip built-in functions
 
         var isMethod = (clas != null);
@@ -549,7 +559,7 @@ public class IrBuilder {
     // endregion
 
     // region Statement
-    public void visitVariableDefine(NodeVariableDefine astNode, boolean isGlobal) {
+    void visitVariableDefine(NodeVariableDefine astNode, boolean isGlobal) {
         if (isGlobal) {
             currentFunction = irRoot.functions.get(internalFuncName.get("_init"));
             currentBlock = currentFunction.blocks.getLast();
@@ -562,8 +572,8 @@ public class IrBuilder {
     /**
      * Build variable define instructions and put variable pointer into scopeStack.
      */
-    public void buildVariableTerm(NodeType astType, NodeVariableTerm astTerm, boolean isGlobal) {
-        var type = new IrType(astType);
+    void buildVariableTerm(NodeType astType, NodeVariableTerm astTerm, boolean isGlobal) {
+        var type = new IrType(astType, irRoot);
         var initExpr = astTerm.initialExpression;
 
         IrInstruction ins;
@@ -585,6 +595,7 @@ public class IrBuilder {
         // Initialize variable
         if (initExpr != null) {
             var initVal = buildExpression(initExpr, false);
+            // todo initVal 为常数时可直接赋值
             if (initVal.genre == IrId.Genre.NULL)
                 initVal.type = ins.insId.type.getDeref();  // Same as buildExpression::ASSIGN
             buildAssignToMem(initVal, ins.insId);
@@ -606,7 +617,7 @@ public class IrBuilder {
 //        }
     }
 
-    public void buildStatement(NodeStatement astNode) {
+    void buildStatement(NodeStatement astNode) {
         // Generate source code comment
         switch (astNode.genre) {
             case SUITE, EMPTY, VARIABLE_DEFINE -> {
@@ -755,7 +766,7 @@ public class IrBuilder {
     /**
      * @return Return a register stores the value of expression
      */
-    public IrId buildExpression(NodeExpression astNode, boolean isLeftValue) {
+    IrId buildExpression(NodeExpression astNode, boolean isLeftValue) {
         // ? 每个 case 应以 add ins & ret insId 结尾，且调用 buildExpression 应该优先使用 isLeftValue 而非指定布尔值
         // 检查错误的的左值情况
         /* switch (astNode.genre) {
@@ -960,7 +971,7 @@ public class IrBuilder {
                 var i8PtrType = new IrType(IrType.Genre.I8);
                 i8PtrType.dimension = 1;
                 var i32Type = new IrType(IrType.Genre.I32);
-                var newType = new IrType(astNode.type);
+                var newType = new IrType(astNode.type, irRoot);
                 var arrayDimension = newType.dimension;
                 // For class, newType is class pointer
                 if (newType.genre == IrType.Genre.COMPOSITE

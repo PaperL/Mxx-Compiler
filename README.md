@@ -10,18 +10,18 @@
 
 ## 简介
 
-- 一个用 Java 编写的 Mx* 语言编译器, 功能为将 Mx* 语言源代码编译为汇编代码
-- 本项目为 ACM 班 20 级大二学年大作业, 题面见: [Compiler-2022](https://github.com/ACMClassCourses/Compiler-Design-Implementation)
-- 目前进度: `Assembly`
+- 一个用 Java 编写的 Mx* 语言编译器，功能为将 Mx* 语言源代码编译为类似 RV32M 指令集的汇编代码（`.s` 文件），输出结果可由 [Ravel](https://github.com/Yveh/ravel) 解释执行
+- 本项目为 ACM 班 20 级大二学年大作业，题面见: [Compiler-2022](https://github.com/ACMClassCourses/Compiler-Design-Implementation)
+- 目前进度: `codegen`
 - 代码量: `3525 lines`（不计空行与注释）
 
 
 
 ## 项目说明
 
-- 本项目包含四部分：
+- 本作业包含四部分：
   - Semantic, Codegen, Optimization, Bonus
-  - 其中除 Semantic 部分使用 Antlr4 库以外, 不使用任何第三方库
+  - 除 Antlr4 库以外，不使用其他第三方库
 
 - 各部分具体实现说明详见 [DETAIL.md](https://github.com/PaperL/Mxx-Compiler/blob/main/DETAIL.md)
 
@@ -31,14 +31,15 @@
   - 支持含有前缀 `++` / `--` 的表达式作为左值
   - 🍸 支持含参构造函数
   - 除 `\n`, `\t` 外支持 `\"`
+
 - 运行方式
-  - 在项目根目录下使用 `make <cmd>` 指令执行对应操作
+  - 在项目根目录下使用 `make <cmd>` 指令执行对应操作，详见 [Makefile](https://github.com/PaperL/Mxx-Compiler/blob/main/Makefile)
     - `build` / `clean`: 构建项目 / 清理运行内容
     - `semantic`: 进行语法语义分析
     - `ir`: 生成 LLVM IR
     - `run`: 生成 RISC-V Assembly
     - `test_ir`: 自动评测 LLVM IR 正确性
-      - 使用 `make test_ir TESTCASE=<name>` 指令评测单个测试点，具体评测方式详见 [ir_local_judge.py](https://github.com/PaperL/Mxx-Compiler/blob/main/run/ir_local_judge.py)
+      - 使用 `make test_ir TESTCASE=<name>` 指令评测单个测试点。评测脚本详见 [ir_local_judge.py](https://github.com/PaperL/Mxx-Compiler/blob/main/run/ir_local_judge.py)
 
 
 
@@ -57,12 +58,11 @@
         - **MxxParserVisitor**, MxxParserBaseVisitor
     - *ast*
         - *node*
-                - **AstNode**, NodeRoot, NodeProgramSection, NodeClassDefine, NodeFunctionDefine, NodeVariableDefine, NodeType, NodeArgumentList, NodeSuite, NodeVariableTerm, NodeExpression, NodeBracket, NodeStatement, NodeExpressionList, NodeAtom
+            - **AstNode**, NodeRoot, NodeProgramSection, NodeClassDefine, NodeFunctionDefine, NodeVariableDefine, NodeType, NodeArgumentList, NodeSuite, NodeVariableTerm, NodeExpression, NodeBracket, NodeStatement, NodeExpressionList, NodeAtom
         - *scope*
             - **VariableScope**, BroadScope, ClassScope, FunctionScope
         - AstPosition, AstType
         - AstBuilder, ForwardCollector, SemanticChecker
-    
     - *ir*
         - *node*
             - **IrNode**, IrTop, IrClass, IrFunction, IrBlock, IrInsturction

@@ -2,38 +2,57 @@
 
 ## 项目环境配置
 
-- 关于 **riscv32-unknown-elf toolchain**
-    - https://github.com/riscv-collab/riscv-gnu-toolchain Release 中有编译结果
-    - 配置环境变量：在 `~/.bashrc` 末添加 `export PATH=$PATH:$HOME/toolchain/riscv/bin` (路径按照解压位置为准)
-    - 其他可能需要安装的包
-        - `sudo apt install gcc-multilib`
-        - `sudo apt install llvm`
-- IDEA Java 项目配置 (jdk 17)
+### riscv32-unknown-elf toolchain
+
+- https://github.com/riscv-collab/riscv-gnu-toolchain Release 中有编译结果
+- 配置环境变量：在 `~/.bashrc` 末添加 `export PATH=$PATH:$HOME/toolchain/riscv/bin` (路径按照解压位置为准)
+- 其他可能需要安装的包
+    - `sudo apt install gcc-multilib`
+    - `sudo apt install llvm`
+
+### [IntelliJ IDEA](https://www.jetbrains.com/idea/)
+
+- Java 项目配置 (jdk 17)
     - 选择 SDK: `File` - `Project Structure` - `Project` - `Project SDK`
         - 如果没有安装任何 SDK 则点击 `EDIT`
         - 左上角 `+`
         - 下载 (或手动下载解压后 add)
         - 本项目使用 Oracle OpenJDK 17.0.1
-    - 配置 Antlr 库
-        - `File` - `Project Structure` - `Libraries`
-        - 左上角 '+', `Java`
-        - 选择形如 `antlr-runtime-4.9.2.jar` 文件即可
-    - 遇到问题尝试 File - Invalidate Caches...
+- 配置 Antlr 库
+    - `File` - `Project Structure` - `Libraries`
+    - 左上角 '+', `Java`
+    - 选择形如 `antlr-runtime-4.9.2.jar` 文件即可
+- 遇到问题尝试 `File` - `Invalidate Caches...`
+
+### [Ravel](https://github.com/Engineev/ravel)
+
+> RISC-V 汇编代码解释器
+
+- 为本项目 submodule 位于 `run/ravel`
+- 本项目按照 [Ravel Repo README.md](https://github.com/Engineev/ravel/blob/master/README.md) 安装说明安装于 `run/ravel/exe` 目录下
+- 请记得阅读 [Ravel 文档](https://github.com/Engineev/ravel/blob/master/doc/support.md)！
+  - Ravel 以解释器形式运行 .s 文件中的代码，支持的标准库函数较少，具体请参考 [interpretable.h : line 50](https://github.com/Engineev/ravel/blob/master/include/ravel/linker/interpretable.h#L50)（实际上文档里有写）
 
 ### 其他工具
 
+- Antlr4 库
+  - 使用 Idea 提供 g4 预览和生成 parser 代码功能支持
+  - g4 文件参考 [Antlr4 Grammars](https://github.com/antlr/grammars-v4)
+
 - 代码中部分注释使用 IDEA 插件 [Comments Highlighter](https://plugins.jetbrains.com/plugin/12895-comments-highlighter) 提供高亮
-- 代码量统计使用 IDEA 插件 [Statistic](https://plugins.jetbrains.com/plugin/4509-statistic) 完成, 统计方式为计算由本人创建 / 修改的文件中的代码总行数 (
-  纯空行与注释行不计)
+- 代码量统计使用 IDEA 插件 [Statistic](https://plugins.jetbrains.com/plugin/4509-statistic) 完成, 统计方式为计算由本人创建 / 修改的文件中的代码总行数 (纯空行与注释行不计)
 
 ## 运行方式
 
 - 参考 `run` 文件夹下脚本
+
+  - 注：`-ea` 表示启用 assert
+
 - 直接运行
   - 如果开启 `--local` 运行参数，则会提示输入测试文件名 `name`，以 `testbin/name.mx` 作为输入。否则从 stdin 读入输入，即请用重定向确定输入文件
   - 输出始终为项目根目录下 `output.*` 文件
   - 以下为程序运行附加参数
-  
+
     - | 参数名称               | 参数功能                           |
       | ---------------------- | ---------------------------------- |
       | **--local**            | 输出易读的编译器运行信息           |
@@ -44,7 +63,7 @@
       | **--stack-size <arg>** | 设置栈大小 (单位 Byte)             |
       | **-O**                 | 开启所有优化                       |
       | **--debug**            | 编译器运行过程中输出调试信息       |
-  
+
 - 本地自动评测
   - 测试数据来自 [Compiler-2021-testcases](https://github.com/ZYHowell/Compiler-2021-testcases/tree/main), 相对位置说明示例：`codegen` 文件夹应位于 `run/testcase/codegen` 路径
 
@@ -128,7 +147,7 @@
                 - NULL
         - `Empty`: (only `;`)
 
-### 其他说明
+### 说明
 
 - `AstNode`
     - 规避了 `Accept()` 函数的使用必要
@@ -189,8 +208,7 @@
 
         
 
-
-### 其他说明
+### 说明 (Clang 指令)
 
 - 实现 llvm
     - 指令说明详见 https://llvm.org/docs/LangRef.html
@@ -234,18 +252,36 @@
 
 ## ASM
 
+> Assembly Code
+
 - Clang 生成的 `.s` 文件中，形如 `.LBB0_2` 的块名含义为：
     - **L**ocal、**B**asic **B**lock、**0**-based Index、**2**th Block
+- **注意：最终结果为类似 `.s` 文件的汇编代码，指令集为类似 RV32M，详见 [Ravel 文档](https://github.com/Engineev/ravel/blob/master/doc/support.md)**（包括支持的 directive 与伪指令）
+    - 指令集可参考 [riscv-isa-pages](https://msyksphinz-self.github.io/riscv-isadoc/html/rvm.html#)
+- [**fixed**] Codegen 部分，指令选择（instruction selection）过程中，由于汇编指令操作数必须为寄存器，故 ir 指令中每个常数均生成对应 asm 虚拟寄存器。其效率问题由后续优化解决（例如 `add` -> `addi`）
+- Codegen 中调用约定见 [RISC-V Calling Conventions](https://github.com/riscv-non-isa/riscv-elf-psabi-doc/blob/master/riscv-cc.adoc)
+    - 搞清楚变量都在 sp+offset，以及 Caller Save / Callee Save 含义即可
+    - 超过 8 个参数传参方式的实验见 [RISC-V BYTES: PASSING ON THE STACK](https://danielmangum.com/posts/risc-v-bytes-passing-on-the-stack/)
+- ASM 中函数末形如 `.Lfunc_end1:` 的 label 及 directive `.size` 在 ravel 中未被使用故省略
+
 
 ## TODO
 
 - 实现 Assembly 部分
 - IR 优化
+  - 死代码消除
+  - 常量传播
+  - 循环优化
+    - 强度削弱
+  - 函数内联展开
+    - 尾递归消除
+  - 清理 block
 - Assembly 优化
+  - peephole
 
 ## 其他笔记
 
-- `gnu是组织; gcc是编译器; g++是gcc开一些编译选项的alias; llvm是个project; clang是llvm project的编译器`
+- `gnu是组织; gcc是编译器; g++是gcc开一些编译选项的alias; llvm是个project; clang是llvm project 的编译器`
 - Compile 中 Target 是与 Source 相对的概念，Compile 就是从 Source (Code) 到 Target (Assembly) 的过程。而 Asm 往往和 CPU 架构 (即指令集), 平台, 系统,
   ABI 有关 (可见https://clang.llvm.org/docs/CrossCompilation.html)
 - ABI (Application Binary Interface) 应用程序二进制接口，为一系列规范 / 约定
@@ -256,3 +292,14 @@
         - `clang output.ll built_in/built_in.ll`
         - **使用 Clang 对拍程序生成的 LLVM IR 时，必须为 64 位指针**（因为生成出的可执行文件 target 为当前系统）
     - 提交评测时 `.s` 文件会被 OJ 自动并入 `output.s` 一块评测
+
+- Java `forEach` 函数可以自动优化为并行，如需保证顺序可用 `forEachOrdered`
+
+  - ```java
+    IntStream.range(0, irNode.blocks.size()).forEach(
+                    i -> func.blocks.add(new AsmBlock(
+                            irNode.blocks.get(i), i != 0)));
+    blocks.forEach(block -> tot.append(block));
+    ```
+
+    

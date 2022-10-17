@@ -211,8 +211,8 @@ define dso_local zeroext i8 @__STRING_GREATER_OR_EQUAL(i8* nocapture readonly %0
   ret i8 %6
 }
 
-; Function Attrs: nofree nounwind
-define dso_local nonnull i8* @__STRING_SUBSTRING(i8* nocapture readonly %0, i32 %1, i32 %2) local_unnamed_addr #0 {
+; Function Attrs: nounwind
+define dso_local noalias nonnull i8* @__STRING_SUBSTRING(i8* nocapture readonly %0, i32 %1, i32 %2) local_unnamed_addr #3 {
   %4 = sub nsw i32 %2, %1
   %5 = add i32 %4, 5
   %6 = tail call noalias i8* @malloc(i32 %5) #10
@@ -220,14 +220,14 @@ define dso_local nonnull i8* @__STRING_SUBSTRING(i8* nocapture readonly %0, i32 
   %8 = bitcast i8* %6 to i32*
   store i32 %4, i32* %8, align 4, !tbaa !3
   %9 = getelementptr inbounds i8, i8* %0, i32 %1
-  %10 = tail call i8* @strncpy(i8* nonnull %7, i8* %9, i32 %4) #10
-  %11 = getelementptr inbounds i8, i8* %7, i32 %4
-  store i8 0, i8* %11, align 1, !tbaa !9
+  tail call void @llvm.memcpy.p0i8.p0i8.i32(i8* nonnull align 1 %7, i8* align 1 %9, i32 %4, i1 false)
+  %10 = getelementptr inbounds i8, i8* %7, i32 %4
+  store i8 0, i8* %10, align 1, !tbaa !9
   ret i8* %7
 }
 
-; Function Attrs: nofree nounwind
-declare dso_local i8* @strncpy(i8* noalias returned, i8* noalias nocapture readonly, i32) local_unnamed_addr #2
+; Function Attrs: argmemonly nounwind willreturn
+declare void @llvm.memcpy.p0i8.p0i8.i32(i8* noalias nocapture writeonly, i8* noalias nocapture readonly, i32, i1 immarg) #1
 
 ; Function Attrs: norecurse nounwind readonly
 define dso_local i32 @__STRING_PARSE_INT(i8* nocapture readonly %0) local_unnamed_addr #8 {

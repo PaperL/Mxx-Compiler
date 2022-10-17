@@ -88,7 +88,10 @@ char *__STRING_SUBSTRING(char *str, int left, int right) {
     int len = right - left;
     char *substr = (char *)malloc(len + 1 + INT_SIZE) + INT_SIZE;
     *(int *)(substr - INT_SIZE) = len;
-    strncpy(substr, str + left, len);
+    // strncpy(substr, str + left, len);
+    // strncpy is not supported by ravel
+    memcpy(substr, str + left, len);
+    // for (int i = 0; i < len; i++) substr[i] = (str + left)[i];
     substr[len] = '\0';
     return substr;
 }
