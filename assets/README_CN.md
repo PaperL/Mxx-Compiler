@@ -12,8 +12,6 @@
 
 - 一个用 Java 编写的 Mx* 语言编译器，功能为将 Mx* 语言源代码编译为类似 RV32M 指令集的汇编代码（`.s` 文件），输出结果可由 [Ravel](https://github.com/Yveh/ravel) 解释执行
 - 本项目为 ACM 班 20 级大二学年大作业，题面见: [Compiler-2022](https://github.com/ACMClassCourses/Compiler-Design-Implementation)
-- 目前进度: `codegen`
-- 代码量: `3525 lines`（不计空行与注释）
 
 
 
@@ -23,7 +21,7 @@
   - Semantic, Codegen, Optimization, Bonus
   - 除 Antlr4 库以外，不使用其他第三方库
 
-- 各部分具体实现说明详见 [DETAIL.md](https://github.com/PaperL/Mxx-Compiler/blob/main/DETAIL.md)
+- 各部分具体实现说明详见 [DETAIL.md](DETAIL.md)
 
 - 实现题面未定义功能 (标记 🍸 表示该功能不支持 Semantic Check)
   - 支持 ` \* *\ ` 注释
